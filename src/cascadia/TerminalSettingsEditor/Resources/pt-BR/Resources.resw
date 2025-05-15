@@ -2100,10 +2100,6 @@
     <value>Perfis restantes</value>
     <comment>Header for a control that adds any remaining profiles to the new tab menu.</comment>
   </data>
-  <data name="NewTabMenu_AddMatchProfiles.HelpText" xml:space="preserve">
-    <value>Adicionar um grupo de perfis que correspondam a pelo menos uma das propriedades definidas</value>
-    <comment>Additional information for a control that adds a terminal profile matcher to the new tab menu. Presented near "NewTabMenu_AddMatchProfiles".</comment>
-  </data>
   <data name="NewTabMenu_AddRemainingProfiles.HelpText" xml:space="preserve">
     <value>Só pode haver uma entrada de "perfis restantes"</value>
     <comment>Additional information for a control that adds any remaining profiles to the new tab menu. Presented near "NewTabMenu_AddRemainingProfiles".</comment>
@@ -2115,18 +2111,6 @@
   <data name="NewTabMenu_AddFolder.Header" xml:space="preserve">
     <value>Pasta</value>
     <comment>Header for a control that adds a folder to the new tab menu.</comment>
-  </data>
-  <data name="NewTabMenu_AddMatchProfiles_Name.Header" xml:space="preserve">
-    <value>Nome do perfil</value>
-    <comment>Header for a text box used to define a regex for the names of profiles to add.</comment>
-  </data>
-  <data name="NewTabMenu_AddMatchProfiles_Source.Header" xml:space="preserve">
-    <value>Origem do perfil</value>
-    <comment>Header for a text box used to define a regex for the sources of profiles to add.</comment>
-  </data>
-  <data name="NewTabMenu_AddMatchProfiles_Commandline.Header" xml:space="preserve">
-    <value>Commandline</value>
-    <comment>Header for a text box used to define a regex for the commandlines of profiles to add.</comment>
   </data>
   <data name="NewTabMenu_AddMatchProfilesTextBlock.Text" xml:space="preserve">
     <value>Adicionar correspondente de perfil</value>

@@ -944,4 +944,7 @@
   <data name="TabMoveRight" xml:space="preserve">
     <value>Мóνε яίģнŧ !!!</value>
   </data>
+  <data name="InvalidRegex" xml:space="preserve">
+    <value>Дŉ ΐňνãľîδ ŗěğµℓдř ë×ρяēѕšιбή ẃăѕ ƒοůŉđ. !!! !!! !!! !!!</value>
+  </data>
 </root>

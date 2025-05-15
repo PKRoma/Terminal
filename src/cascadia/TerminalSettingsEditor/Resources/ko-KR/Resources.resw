@@ -2100,10 +2100,6 @@
     <value>남은 프로필</value>
     <comment>Header for a control that adds any remaining profiles to the new tab menu.</comment>
   </data>
-  <data name="NewTabMenu_AddMatchProfiles.HelpText" xml:space="preserve">
-    <value>정의된 속성 중 하나 이상과 일치하는 프로필 그룹을 추가합니다.</value>
-    <comment>Additional information for a control that adds a terminal profile matcher to the new tab menu. Presented near "NewTabMenu_AddMatchProfiles".</comment>
-  </data>
   <data name="NewTabMenu_AddRemainingProfiles.HelpText" xml:space="preserve">
     <value>"남은 프로필" 항목은 하나만 있을 수 있습니다.</value>
     <comment>Additional information for a control that adds any remaining profiles to the new tab menu. Presented near "NewTabMenu_AddRemainingProfiles".</comment>
@@ -2115,18 +2111,6 @@
   <data name="NewTabMenu_AddFolder.Header" xml:space="preserve">
     <value>폴더</value>
     <comment>Header for a control that adds a folder to the new tab menu.</comment>
-  </data>
-  <data name="NewTabMenu_AddMatchProfiles_Name.Header" xml:space="preserve">
-    <value>프로필 이름</value>
-    <comment>Header for a text box used to define a regex for the names of profiles to add.</comment>
-  </data>
-  <data name="NewTabMenu_AddMatchProfiles_Source.Header" xml:space="preserve">
-    <value>프로필 원본</value>
-    <comment>Header for a text box used to define a regex for the sources of profiles to add.</comment>
-  </data>
-  <data name="NewTabMenu_AddMatchProfiles_Commandline.Header" xml:space="preserve">
-    <value>명령줄</value>
-    <comment>Header for a text box used to define a regex for the commandlines of profiles to add.</comment>
   </data>
   <data name="NewTabMenu_AddMatchProfilesTextBlock.Text" xml:space="preserve">
     <value>프로필 매칭기 추가</value>
