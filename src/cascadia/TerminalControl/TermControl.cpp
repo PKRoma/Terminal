@@ -848,13 +848,6 @@ namespace winrt::Microsoft::Terminal::Control::implementation
     {
         // Dismiss any previewed input.
         PreviewInput(hstring{});
-
-        // only broadcast if there's an actual listener. Saves the overhead of some object creation.
-        if (StringSent)
-        {
-            StringSent.raise(*this, winrt::make<StringSentEventArgs>(wstr, static_cast<uint32_t>(type)));
-        }
-
         _core.WriteInputString(wstr, type);
     }
     void TermControl::ClearBuffer(Control::ClearBufferType clearType)
@@ -2994,22 +2987,6 @@ namespace winrt::Microsoft::Terminal::Control::implementation
         // The numbers below just feel well, feel free to change.
         // TODO: Maybe account for space beyond border that user has available
         return std::pow(cursorDistanceFromBorder, 2.0) / 25.0 + 2.0;
-    }
-
-    // Method Description:
-    // - Paste this text, and raise a StringSent, to potentially broadcast this
-    //   text to other controls in the app. For certain interactions, like
-    //   drag/dropping a file, we want to act like we "pasted" the text (even if
-    //   the text didn't come from the clipboard). This lets those interactions
-    //   broadcast as well.
-    void TermControl::_pasteTextWithBroadcast(const winrt::hstring& text)
-    {
-        // only broadcast if there's an actual listener. Saves the overhead of some object creation.
-        if (StringSent)
-        {
-            StringSent.raise(*this, winrt::make<StringSentEventArgs>(text, static_cast<uint32_t>(WriteInputStringType::Raw)));
-        }
-        _core.WriteInputString(text, WriteInputStringType::Raw);
     }
 
     // Method description:
