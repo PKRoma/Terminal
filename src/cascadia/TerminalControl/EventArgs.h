@@ -235,10 +235,11 @@ namespace winrt::Microsoft::Terminal::Control::implementation
     struct StringSentEventArgs : public StringSentEventArgsT<StringSentEventArgs>
     {
     public:
-        StringSentEventArgs(const winrt::hstring& text) :
-            _Text(text) {}
+        StringSentEventArgs(const winrt::hstring& text, uint32_t type) :
+            _Text(text), _Type(type) {}
 
         WINRT_PROPERTY(winrt::hstring, Text);
+        WINRT_PROPERTY(uint32_t, Type);
     };
 
     struct SearchMissingCommandEventArgs : public SearchMissingCommandEventArgsT<SearchMissingCommandEventArgs>
