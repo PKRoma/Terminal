@@ -32,6 +32,7 @@ public:
     void UnknownSequence() noexcept override;
     void ReturnResponse(const std::wstring_view response) override;
 
+    bool IsConPTY() const noexcept override;
     Microsoft::Console::VirtualTerminal::StateMachine& GetStateMachine() override;
     BufferState GetBufferAndViewport() override;
     void SetViewportPosition(const til::point position) override;

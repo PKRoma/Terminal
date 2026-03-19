@@ -80,6 +80,11 @@ public:
         }
     }
 
+    bool IsConPTY() const noexcept override
+    {
+        return false;
+    }
+
     StateMachine& GetStateMachine() override
     {
         return *_stateMachine;
