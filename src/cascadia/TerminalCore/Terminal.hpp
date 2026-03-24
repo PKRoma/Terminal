@@ -131,6 +131,7 @@ public:
 
 #pragma region ITerminalApi
     // These methods are defined in TerminalApi.cpp
+    void UnknownSequence() noexcept override;
     void ReturnResponse(const std::wstring_view response) override;
     Microsoft::Console::VirtualTerminal::StateMachine& GetStateMachine() noexcept override;
     BufferState GetBufferAndViewport() noexcept override;
