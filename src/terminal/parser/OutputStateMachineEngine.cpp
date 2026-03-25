@@ -909,6 +909,11 @@ bool OutputStateMachineEngine::ActionOscDispatch(const size_t parameter, const s
         _dispatch->DoWTAction(string);
         break;
     }
+    case OscActionCodes::DesktopNotification:
+    {
+        _dispatch->DoDesktopNotification(string);
+        break;
+    }
     default:
         _dispatch->UnknownSequence();
         break;
