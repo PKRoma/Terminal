@@ -4089,6 +4089,83 @@ namespace winrt::TerminalApp::implementation
         AlwaysOnTopChanged.raise(*this, nullptr);
     }
 
+    void TerminalPage::ToggleOverview()
+    {
+        if (_isInOverviewMode)
+        {
+            _ExitOverview(std::nullopt);
+        }
+        else
+        {
+            _EnterOverview();
+        }
+    }
+
+    void TerminalPage::_EnterOverview()
+    {
+        _isInOverviewMode = true;
+
+        // Use FindName to lazily load the OverviewPane (same pattern as CommandPalette)
+        auto overview = FindName(L"OverviewPaneElement").try_as<OverviewPane>();
+        if (!overview)
+        {
+            return;
+        }
+
+        const auto focusedIdx = _GetFocusedTabIndex();
+        const auto idx = focusedIdx.has_value() ? static_cast<int32_t>(focusedIdx.value()) : 0;
+
+        // Wire up events to handle tab selection and dismissal
+        _overviewTabSelectedToken = overview.TabSelected([weakThis = get_weak()](auto&&, const auto& args) {
+            if (auto self = weakThis.get())
+            {
+                if (args)
+                {
+                    self->_ExitOverview(static_cast<uint32_t>(args.Value()));
+                }
+            }
+        });
+        _overviewDismissedToken = overview.Dismissed([weakThis = get_weak()](auto&&, auto&&) {
+            if (auto self = weakThis.get())
+            {
+                self->_ExitOverview(std::nullopt);
+            }
+        });
+
+        // _tabs is already IObservableVector<Tab>, which inherits from IVector<Tab>
+        overview.UpdateTabContent(_tabs, idx);
+        overview.Visibility(WUX::Visibility::Visible);
+        overview.Focus(WUX::FocusState::Programmatic);
+    }
+
+    void TerminalPage::_ExitOverview(const std::optional<uint32_t>& selectedIndex)
+    {
+        auto overview = FindName(L"OverviewPaneElement").try_as<OverviewPane>();
+        if (overview)
+        {
+            // Revoke event handlers to avoid stale callbacks
+            overview.TabSelected(_overviewTabSelectedToken);
+            overview.Dismissed(_overviewDismissedToken);
+
+            overview.ClearTabContent();
+            overview.Visibility(WUX::Visibility::Collapsed);
+        }
+
+        _isInOverviewMode = false;
+
+        if (selectedIndex.has_value())
+        {
+            _SelectTab(selectedIndex.value());
+        }
+
+        _UpdatedSelectedTab(_GetFocusedTab());
+    }
+
+    bool TerminalPage::OverviewMode() const
+    {
+        return _isInOverviewMode;
+    }
+
     // Method Description:
     // - Sets the tab split button color when a new tab color is selected
     // Arguments:

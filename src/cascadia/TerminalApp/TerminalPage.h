@@ -128,9 +128,11 @@ namespace winrt::TerminalApp::implementation
         void ToggleFocusMode();
         void ToggleFullscreen();
         void ToggleAlwaysOnTop();
+        void ToggleOverview();
         bool FocusMode() const;
         bool Fullscreen() const;
         bool AlwaysOnTop() const;
+        bool OverviewMode() const;
         bool ShowTabsFullscreen() const;
         void SetShowTabsFullscreen(bool newShowTabsFullscreen);
         void SetFullscreen(bool);
@@ -238,6 +240,9 @@ namespace winrt::TerminalApp::implementation
         TerminalApp::Tab _settingsTab{ nullptr };
 
         bool _isInFocusMode{ false };
+        bool _isInOverviewMode{ false };
+        winrt::event_token _overviewTabSelectedToken{};
+        winrt::event_token _overviewDismissedToken{};
         bool _isFullscreen{ false };
         bool _isMaximized{ false };
         bool _isAlwaysOnTop{ false };
@@ -364,6 +369,8 @@ namespace winrt::TerminalApp::implementation
 
         void _SelectNextTab(const bool bMoveRight, const Windows::Foundation::IReference<Microsoft::Terminal::Settings::Model::TabSwitcherMode>& customTabSwitcherMode);
         bool _SelectTab(uint32_t tabIndex);
+        void _EnterOverview();
+        void _ExitOverview(const std::optional<uint32_t>& selectedIndex);
         bool _MoveFocus(const Microsoft::Terminal::Settings::Model::FocusDirection& direction);
         bool _SwapPane(const Microsoft::Terminal::Settings::Model::FocusDirection& direction);
         bool _MovePane(const Microsoft::Terminal::Settings::Model::MovePaneArgs args);
