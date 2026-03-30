@@ -3723,10 +3723,6 @@ namespace winrt::Microsoft::Terminal::Control::implementation
     {
         return _core.CommandHistory();
     }
-    winrt::hstring TermControl::CurrentWorkingDirectory() const
-    {
-        return _core.CurrentWorkingDirectory();
-    }
 
     void TermControl::UpdateWinGetSuggestions(Windows::Foundation::Collections::IVector<hstring> suggestions)
     {
