@@ -6,6 +6,7 @@
 #include "InteractionViewModel.g.cpp"
 #include "EnumEntry.h"
 
+using namespace winrt::Windows::UI::Xaml::Data;
 using namespace winrt::Windows::UI::Xaml::Navigation;
 using namespace winrt::Windows::Foundation;
 using namespace winrt::Microsoft::Terminal::Settings::Model;
@@ -17,6 +18,14 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
     {
         INITIALIZE_BINDABLE_ENUM_SETTING(TabSwitcherMode, TabSwitcherMode, TabSwitcherMode, L"Globals_TabSwitcherMode", L"Content");
         INITIALIZE_BINDABLE_ENUM_SETTING(CopyFormat, CopyFormat, winrt::Microsoft::Terminal::Control::CopyFormat, L"Globals_CopyFormat", L"Content");
+
+        PropertyChanged([this](auto&&, const PropertyChangedEventArgs& args) {
+            const auto viewModelProperty{ args.PropertyName() };
+            if (viewModelProperty == L"ConfirmCloseOn")
+            {
+                _NotifyChanges(L"ConfirmCloseOnPreview");
+            }
+        });
     }
 
     hstring InteractionViewModel::ConfirmCloseOnPreview() const
