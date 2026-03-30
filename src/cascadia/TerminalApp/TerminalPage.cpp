@@ -4141,6 +4141,21 @@ namespace winrt::TerminalApp::implementation
     void TerminalPage::_ExitOverview(const std::optional<uint32_t>& selectedIndex)
     {
         auto overview = FindName(L"OverviewPaneElement").try_as<OverviewPane>();
+
+        // Determine which tab to switch to. Prefer the explicitly passed index
+        // (from TabSelected event), but fall back to the overview pane's
+        // current selection — this covers ToggleOverview and Dismiss paths so
+        // the user always lands on whichever tab they navigated to.
+        std::optional<uint32_t> tabToSelect = selectedIndex;
+        if (!tabToSelect.has_value() && overview)
+        {
+            const auto overviewIdx = overview.SelectedIndex();
+            if (overviewIdx >= 0 && overviewIdx < static_cast<int32_t>(_tabs.Size()))
+            {
+                tabToSelect = static_cast<uint32_t>(overviewIdx);
+            }
+        }
+
         if (overview)
         {
             // Revoke event handlers to avoid stale callbacks
@@ -4153,9 +4168,9 @@ namespace winrt::TerminalApp::implementation
 
         _isInOverviewMode = false;
 
-        if (selectedIndex.has_value())
+        if (tabToSelect.has_value())
         {
-            _SelectTab(selectedIndex.value());
+            _SelectTab(tabToSelect.value());
         }
 
         _UpdatedSelectedTab(_GetFocusedTab());

@@ -235,7 +235,16 @@ namespace winrt::TerminalApp::implementation
 
         if (contentStoryboard)
         {
-            contentStoryboard.Completed([weakThis = get_weak(), onComplete](auto&&, auto&&) {
+            // Revoke any previously registered Completed handler.
+            // The storyboard is a shared XAML resource — without this,
+            // handlers accumulate across overview sessions and the stale
+            // first handler always fires with the original index.
+            if (_exitContentStoryboard)
+            {
+                _exitContentStoryboard.Completed(_exitAnimationToken);
+            }
+            _exitContentStoryboard = contentStoryboard;
+            _exitAnimationToken = contentStoryboard.Completed([weakThis = get_weak(), onComplete](auto&&, auto&&) {
                 if (auto self = weakThis.get())
                 {
                     if (onComplete)

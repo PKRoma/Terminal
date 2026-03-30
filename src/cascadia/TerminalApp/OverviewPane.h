@@ -36,6 +36,8 @@ namespace winrt::TerminalApp::implementation
 
         int32_t _selectedIndex{ 0 };
         int32_t _columnCount{ 3 };
+        winrt::event_token _exitAnimationToken{};
+        Windows::UI::Xaml::Media::Animation::Storyboard _exitContentStoryboard{ nullptr };
 
         struct ReparentedEntry
         {
