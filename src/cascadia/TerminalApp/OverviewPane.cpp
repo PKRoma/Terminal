@@ -349,7 +349,17 @@ namespace winrt::TerminalApp::implementation
                 canvas.Clip(clipGeometry);
 
                 canvas.Children().Append(tabContent);
-                previewBorder.Child(canvas);
+
+                // Layer the canvas behind a transparent overlay so
+                // pointer events never reach the TermControl content.
+                Grid previewGrid;
+                previewGrid.Children().Append(canvas);
+
+                Border inputOverlay;
+                inputOverlay.Background(SolidColorBrush{ winrt::Windows::UI::Colors::Transparent() });
+                previewGrid.Children().Append(inputOverlay);
+
+                previewBorder.Child(previewGrid);
             }
 
             _reparentedContent.push_back({ tabContent, originalParent, origWidthProp, origHeightProp, origRenderTransform, origRenderTransformOrigin });
