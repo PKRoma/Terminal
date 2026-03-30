@@ -260,6 +260,7 @@ namespace winrt::Microsoft::Terminal::Control::implementation
 
         TerminalConnection::ITerminalConnection Connection();
         void Connection(const TerminalConnection::ITerminalConnection& connection);
+        void HardResetWithoutErase();
 
         void AnchorContextMenu(til::point viewportRelativeCharacterPosition);
 

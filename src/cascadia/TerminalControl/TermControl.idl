@@ -47,6 +47,7 @@ namespace Microsoft.Terminal.Control
         void UpdateControlSettings(IControlSettings settings, IControlAppearance unfocusedAppearance);
 
         Microsoft.Terminal.TerminalConnection.ITerminalConnection Connection;
+        void HardResetWithoutErase();
 
         UInt64 ContentId{ get; };
 
