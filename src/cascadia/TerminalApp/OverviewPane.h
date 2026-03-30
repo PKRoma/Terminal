@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <limits>
+
 #include "OverviewPane.g.h"
 
 namespace winrt::TerminalApp::implementation
@@ -29,7 +31,7 @@ namespace winrt::TerminalApp::implementation
         void _UpdateSelection();
         void _PlayEnterAnimation();
         void _PlayExitAnimation(std::function<void()> onComplete = nullptr);
-        Windows::UI::Xaml::FrameworkElement _BuildPreviewCell(const TerminalApp::Tab& tab, int32_t index);
+        Windows::UI::Xaml::FrameworkElement _BuildPreviewCell(const TerminalApp::Tab& tab, int32_t index, double referenceWidth, double referenceHeight);
         void _DetachContent(const Windows::UI::Xaml::FrameworkElement& content);
 
         int32_t _selectedIndex{ 0 };
@@ -39,6 +41,10 @@ namespace winrt::TerminalApp::implementation
         {
             Windows::UI::Xaml::FrameworkElement content{ nullptr };
             Windows::UI::Xaml::Controls::Panel originalParent{ nullptr };
+            double originalWidth{ std::numeric_limits<double>::quiet_NaN() };
+            double originalHeight{ std::numeric_limits<double>::quiet_NaN() };
+            Windows::UI::Xaml::Media::Transform originalRenderTransform{ nullptr };
+            Windows::Foundation::Point originalRenderTransformOrigin{ 0.0f, 0.0f };
         };
         std::vector<ReparentedEntry> _reparentedContent;
     };

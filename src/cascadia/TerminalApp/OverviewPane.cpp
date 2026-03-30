@@ -35,10 +35,26 @@ namespace winrt::TerminalApp::implementation
 
         const auto itemsControl = PreviewGrid();
 
+        // Determine a reference size from the currently visible tab's content.
+        // Inactive tabs have zero ActualWidth/Height since they're not laid out
+        // in the visual tree, but all tabs share the same content area, so the
+        // active tab's size is the right reference for all of them.
+        double referenceWidth = 0;
+        double referenceHeight = 0;
+        if (focusedIndex >= 0 && focusedIndex < static_cast<int32_t>(tabs.Size()))
+        {
+            auto focusedContent = tabs.GetAt(static_cast<uint32_t>(focusedIndex)).Content();
+            if (focusedContent)
+            {
+                referenceWidth = focusedContent.ActualWidth();
+                referenceHeight = focusedContent.ActualHeight();
+            }
+        }
+
         for (uint32_t i = 0; i < tabs.Size(); i++)
         {
             const auto& tab = tabs.GetAt(i);
-            auto cell = _BuildPreviewCell(tab, static_cast<int32_t>(i));
+            auto cell = _BuildPreviewCell(tab, static_cast<int32_t>(i), referenceWidth, referenceHeight);
             itemsControl.Items().Append(cell);
         }
 
@@ -57,6 +73,14 @@ namespace winrt::TerminalApp::implementation
         {
             if (entry.content)
             {
+                // Restore original Width/Height (NaN = auto-sizing)
+                entry.content.Width(entry.originalWidth);
+                entry.content.Height(entry.originalHeight);
+
+                // Restore original RenderTransform and origin
+                entry.content.RenderTransform(entry.originalRenderTransform);
+                entry.content.RenderTransformOrigin(entry.originalRenderTransformOrigin);
+
                 _DetachContent(entry.content);
 
                 // Put it back where it came from
@@ -233,7 +257,7 @@ namespace winrt::TerminalApp::implementation
         }
     }
 
-    FrameworkElement OverviewPane::_BuildPreviewCell(const TerminalApp::Tab& tab, int32_t index)
+    FrameworkElement OverviewPane::_BuildPreviewCell(const TerminalApp::Tab& tab, int32_t index, double referenceWidth, double referenceHeight)
     {
         // Outer border — serves as the selection indicator
         Border outerBorder;
@@ -255,23 +279,71 @@ namespace winrt::TerminalApp::implementation
         previewBorder.CornerRadius({ 6, 6, 6, 6 });
         previewBorder.Background(SolidColorBrush{ winrt::Windows::UI::ColorHelper::FromArgb(255, 30, 30, 30) });
 
-        // Get the tab's content and reparent it into a Viewbox
+        // Get the tab's content and reparent it with a ScaleTransform
         auto tabContent = tab.Content();
         if (tabContent)
         {
-            // Track the original parent so we can restore later
+            // Save the Width/Height *property* values (likely NaN for auto-sized
+            // elements). These differ from ActualWidth/Height (the rendered size).
+            // We need the property values to restore auto-sizing on exit.
+            const auto origWidthProp = tabContent.Width();
+            const auto origHeightProp = tabContent.Height();
+            const auto origRenderTransform = tabContent.RenderTransform();
+            const auto origRenderTransformOrigin = tabContent.RenderTransformOrigin();
+
+            // Use ActualWidth/Height if the content is currently laid out (active tab).
+            // Inactive tabs aren't in the visual tree and report zero — fall back
+            // to the reference size from the active tab's content area.
+            auto layoutWidth = tabContent.ActualWidth();
+            auto layoutHeight = tabContent.ActualHeight();
+            if (layoutWidth <= 0 || layoutHeight <= 0)
+            {
+                layoutWidth = referenceWidth;
+                layoutHeight = referenceHeight;
+            }
+
             auto originalParent = VisualTreeHelper::GetParent(tabContent).try_as<Panel>();
 
             // XAML single-parent rule: remove from current parent first
             _DetachContent(tabContent);
 
-            Viewbox viewbox;
-            viewbox.Stretch(Stretch::Uniform);
-            viewbox.Child(tabContent);
+            // Lock the content to the layout size — this prevents
+            // TermControl from seeing a resize and reflowing its buffer
+            if (layoutWidth > 0 && layoutHeight > 0)
+            {
+                tabContent.Width(layoutWidth);
+                tabContent.Height(layoutHeight);
 
-            previewBorder.Child(viewbox);
+                // Calculate uniform scale to fit in preview
+                const double previewWidth = 320.0;
+                const double previewHeight = 220.0;
+                const double scale = std::min(previewWidth / layoutWidth, previewHeight / layoutHeight);
 
-            _reparentedContent.push_back({ tabContent, originalParent });
+                // RenderTransform is applied AFTER layout — the content still
+                // thinks it's at its original size
+                ScaleTransform scaleTransform;
+                scaleTransform.ScaleX(scale);
+                scaleTransform.ScaleY(scale);
+                tabContent.RenderTransform(scaleTransform);
+                tabContent.RenderTransformOrigin({ 0.0f, 0.0f });
+
+                // Use a Canvas so the content is not constrained by the preview
+                // container's layout. Canvas gives children infinite measure
+                // space and arranges at desired size.
+                Canvas canvas;
+                canvas.Width(previewWidth);
+                canvas.Height(previewHeight);
+
+                // Clip to preview bounds so the scaled content doesn't overflow
+                RectangleGeometry clipGeometry;
+                clipGeometry.Rect({ 0, 0, static_cast<float>(previewWidth), static_cast<float>(previewHeight) });
+                canvas.Clip(clipGeometry);
+
+                canvas.Children().Append(tabContent);
+                previewBorder.Child(canvas);
+            }
+
+            _reparentedContent.push_back({ tabContent, originalParent, origWidthProp, origHeightProp, origRenderTransform, origRenderTransformOrigin });
         }
 
         cellStack.Children().Append(previewBorder);
