@@ -1789,8 +1789,7 @@ namespace winrt::TerminalApp::implementation
 
             // Replace the Starting directory with the CWD, if given
             const auto workingDirectory = control.WorkingDirectory();
-            const auto validWorkingDirectory = !workingDirectory.empty();
-            if (validWorkingDirectory)
+            if (Utils::IsValidDirectory(workingDirectory.c_str()))
             {
                 controlSettings.DefaultSettings()->StartingDirectory(workingDirectory);
             }
@@ -3175,7 +3174,11 @@ namespace winrt::TerminalApp::implementation
             text = winrt::hstring{ Utils::TrimPaste(text) };
         }
 
-        if (text.empty())
+        // LOAD BEARING: Send an empty bracketed paste even if the clipboard was empty.
+        // Bracketed Paste provides an application a way to know whether the
+        // user pasted, even if there was no applicable content on it. This
+        // behavior is observed in GNOME Terminal, among others.
+        if (!bracketedPaste && text.empty())
         {
             co_return;
         }
@@ -3757,8 +3760,7 @@ namespace winrt::TerminalApp::implementation
                 profile = GetClosestProfileForDuplicationOfProfile(profile);
                 controlSettings = Settings::TerminalSettings::CreateWithProfile(_settings, profile);
                 const auto workingDirectory = tabImpl->GetActiveTerminalControl().WorkingDirectory();
-                const auto validWorkingDirectory = !workingDirectory.empty();
-                if (validWorkingDirectory)
+                if (Utils::IsValidDirectory(workingDirectory.c_str()))
                 {
                     controlSettings.DefaultSettings()->StartingDirectory(workingDirectory);
                 }
@@ -3944,7 +3946,13 @@ namespace winrt::TerminalApp::implementation
         // for nulls
         if (const auto& connection{ _duplicateConnectionForRestart(paneContent) })
         {
-            paneContent.GetTermControl().Connection(connection);
+            // Reset the terminal's VT state before attaching the new connection.
+            // The previous client may have left dirty modes (e.g., bracketed
+            // paste, mouse tracking, alternate buffer, kitty keyboard) that
+            // would corrupt input/output for the new shell process.
+            const auto& termControl = paneContent.GetTermControl();
+            termControl.HardResetWithoutErase();
+            termControl.Connection(connection);
             connection.Start();
         }
     }

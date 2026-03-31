@@ -532,6 +532,11 @@ namespace winrt::Microsoft::Terminal::Control::implementation
         _core.Connection(newConnection);
     }
 
+    void TermControl::HardResetWithoutErase()
+    {
+        _core.HardResetWithoutErase();
+    }
+
     void TermControl::_throttledUpdateScrollbar(const ScrollBarUpdate& update)
     {
         if (!_initializedTerminal)
@@ -3060,7 +3065,7 @@ namespace winrt::Microsoft::Terminal::Control::implementation
     //   the full path of the file to our terminal connection. Like conhost, if
     //   the path contains a space, we'll wrap the path in quotes.
     // - Unlike conhost, if multiple files are dropped onto the terminal, we'll
-    //   write all the paths to the terminal, separated by spaces.
+    //   write all the paths to the terminal, separated by the configured delimiter.
     // Arguments:
     // - e: The DragEventArgs from the Drop event
     // Return Value:
@@ -3181,12 +3186,13 @@ namespace winrt::Microsoft::Terminal::Control::implementation
                 }
 
                 std::wstring allPathsString;
+                const auto delimiter{ _core.Settings().DragDropDelimiter() };
                 for (auto& fullPath : fullPaths)
                 {
-                    // Join the paths with spaces
+                    // Join the paths with the delimiter
                     if (!allPathsString.empty())
                     {
-                        allPathsString += L" ";
+                        allPathsString += delimiter;
                     }
 
                     const auto translationStyle{ _core.Settings().PathTranslationStyle() };
@@ -3717,10 +3723,6 @@ namespace winrt::Microsoft::Terminal::Control::implementation
     Control::CommandHistoryContext TermControl::CommandHistory() const
     {
         return _core.CommandHistory();
-    }
-    winrt::hstring TermControl::CurrentWorkingDirectory() const
-    {
-        return _core.CurrentWorkingDirectory();
     }
 
     void TermControl::UpdateWinGetSuggestions(Windows::Foundation::Collections::IVector<hstring> suggestions)
