@@ -808,8 +808,7 @@ namespace winrt::TerminalApp::implementation
                 if (WI_IsFlagSet(flags, ConfirmCloseOn::Always))
                 {
                     auto warningResult = co_await _ShowClosePaneWarningDialog();
-                    const auto strong = weak.get();
-                    if (!strong ||  warningResult != ContentDialogResult::Primary)
+                    if (warningResult != ContentDialogResult::Primary)
                     {
                         co_return;
                     }
