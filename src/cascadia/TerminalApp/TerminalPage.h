@@ -402,8 +402,8 @@ namespace winrt::TerminalApp::implementation
         TerminalApp::Tab _GetTabByTabViewItem(const IInspectable& tabViewItem) const noexcept;
 
         void _HandleClosePaneRequested(std::shared_ptr<Pane> pane);
-        bool _ShouldWarnOnClose() const;
-        bool _ShouldWarnOnCloseTab(const winrt::com_ptr<Tab>& tab) const;
+        Microsoft::Terminal::Settings::Model::ConfirmCloseOn _ShouldWarnOnClose() const;
+        Microsoft::Terminal::Settings::Model::ConfirmCloseOn _ShouldWarnOnCloseTab(const winrt::com_ptr<Tab>& tab) const;
         safe_void_coroutine _SetFocusedTab(const winrt::TerminalApp::Tab tab);
         safe_void_coroutine _CloseFocusedPane();
         void _ClosePanes(weak_ref<Tab> weakTab, std::vector<uint32_t> paneIds);

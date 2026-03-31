@@ -2329,25 +2329,33 @@ namespace winrt::TerminalApp::implementation
     // Arguments:
     // - <none>
     // Return Value:
-    // - true if a warning dialog should be shown before closing the window.
-    bool TerminalPage::_ShouldWarnOnClose() const
+    // - The ConfirmCloseOn flags that triggered the warning, or Never if no
+    //   warning is needed. Callers use this to determine checkbox visibility
+    //   and which dismissal state to persist.
+    ConfirmCloseOn TerminalPage::_ShouldWarnOnClose() const
     {
+        auto result = ConfirmCloseOn::Never;
         const auto flags = _settings.GlobalSettings().ConfirmCloseOn();
 
         // Always flag means warn unconditionally.
         if (WI_IsFlagSet(flags, ConfirmCloseOn::Always))
         {
-            return true;
+            WI_SetFlag(result, ConfirmCloseOn::Always);
         }
 
-        // MultipleTabs: warn if there's more than one tab.
-        if (WI_IsFlagSet(flags, ConfirmCloseOn::MultipleTabs) && _HasMultipleTabs())
+        // MultipleTabs: warn if there's more than one tab and the user hasn't
+        // dismissed this warning via "don't ask me again".
+        if (WI_IsFlagSet(flags, ConfirmCloseOn::MultipleTabs) &&
+            _HasMultipleTabs() &&
+            !ApplicationState::SharedInstance().DismissedConfirmCloseMultipleTabs())
         {
-            return true;
+            WI_SetFlag(result, ConfirmCloseOn::MultipleTabs);
         }
 
-        // MultiplePanes: warn if any tab has more than one pane.
-        if (WI_IsFlagSet(flags, ConfirmCloseOn::MultiplePanes))
+        // MultiplePanes: warn if any tab has more than one pane and the user
+        // hasn't dismissed this warning via "don't ask me again".
+        if (WI_IsFlagSet(flags, ConfirmCloseOn::MultiplePanes) &&
+            !ApplicationState::SharedInstance().DismissedConfirmCloseMultiplePanes())
         {
             for (const auto tab : _tabs)
             {
@@ -2355,7 +2363,8 @@ namespace winrt::TerminalApp::implementation
                 {
                     if (impl->GetLeafPaneCount() > 1)
                     {
-                        return true;
+                        WI_SetFlag(result, ConfirmCloseOn::MultiplePanes);
+                        break;
                     }
                 }
             }
@@ -2364,7 +2373,7 @@ namespace winrt::TerminalApp::implementation
         // TODO GH#6549: ConfirmCloseOn::MultipleProcesses
         // Needs TermControl to expose whether >1 client process is connected.
 
-        return false;
+        return result;
     }
 
     // Method Description:
@@ -2373,27 +2382,32 @@ namespace winrt::TerminalApp::implementation
     // Arguments:
     // - tab: The tab being closed.
     // Return Value:
-    // - true if a warning dialog should be shown before closing the tab.
-    bool TerminalPage::_ShouldWarnOnCloseTab(const winrt::com_ptr<Tab>& tab) const
+    // - The ConfirmCloseOn flags that triggered the warning, or Never if no
+    //   warning is needed.
+    ConfirmCloseOn TerminalPage::_ShouldWarnOnCloseTab(const winrt::com_ptr<Tab>& tab) const
     {
+        auto result = ConfirmCloseOn::Never;
         const auto flags = _settings.GlobalSettings().ConfirmCloseOn();
 
         // Always flag means warn unconditionally.
         if (WI_IsFlagSet(flags, ConfirmCloseOn::Always))
         {
-            return true;
+            WI_SetFlag(result, ConfirmCloseOn::Always);
         }
 
-        // MultiplePanes: warn if this tab has more than one pane.
-        if (WI_IsFlagSet(flags, ConfirmCloseOn::MultiplePanes) && tab->GetLeafPaneCount() > 1)
+        // MultiplePanes: warn if this tab has more than one pane and the user
+        // hasn't dismissed this warning via "don't ask me again".
+        if (WI_IsFlagSet(flags, ConfirmCloseOn::MultiplePanes) &&
+            tab->GetLeafPaneCount() > 1 &&
+            !ApplicationState::SharedInstance().DismissedConfirmCloseMultiplePanes())
         {
-            return true;
+            WI_SetFlag(result, ConfirmCloseOn::MultiplePanes);
         }
 
         // TODO GH#6549: ConfirmCloseOn::MultipleProcesses
         // Needs TermControl to expose whether >1 client process is connected.
 
-        return false;
+        return result;
     }
 
     // Method Description:
@@ -2401,7 +2415,8 @@ namespace winrt::TerminalApp::implementation
     //   warn for the current window state, show a warning dialog.
     safe_void_coroutine TerminalPage::CloseWindow()
     {
-        if (_ShouldWarnOnClose() &&
+        const auto reason = _ShouldWarnOnClose();
+        if (reason != ConfirmCloseOn::Never &&
             !_displayingCloseDialog)
         {
             if (_newTabButton && _newTabButton.Flyout())
@@ -2410,12 +2425,42 @@ namespace winrt::TerminalApp::implementation
             }
             _DismissTabContextMenus();
             _displayingCloseDialog = true;
+
+            // Show the "don't ask me again" checkbox only when the dialog is
+            // triggered by conditional flags (not just Always).
+            const auto conditionalFlags = reason & ~ConfirmCloseOn::Always;
+            const auto showCheckbox = conditionalFlags != ConfirmCloseOn::Never;
+
+            // Load the dialog (triggers x:Load) so we can configure the checkbox
+            // before showing it.
+            const auto dialog = FindName(L"CloseAllDialog").try_as<WUX::Controls::ContentDialog>();
+            const auto checkbox = dialog ? dialog.Content().try_as<WUX::Controls::CheckBox>() : nullptr;
+            if (checkbox)
+            {
+                checkbox.IsChecked(false);
+                checkbox.Visibility(showCheckbox ? WUX::Visibility::Visible : WUX::Visibility::Collapsed);
+            }
+
             auto warningResult = co_await _ShowCloseWarningDialog();
             _displayingCloseDialog = false;
 
             if (warningResult != ContentDialogResult::Primary)
             {
                 co_return;
+            }
+
+            // Persist dismissal if the user checked "don't ask me again"
+            if (showCheckbox && checkbox && checkbox.IsChecked().Value())
+            {
+                const auto state = ApplicationState::SharedInstance();
+                if (WI_IsFlagSet(reason, ConfirmCloseOn::MultipleTabs))
+                {
+                    state.DismissedConfirmCloseMultipleTabs(true);
+                }
+                if (WI_IsFlagSet(reason, ConfirmCloseOn::MultiplePanes))
+                {
+                    state.DismissedConfirmCloseMultiplePanes(true);
+                }
             }
         }
 

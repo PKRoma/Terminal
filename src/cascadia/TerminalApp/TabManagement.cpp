@@ -417,9 +417,25 @@ namespace winrt::TerminalApp::implementation
         // confirmCloseOn flags (e.g. multiple panes, always, etc.)
         {
             const auto tabImpl = _GetTabImpl(tab);
-            if (tabImpl && _ShouldWarnOnCloseTab(tabImpl))
+            const auto reason = tabImpl ? _ShouldWarnOnCloseTab(tabImpl) : ConfirmCloseOn::Never;
+            if (reason != ConfirmCloseOn::Never)
             {
                 const auto weak = get_weak();
+
+                // Show the "don't ask me again" checkbox only when the dialog
+                // is triggered by conditional flags (not just Always).
+                const auto conditionalFlags = reason & ~ConfirmCloseOn::Always;
+                const auto showCheckbox = conditionalFlags != ConfirmCloseOn::Never;
+
+                // Load the dialog (triggers x:Load) so we can configure the
+                // checkbox before showing it.
+                const auto dialog = FindName(L"CloseTabDialog").try_as<ContentDialog>();
+                const auto checkbox = dialog ? dialog.Content().try_as<CheckBox>() : nullptr;
+                if (checkbox)
+                {
+                    checkbox.IsChecked(false);
+                    checkbox.Visibility(showCheckbox ? Visibility::Visible : Visibility::Collapsed);
+                }
 
                 auto warningResult = co_await _ShowCloseTabWarningDialog();
 
@@ -428,6 +444,16 @@ namespace winrt::TerminalApp::implementation
                 if (!strong || warningResult != ContentDialogResult::Primary)
                 {
                     co_return;
+                }
+
+                // Persist dismissal if the user checked "don't ask me again"
+                if (showCheckbox && checkbox && checkbox.IsChecked().Value())
+                {
+                    const auto state = ApplicationState::SharedInstance();
+                    if (WI_IsFlagSet(reason, ConfirmCloseOn::MultiplePanes))
+                    {
+                        state.DismissedConfirmCloseMultiplePanes(true);
+                    }
                 }
             }
         }
@@ -807,6 +833,17 @@ namespace winrt::TerminalApp::implementation
                 const auto flags = _settings.GlobalSettings().ConfirmCloseOn();
                 if (WI_IsFlagSet(flags, ConfirmCloseOn::Always))
                 {
+                    // The "don't ask me again" checkbox stays collapsed for
+                    // Always-only triggers. It will become relevant when
+                    // MultipleProcesses is implemented.
+                    // Load the dialog (triggers x:Load) to configure the checkbox.
+                    const auto dialog = FindName(L"ClosePaneDialog").try_as<ContentDialog>();
+                    if (const auto checkbox = dialog ? dialog.Content().try_as<CheckBox>() : nullptr)
+                    {
+                        checkbox.IsChecked(false);
+                        checkbox.Visibility(Visibility::Collapsed);
+                    }
+
                     auto warningResult = co_await _ShowClosePaneWarningDialog();
                     if (warningResult != ContentDialogResult::Primary)
                     {
@@ -814,6 +851,7 @@ namespace winrt::TerminalApp::implementation
                     }
                 }
                 // TODO GH#6549: ConfirmCloseOn::MultipleProcesses check here
+                // When implemented, show the checkbox and persist dismissal state.
 
                 if (co_await _PaneConfirmCloseReadOnly(pane))
                 {

@@ -96,19 +96,31 @@
                        x:Uid="CloseAllDialog"
                        Grid.Row="2"
                        x:Load="False"
-                       DefaultButton="Primary" />
+                       DefaultButton="Primary">
+            <CheckBox x:Name="CloseAllDontAskAgain"
+                      x:Uid="DontAskAgainCheckBox"
+                      Visibility="Collapsed" />
+        </ContentDialog>
 
         <ContentDialog x:Name="CloseTabDialog"
                        x:Uid="CloseTabDialog"
                        Grid.Row="2"
                        x:Load="False"
-                       DefaultButton="Primary" />
+                       DefaultButton="Primary">
+            <CheckBox x:Name="CloseTabDontAskAgain"
+                      x:Uid="DontAskAgainCheckBox"
+                      Visibility="Collapsed" />
+        </ContentDialog>
 
         <ContentDialog x:Name="ClosePaneDialog"
                        x:Uid="ClosePaneDialog"
                        Grid.Row="2"
                        x:Load="False"
-                       DefaultButton="Primary" />
+                       DefaultButton="Primary">
+            <CheckBox x:Name="ClosePaneDontAskAgain"
+                      x:Uid="DontAskAgainCheckBox"
+                      Visibility="Collapsed" />
+        </ContentDialog>
 
         <ContentDialog x:Name="CloseReadOnlyDialog"
                        x:Uid="CloseReadOnlyDialog"
