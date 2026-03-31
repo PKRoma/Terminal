@@ -110,6 +110,42 @@ namespace winrt::TerminalApp::implementation
         }
     }
 
+    void OverviewPane::_OnPreviewKeyDown(const IInspectable& /*sender*/, const KeyRoutedEventArgs& e)
+    {
+        if (e.OriginalKey() != VirtualKey::Tab)
+        {
+            return;
+        }
+
+        const auto items = PreviewGrid().Items();
+        const auto itemCount = static_cast<int32_t>(items.Size());
+        if (itemCount == 0)
+        {
+            return;
+        }
+
+        const auto shiftPressed = (Windows::UI::Core::CoreWindow::GetForCurrentThread().GetKeyState(VirtualKey::Shift) & Windows::UI::Core::CoreVirtualKeyStates::Down) == Windows::UI::Core::CoreVirtualKeyStates::Down;
+
+        if (shiftPressed)
+        {
+            if (_selectedIndex > 0)
+            {
+                _selectedIndex--;
+                _UpdateSelection();
+            }
+        }
+        else
+        {
+            if (_selectedIndex < itemCount - 1)
+            {
+                _selectedIndex++;
+                _UpdateSelection();
+            }
+        }
+
+        e.Handled(true);
+    }
+
     void OverviewPane::_OnKeyDown(const IInspectable& /*sender*/, const KeyRoutedEventArgs& e)
     {
         const auto items = PreviewGrid().Items();

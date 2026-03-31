@@ -27,6 +27,7 @@ namespace winrt::TerminalApp::implementation
         friend struct OverviewPaneT<OverviewPane>; // for Xaml to bind events
 
         void _OnKeyDown(const Windows::Foundation::IInspectable& sender, const Windows::UI::Xaml::Input::KeyRoutedEventArgs& e);
+        void _OnPreviewKeyDown(const Windows::Foundation::IInspectable& sender, const Windows::UI::Xaml::Input::KeyRoutedEventArgs& e);
         void _OnItemClicked(int32_t index);
         void _UpdateSelection();
         void _PlayEnterAnimation();

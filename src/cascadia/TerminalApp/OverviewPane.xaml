@@ -11,6 +11,7 @@
              AllowFocusOnInteraction="True"
              IsTabStop="True"
              KeyDown="_OnKeyDown"
+             PreviewKeyDown="_OnPreviewKeyDown"
              mc:Ignorable="d">
 
     <UserControl.Resources>
