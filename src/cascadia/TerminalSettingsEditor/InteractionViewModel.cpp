@@ -81,14 +81,28 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
     void InteractionViewModel::SetConfirmCloseOnMultipleTabs(winrt::Windows::Foundation::IReference<bool> on)
     {
         auto current = ConfirmCloseOn();
-        WI_UpdateFlag(current, Model::ConfirmCloseOn::MultipleTabs, winrt::unbox_value<bool>(on));
+        const auto enabled = winrt::unbox_value<bool>(on);
+        WI_UpdateFlag(current, Model::ConfirmCloseOn::MultipleTabs, enabled);
         ConfirmCloseOn(current);
+
+        // Reset the dismissed state so the user sees the warning again
+        if (enabled)
+        {
+            ApplicationState::SharedInstance().DismissedConfirmCloseMultipleTabs(false);
+        }
     }
 
     void InteractionViewModel::SetConfirmCloseOnMultiplePanes(winrt::Windows::Foundation::IReference<bool> on)
     {
         auto current = ConfirmCloseOn();
-        WI_UpdateFlag(current, Model::ConfirmCloseOn::MultiplePanes, winrt::unbox_value<bool>(on));
+        const auto enabled = winrt::unbox_value<bool>(on);
+        WI_UpdateFlag(current, Model::ConfirmCloseOn::MultiplePanes, enabled);
         ConfirmCloseOn(current);
+
+        // Reset the dismissed state so the user sees the warning again
+        if (enabled)
+        {
+            ApplicationState::SharedInstance().DismissedConfirmCloseMultiplePanes(false);
+        }
     }
 }
