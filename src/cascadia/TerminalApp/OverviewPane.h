@@ -4,6 +4,7 @@
 #pragma once
 
 #include <limits>
+#include <optional>
 
 #include "OverviewPane.g.h"
 
@@ -12,6 +13,7 @@ namespace winrt::TerminalApp::implementation
     struct OverviewPane : OverviewPaneT<OverviewPane>
     {
         OverviewPane();
+        ~OverviewPane();
 
         void UpdateTabContent(Windows::Foundation::Collections::IVector<TerminalApp::Tab> tabs, int32_t focusedIndex);
         void ClearTabContent();
@@ -32,11 +34,22 @@ namespace winrt::TerminalApp::implementation
         void _UpdateSelection();
         void _PlayEnterAnimation();
         void _PlayExitAnimation(std::function<void()> onComplete = nullptr);
+        void _StartEnterZoomAnimation();
+        std::optional<std::tuple<double, double, double>> _GetZoomParamsForCell(int32_t index);
         Windows::UI::Xaml::FrameworkElement _BuildPreviewCell(const TerminalApp::Tab& tab, int32_t index, double referenceWidth, double referenceHeight);
         void _DetachContent(const Windows::UI::Xaml::FrameworkElement& content);
+        static void _AddDoubleAnimation(
+            const Windows::UI::Xaml::Media::Animation::Storyboard& storyboard,
+            const Windows::UI::Xaml::Media::CompositeTransform& target,
+            const hstring& property,
+            double from,
+            double to,
+            const Windows::UI::Xaml::Duration& duration,
+            const Windows::UI::Xaml::Media::Animation::EasingFunctionBase& easing);
 
         int32_t _selectedIndex{ 0 };
-        int32_t _columnCount{ 3 };
+        int32_t _columnCount{ 3 }; // must match WrapGrid MaximumRowsOrColumns in OverviewPane.xaml
+        bool _pendingEnterAnimation{ false };
         winrt::event_token _exitAnimationToken{};
         Windows::UI::Xaml::Media::Animation::Storyboard _exitContentStoryboard{ nullptr };
 

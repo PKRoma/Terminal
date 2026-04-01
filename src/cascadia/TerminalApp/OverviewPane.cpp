@@ -18,9 +18,46 @@ using namespace winrt::Windows::System;
 
 namespace winrt::TerminalApp::implementation
 {
+    static constexpr double PreviewCellWidth = 320.0;
+    static constexpr double PreviewCellHeight = 220.0;
+    static constexpr std::chrono::milliseconds EnterAnimDuration{ 400 };
+    static constexpr std::chrono::milliseconds ExitAnimDuration{ 100 };
+
     OverviewPane::OverviewPane()
     {
         InitializeComponent();
+
+        // Listen for layout passes so we can start the zoom-in animation
+        // once the WrapGrid has measured and positioned its children.
+        PreviewGrid().LayoutUpdated([weakThis = get_weak()](auto&&, auto&&) {
+            if (auto self = weakThis.get())
+            {
+                if (!self->_pendingEnterAnimation)
+                {
+                    return;
+                }
+
+                // Check that at least the first cell is laid out
+                auto items = self->PreviewGrid().Items();
+                if (items.Size() == 0)
+                {
+                    return;
+                }
+                auto first = items.GetAt(0).try_as<FrameworkElement>();
+                if (!first || first.ActualWidth() <= 0)
+                {
+                    return;
+                }
+
+                self->_pendingEnterAnimation = false;
+                self->_StartEnterZoomAnimation();
+            }
+        });
+    }
+
+    OverviewPane::~OverviewPane()
+    {
+        ClearTabContent();
     }
 
     void OverviewPane::UpdateTabContent(Windows::Foundation::Collections::IVector<TerminalApp::Tab> tabs, int32_t focusedIndex)
@@ -68,6 +105,25 @@ namespace winrt::TerminalApp::implementation
 
     void OverviewPane::ClearTabContent()
     {
+        _pendingEnterAnimation = false;
+
+        // Stop any running exit animation
+        if (_exitContentStoryboard)
+        {
+            _exitContentStoryboard.Completed(_exitAnimationToken);
+            _exitAnimationToken = {};
+            _exitContentStoryboard.Stop();
+            _exitContentStoryboard = nullptr;
+        }
+
+        // Reset the zoom transform to identity
+        auto transform = ContentTransform();
+        transform.ScaleX(1.0);
+        transform.ScaleY(1.0);
+        transform.TranslateX(0.0);
+        transform.TranslateY(0.0);
+        ContentWrapper().Opacity(1.0);
+
         // Reparent content back to original parents
         for (auto& entry : _reparentedContent)
         {
@@ -254,52 +310,145 @@ namespace winrt::TerminalApp::implementation
 
     void OverviewPane::_PlayEnterAnimation()
     {
-        if (auto storyboard = Resources().Lookup(winrt::box_value(L"BackgroundFadeIn")).try_as<Storyboard>())
+        // Hide the content wrapper until the LayoutUpdated callback fires
+        // and we can read cell positions to set up the zoom transform.
+        ContentWrapper().Opacity(0);
+        _pendingEnterAnimation = true;
+    }
+
+    void OverviewPane::_StartEnterZoomAnimation()
+    {
+        // Start the background fade-in together with the zoom so both
+        // animations are visible at the same moment (avoids opacity flash).
+        if (auto bgSb = Resources().Lookup(winrt::box_value(L"BackgroundFadeIn")).try_as<Storyboard>())
         {
-            storyboard.Begin();
+            bgSb.Begin();
         }
-        if (auto storyboard = Resources().Lookup(winrt::box_value(L"ContentFadeIn")).try_as<Storyboard>())
+
+        auto wrapper = ContentWrapper();
+        auto transform = ContentTransform();
+
+        auto zoomParams = _GetZoomParamsForCell(_selectedIndex);
+        if (!zoomParams)
         {
-            storyboard.Begin();
+            wrapper.Opacity(1.0);
+            return;
         }
+        auto [scale, tx, ty] = *zoomParams;
+
+        // Set the initial transform so the focused cell fills the viewport
+        transform.ScaleX(scale);
+        transform.ScaleY(scale);
+        transform.TranslateX(tx);
+        transform.TranslateY(ty);
+        wrapper.Opacity(1.0);
+
+        // Animate from the zoomed-in state to identity (zoom out to grid)
+        Storyboard storyboard;
+        const auto duration = DurationHelper::FromTimeSpan(EnterAnimDuration);
+        CubicEase easing;
+        easing.EasingMode(EasingMode::EaseOut);
+
+        _AddDoubleAnimation(storyboard, transform, L"ScaleX", scale, 1.0, duration, easing);
+        _AddDoubleAnimation(storyboard, transform, L"ScaleY", scale, 1.0, duration, easing);
+        _AddDoubleAnimation(storyboard, transform, L"TranslateX", tx, 0.0, duration, easing);
+        _AddDoubleAnimation(storyboard, transform, L"TranslateY", ty, 0.0, duration, easing);
+
+        storyboard.Begin();
     }
 
     void OverviewPane::_PlayExitAnimation(std::function<void()> onComplete)
     {
-        auto bgStoryboard = Resources().Lookup(winrt::box_value(L"BackgroundFadeOut")).try_as<Storyboard>();
-        auto contentStoryboard = Resources().Lookup(winrt::box_value(L"ContentFadeOut")).try_as<Storyboard>();
-
-        if (contentStoryboard)
+        // Fade out the background overlay
+        if (auto bgSb = Resources().Lookup(winrt::box_value(L"BackgroundFadeOut")).try_as<Storyboard>())
         {
-            // Revoke any previously registered Completed handler.
-            // The storyboard is a shared XAML resource — without this,
-            // handlers accumulate across overview sessions and the stale
-            // first handler always fires with the original index.
-            if (_exitContentStoryboard)
+            bgSb.Begin();
+        }
+
+        auto zoomParams = _GetZoomParamsForCell(_selectedIndex);
+        if (!zoomParams)
+        {
+            if (onComplete)
             {
-                _exitContentStoryboard.Completed(_exitAnimationToken);
+                onComplete();
             }
-            _exitContentStoryboard = contentStoryboard;
-            _exitAnimationToken = contentStoryboard.Completed([weakThis = get_weak(), onComplete](auto&&, auto&&) {
-                if (auto self = weakThis.get())
-                {
-                    if (onComplete)
-                    {
-                        onComplete();
-                    }
-                }
-            });
-            contentStoryboard.Begin();
+            return;
         }
-        else if (onComplete)
+        auto [scale, tx, ty] = *zoomParams;
+
+        // Animate from the current grid view into the selected cell
+        auto transform = ContentTransform();
+        Storyboard storyboard;
+        const auto duration = DurationHelper::FromTimeSpan(ExitAnimDuration);
+        CubicEase easing;
+        easing.EasingMode(EasingMode::EaseIn);
+
+        _AddDoubleAnimation(storyboard, transform, L"ScaleX", 1.0, scale, duration, easing);
+        _AddDoubleAnimation(storyboard, transform, L"ScaleY", 1.0, scale, duration, easing);
+        _AddDoubleAnimation(storyboard, transform, L"TranslateX", 0.0, tx, duration, easing);
+        _AddDoubleAnimation(storyboard, transform, L"TranslateY", 0.0, ty, duration, easing);
+
+        // Revoke any previously registered Completed handler
+        if (_exitContentStoryboard)
         {
-            onComplete();
+            _exitContentStoryboard.Completed(_exitAnimationToken);
+        }
+        _exitContentStoryboard = storyboard;
+        _exitAnimationToken = storyboard.Completed([weakThis = get_weak(), onComplete](auto&&, auto&&) {
+            if (auto self = weakThis.get())
+            {
+                if (onComplete)
+                {
+                    onComplete();
+                }
+            }
+        });
+
+        storyboard.Begin();
+    }
+
+    std::optional<std::tuple<double, double, double>> OverviewPane::_GetZoomParamsForCell(int32_t index)
+    {
+        auto wrapper = ContentWrapper();
+        const auto vpW = wrapper.ActualWidth();
+        const auto vpH = wrapper.ActualHeight();
+
+        if (vpW <= 0 || vpH <= 0)
+        {
+            return std::nullopt;
         }
 
-        if (bgStoryboard)
+        auto items = PreviewGrid().Items();
+        if (index < 0 || index >= static_cast<int32_t>(items.Size()))
         {
-            bgStoryboard.Begin();
+            return std::nullopt;
         }
+
+        auto cell = items.GetAt(static_cast<uint32_t>(index)).try_as<FrameworkElement>();
+        if (!cell || cell.ActualWidth() <= 0 || cell.ActualHeight() <= 0)
+        {
+            return std::nullopt;
+        }
+
+        const auto cellW = cell.ActualWidth();
+        const auto cellH = cell.ActualHeight();
+
+        // Cell center relative to ContentWrapper (accounts for scroll offset)
+        auto cellTransform = cell.TransformToVisual(wrapper);
+        auto topLeft = cellTransform.TransformPoint({ 0.0f, 0.0f });
+        const auto cellCX = static_cast<double>(topLeft.X) + cellW / 2.0;
+        const auto cellCY = static_cast<double>(topLeft.Y) + cellH / 2.0;
+
+        // Scale so the cell fits the viewport
+        const auto scale = std::min(vpW / cellW, vpH / cellH);
+
+        // With RenderTransformOrigin={0.5,0.5} the scale origin is the
+        // center of ContentWrapper. Translate so the cell center lands
+        // at the viewport center after scaling.
+        const auto translateX = (vpW / 2.0 - cellCX) * scale;
+        const auto translateY = (vpH / 2.0 - cellCY) * scale;
+
+        return std::tuple{ scale, translateX, translateY };
     }
 
     FrameworkElement OverviewPane::_BuildPreviewCell(const TerminalApp::Tab& tab, int32_t index, double referenceWidth, double referenceHeight)
@@ -319,10 +468,18 @@ namespace winrt::TerminalApp::implementation
 
         // Preview container with a dark background
         Border previewBorder;
-        previewBorder.Width(320);
-        previewBorder.Height(220);
+        previewBorder.Width(PreviewCellWidth);
+        previewBorder.Height(PreviewCellHeight);
         previewBorder.CornerRadius({ 6, 6, 6, 6 });
-        previewBorder.Background(SolidColorBrush{ winrt::Windows::UI::ColorHelper::FromArgb(255, 30, 30, 30) });
+        auto bgBrush = Application::Current().Resources().TryLookup(winrt::box_value(L"SystemControlBackgroundChromeMediumBrush"));
+        if (bgBrush)
+        {
+            previewBorder.Background(bgBrush.as<Brush>());
+        }
+        else
+        {
+            previewBorder.Background(SolidColorBrush{ winrt::Windows::UI::ColorHelper::FromArgb(255, 30, 30, 30) });
+        }
 
         // Get the tab's content and reparent it with a ScaleTransform
         auto tabContent = tab.Content();
@@ -360,8 +517,8 @@ namespace winrt::TerminalApp::implementation
                 tabContent.Height(layoutHeight);
 
                 // Calculate uniform scale to fit in preview
-                const double previewWidth = 320.0;
-                const double previewHeight = 220.0;
+                const double previewWidth = PreviewCellWidth;
+                const double previewHeight = PreviewCellHeight;
                 const double scale = std::min(previewWidth / layoutWidth, previewHeight / layoutHeight);
 
                 // RenderTransform is applied AFTER layout — the content still
@@ -410,7 +567,7 @@ namespace winrt::TerminalApp::implementation
         titleBlock.Foreground(SolidColorBrush{ winrt::Windows::UI::Colors::White() });
         titleBlock.HorizontalAlignment(HorizontalAlignment::Center);
         titleBlock.TextTrimming(TextTrimming::CharacterEllipsis);
-        titleBlock.MaxWidth(320);
+        titleBlock.MaxWidth(PreviewCellWidth);
         titleBlock.Margin({ 0, 6, 0, 0 });
 
         cellStack.Children().Append(titleBlock);
@@ -437,6 +594,25 @@ namespace winrt::TerminalApp::implementation
         });
 
         return outerBorder;
+    }
+
+    void OverviewPane::_AddDoubleAnimation(
+        const Storyboard& storyboard,
+        const CompositeTransform& target,
+        const hstring& property,
+        double from,
+        double to,
+        const Duration& duration,
+        const EasingFunctionBase& easing)
+    {
+        DoubleAnimation anim;
+        anim.From(from);
+        anim.To(to);
+        anim.Duration(duration);
+        anim.EasingFunction(easing);
+        Storyboard::SetTarget(anim, target);
+        Storyboard::SetTargetProperty(anim, property);
+        storyboard.Children().Append(anim);
     }
 
     void OverviewPane::_DetachContent(const FrameworkElement& content)

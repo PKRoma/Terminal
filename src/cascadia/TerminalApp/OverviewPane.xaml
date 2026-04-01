@@ -39,30 +39,6 @@
                     </DoubleAnimation.EasingFunction>
                 </DoubleAnimation>
             </Storyboard>
-
-            <Storyboard x:Key="ContentFadeIn">
-                <DoubleAnimation Duration="0:0:0.2"
-                                 Storyboard.TargetName="PreviewGrid"
-                                 Storyboard.TargetProperty="Opacity"
-                                 From="0.0"
-                                 To="1.0">
-                    <DoubleAnimation.EasingFunction>
-                        <QuadraticEase EasingMode="EaseOut" />
-                    </DoubleAnimation.EasingFunction>
-                </DoubleAnimation>
-            </Storyboard>
-
-            <Storyboard x:Key="ContentFadeOut">
-                <DoubleAnimation Duration="0:0:0.15"
-                                 Storyboard.TargetName="PreviewGrid"
-                                 Storyboard.TargetProperty="Opacity"
-                                 From="1.0"
-                                 To="0.0">
-                    <DoubleAnimation.EasingFunction>
-                        <QuadraticEase EasingMode="EaseIn" />
-                    </DoubleAnimation.EasingFunction>
-                </DoubleAnimation>
-            </Storyboard>
         </ResourceDictionary>
     </UserControl.Resources>
 
@@ -74,30 +50,39 @@
         <Border x:Name="BackgroundOverlay"
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Stretch"
-                Background="#CC000000" />
+                Background="{ThemeResource SmokeFillColorDefaultBrush}" />
 
-        <!--  Centered scrollable content area  -->
-        <ScrollViewer x:Name="PreviewScrollViewer"
-                      HorizontalAlignment="Stretch"
-                      VerticalAlignment="Stretch"
-                      HorizontalScrollBarVisibility="Disabled"
-                      VerticalScrollBarVisibility="Auto">
+        <!--  Zoom-animated wrapper around the scrollable content  -->
+        <Grid x:Name="ContentWrapper"
+              HorizontalAlignment="Stretch"
+              VerticalAlignment="Stretch"
+              RenderTransformOrigin="0.5,0.5">
+            <Grid.RenderTransform>
+                <CompositeTransform x:Name="ContentTransform" />
+            </Grid.RenderTransform>
 
-            <!--  WrapGrid-style layout using ItemsControl with WrapGrid panel  -->
-            <ItemsControl x:Name="PreviewGrid"
-                          HorizontalAlignment="Center"
-                          VerticalAlignment="Center"
-                          Margin="24">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <WrapGrid HorizontalChildrenAlignment="Left"
-                                  ItemHeight="270"
-                                  ItemWidth="332"
-                                  MaximumRowsOrColumns="3"
-                                  Orientation="Horizontal" />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-            </ItemsControl>
-        </ScrollViewer>
+            <ScrollViewer x:Name="PreviewScrollViewer"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch"
+                          HorizontalScrollBarVisibility="Disabled"
+                          VerticalScrollBarVisibility="Auto">
+
+                <!--  WrapGrid-style layout using ItemsControl with WrapGrid panel  -->
+                <ItemsControl x:Name="PreviewGrid"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center"
+                              Margin="24">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapGrid HorizontalChildrenAlignment="Left"
+                                      ItemHeight="270"
+                                      ItemWidth="332"
+                                      MaximumRowsOrColumns="3"
+                                      Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
     </Grid>
 </UserControl>
