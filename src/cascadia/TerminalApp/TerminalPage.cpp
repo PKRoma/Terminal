@@ -908,6 +908,14 @@ namespace winrt::TerminalApp::implementation
             dialog.Title(winrt::box_value(RS_(L"ConfirmCloseDialog_TabTitle")));
             dialog.PrimaryButtonText(RS_(L"ConfirmCloseDialog_TabPrimary"));
             break;
+        case ConfirmCloseDialogKind::MultiplePanes:
+            dialog.Title(winrt::box_value(RS_(L"ConfirmCloseDialog_MultiplePanesTitle")));
+            dialog.PrimaryButtonText(RS_(L"ConfirmCloseDialog_MultiplePanesPrimary"));
+            break;
+        case ConfirmCloseDialogKind::MultipleTabs:
+            dialog.Title(winrt::box_value(RS_(L"ConfirmCloseDialog_MultipleTabsTitle")));
+            dialog.PrimaryButtonText(RS_(L"ConfirmCloseDialog_MultipleTabsPrimary"));
+            break;
         case ConfirmCloseDialogKind::Pane:
             dialog.Title(winrt::box_value(RS_(L"ConfirmCloseDialog_PaneTitle")));
             dialog.PrimaryButtonText(RS_(L"ConfirmCloseDialog_PanePrimary"));

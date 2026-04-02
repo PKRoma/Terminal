@@ -523,6 +523,18 @@
   <data name="ConfirmCloseDialog_PanePrimary" xml:space="preserve">
     <value>Close pane</value>
   </data>
+  <data name="ConfirmCloseDialog_MultipleTabsTitle" xml:space="preserve">
+    <value>Do you want to close these tabs?</value>
+  </data>
+  <data name="ConfirmCloseDialog_MultipleTabsPrimary" xml:space="preserve">
+    <value>Close tabs</value>
+  </data>
+  <data name="ConfirmCloseDialog_MultiplePanesTitle" xml:space="preserve">
+    <value>Do you want to close these panes?</value>
+  </data>
+  <data name="ConfirmCloseDialog_MultiplePanesPrimary" xml:space="preserve">
+    <value>Close panes</value>
+  </data>
   <data name="DontAskAgainCheckBox.Content" xml:space="preserve">
     <value>Don't ask me again</value>
   </data>
