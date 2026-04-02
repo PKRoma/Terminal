@@ -421,25 +421,11 @@ namespace winrt::TerminalApp::implementation
             {
                 const auto weak = get_weak();
 
-                // Load the dialog (triggers x:Load) so we can reset the checkbox.
-                // BODGY: After a ContentDialog is dismissed, FindName() can no longer
-                // resolve children inside it. Use Content() to get the checkbox directly.
-                const auto dialog = FindName(L"CloseTabDialog").as<ContentDialog>();
-                const auto checkbox = dialog.Content().as<CheckBox>();
-                checkbox.IsChecked(false);
-
-                auto warningResult = co_await _ShowCloseTabWarningDialog();
+                auto warningResult = co_await _ShowConfirmCloseDialog(ConfirmCloseDialogKind::Tab);
                 strong = weak.get();
                 if (!strong || warningResult != ContentDialogResult::Primary)
                 {
                     co_return;
-                }
-
-                // If the user checked "don't ask me again", set the setting to Never.
-                if (checkbox.IsChecked().Value())
-                {
-                    _settings.GlobalSettings().ConfirmCloseOn(ConfirmCloseOn::Never);
-                    _settings.WriteSettingsToDisk();
                 }
             }
         }
@@ -819,24 +805,15 @@ namespace winrt::TerminalApp::implementation
                 const auto setting = _settings.GlobalSettings().ConfirmCloseOn();
                 if (setting == ConfirmCloseOn::Always)
                 {
-                    // Load the dialog (triggers x:Load) so we can reset the checkbox.
-                    // BODGY: After a ContentDialog is dismissed, FindName() can no longer
-                    // resolve children inside it. Use Content() to get the checkbox directly.
-                    const auto dialog = FindName(L"ClosePaneDialog").as<ContentDialog>();
-                    const auto checkbox = dialog.Content().as<CheckBox>();
-                    checkbox.IsChecked(false);
-
-                    auto warningResult = co_await _ShowClosePaneWarningDialog();
-                    if (warningResult != ContentDialogResult::Primary)
+                    // If this is the last pane, closing it closes the tab,
+                    // so use the tab dialog text instead.
+                    const auto kind = activeTab->GetLeafPaneCount() == 1
+                                          ? ConfirmCloseDialogKind::Tab
+                                          : ConfirmCloseDialogKind::Pane;
+                    auto warningResult = co_await _ShowConfirmCloseDialog(kind);
+                    if (!weak.get() || warningResult != ContentDialogResult::Primary)
                     {
                         co_return;
-                    }
-
-                    // If the user checked "don't ask me again", set the setting to Never.
-                    if (checkbox.IsChecked().Value())
-                    {
-                        _settings.GlobalSettings().ConfirmCloseOn(ConfirmCloseOn::Never);
-                        _settings.WriteSettingsToDisk();
                     }
                 }
 

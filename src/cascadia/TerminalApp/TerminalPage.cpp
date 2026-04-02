@@ -884,42 +884,55 @@ namespace winrt::TerminalApp::implementation
     }
 
     // Method Description:
-    // - Displays a dialog to warn the user that they are about to close all open windows.
-    //   Once the user clicks the OK button, shut down the application.
-    //   If cancel is clicked, the dialog will close.
+    // - Displays the unified close confirmation dialog configured for the
+    //   given scenario. Resets the "don't ask me again" checkbox before showing.
+    //   If the user confirms and checked "don't ask me again", sets
+    //   confirmCloseOn to Never and writes settings to disk.
     // - Only one dialog can be visible at a time. If another dialog is visible
     //   when this is called, nothing happens. See _ShowDialog for details
-    winrt::Windows::Foundation::IAsyncOperation<ContentDialogResult> TerminalPage::_ShowQuitDialog()
+    winrt::Windows::Foundation::IAsyncOperation<ContentDialogResult> TerminalPage::_ShowConfirmCloseDialog(ConfirmCloseDialogKind kind)
     {
-        return _ShowDialogHelper(L"QuitDialog");
-    }
+        // Load the dialog (triggers x:Load) and configure its strings.
+        const auto dialog = FindName(L"ConfirmCloseDialog").as<ContentDialog>();
+        switch (kind)
+        {
+        case ConfirmCloseDialogKind::CloseAll:
+            dialog.Title(winrt::box_value(RS_(L"ConfirmCloseDialog_CloseAllTitle")));
+            dialog.PrimaryButtonText(RS_(L"ConfirmCloseDialog_CloseAllPrimary"));
+            break;
+        case ConfirmCloseDialogKind::Window:
+            dialog.Title(winrt::box_value(RS_(L"ConfirmCloseDialog_WindowTitle")));
+            dialog.PrimaryButtonText(RS_(L"ConfirmCloseDialog_WindowPrimary"));
+            break;
+        case ConfirmCloseDialogKind::Tab:
+            dialog.Title(winrt::box_value(RS_(L"ConfirmCloseDialog_TabTitle")));
+            dialog.PrimaryButtonText(RS_(L"ConfirmCloseDialog_TabPrimary"));
+            break;
+        case ConfirmCloseDialogKind::Pane:
+            dialog.Title(winrt::box_value(RS_(L"ConfirmCloseDialog_PaneTitle")));
+            dialog.PrimaryButtonText(RS_(L"ConfirmCloseDialog_PanePrimary"));
+            break;
+        }
+        dialog.CloseButtonText(RS_(L"ConfirmCloseDialog_Cancel"));
 
-    // Method Description:
-    // - Displays a dialog for warnings found while closing the terminal app using
-    //   key binding with multiple tabs opened. Display messages to warn user
-    //   that more than 1 tab is opened, and once the user clicks the OK button, remove
-    //   all the tabs and shut down and app. If cancel is clicked, the dialog will close
-    // - Only one dialog can be visible at a time. If another dialog is visible
-    //   when this is called, nothing happens. See _ShowDialog for details
-    winrt::Windows::Foundation::IAsyncOperation<ContentDialogResult> TerminalPage::_ShowCloseWarningDialog()
-    {
-        return _ShowDialogHelper(L"CloseAllDialog");
-    }
+        // BODGY: After a ContentDialog is dismissed, FindName() can no longer
+        // resolve children inside it. Use Content() to get the checkbox directly.
+        const auto checkbox = dialog.Content().as<CheckBox>();
+        checkbox.IsChecked(false);
 
-    // Method Description:
-    // - Displays a dialog for warnings found while closing a tab that has
-    //   multiple panes or other conditions that warrant a warning.
-    winrt::Windows::Foundation::IAsyncOperation<ContentDialogResult> TerminalPage::_ShowCloseTabWarningDialog()
-    {
-        return _ShowDialogHelper(L"CloseTabDialog");
-    }
+        auto result = ContentDialogResult::None;
+        if (auto presenter{ _dialogPresenter.get() })
+        {
+            result = co_await presenter.ShowDialog(dialog);
+        }
 
-    // Method Description:
-    // - Displays a dialog for warnings found while closing a single pane
-    //   (e.g. when confirmCloseOn includes "always").
-    winrt::Windows::Foundation::IAsyncOperation<ContentDialogResult> TerminalPage::_ShowClosePaneWarningDialog()
-    {
-        return _ShowDialogHelper(L"ClosePaneDialog");
+        if (result == ContentDialogResult::Primary && checkbox.IsChecked().Value())
+        {
+            _settings.GlobalSettings().ConfirmCloseOn(ConfirmCloseOn::Never);
+            _settings.WriteSettingsToDisk();
+        }
+
+        co_return result;
     }
 
     // Method Description:
@@ -2231,15 +2244,8 @@ namespace winrt::TerminalApp::implementation
         {
             _displayingCloseDialog = true;
 
-            // Load the dialog (triggers x:Load) so we can reset the checkbox.
-            // BODGY: After a ContentDialog is dismissed, FindName() can no longer
-            // resolve children inside it. Use Content() to get the checkbox directly.
-            const auto dialog = FindName(L"QuitDialog").as<ContentDialog>();
-            const auto checkbox = dialog.Content().as<CheckBox>();
-            checkbox.IsChecked(false);
-
             const auto weak = get_weak();
-            auto warningResult = co_await _ShowQuitDialog();
+            auto warningResult = co_await _ShowConfirmCloseDialog(ConfirmCloseDialogKind::CloseAll);
             const auto strong = weak.get();
             if (!strong)
             {
@@ -2251,13 +2257,6 @@ namespace winrt::TerminalApp::implementation
             if (warningResult != ContentDialogResult::Primary)
             {
                 co_return;
-            }
-
-            // If the user checked "don't ask me again", set the setting to Never.
-            if (checkbox.IsChecked().Value())
-            {
-                _settings.GlobalSettings().ConfirmCloseOn(ConfirmCloseOn::Never);
-                _settings.WriteSettingsToDisk();
             }
         }
 
@@ -2417,26 +2416,18 @@ namespace winrt::TerminalApp::implementation
             _DismissTabContextMenus();
             _displayingCloseDialog = true;
 
-            // Load the dialog (triggers x:Load) so we can reset the checkbox.
-            // BODGY: After a ContentDialog is dismissed, FindName() can no longer
-            // resolve children inside it. Use Content() to get the checkbox directly.
-            const auto dialog = FindName(L"CloseAllDialog").as<ContentDialog>();
-            const auto checkbox = dialog.Content().as<CheckBox>();
-            checkbox.IsChecked(false);
+            const auto weak = get_weak();
+            auto warningResult = co_await _ShowConfirmCloseDialog(ConfirmCloseDialogKind::Window);
+            if (!weak.get())
+            {
+                co_return;
+            }
 
-            auto warningResult = co_await _ShowCloseWarningDialog();
             _displayingCloseDialog = false;
 
             if (warningResult != ContentDialogResult::Primary)
             {
                 co_return;
-            }
-
-            // If the user checked "don't ask me again", set the setting to Never.
-            if (checkbox.IsChecked().Value())
-            {
-                _settings.GlobalSettings().ConfirmCloseOn(ConfirmCloseOn::Never);
-                _settings.WriteSettingsToDisk();
             }
         }
 
