@@ -810,9 +810,7 @@ namespace winrt::TerminalApp::implementation
                 {
                     // If this is the last pane, closing it closes the tab,
                     // so use the tab dialog text instead.
-                    const auto kind = activeTab->GetLeafPaneCount() == 1
-                                          ? ConfirmCloseDialogKind::Tab
-                                          : ConfirmCloseDialogKind::Pane;
+                    const auto kind = activeTab->GetLeafPaneCount() == 1 ? ConfirmCloseDialogKind::Tab : ConfirmCloseDialogKind::Pane;
                     auto warningResult = co_await _ShowConfirmCloseDialog(kind);
                     if (!weak.get() || warningResult != ContentDialogResult::Primary)
                     {
