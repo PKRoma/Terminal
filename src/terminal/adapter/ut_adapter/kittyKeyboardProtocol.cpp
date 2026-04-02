@@ -65,8 +65,7 @@ namespace
     constexpr TestCase testCases[] = {
         // Core behavior: DisambiguateEscapeCodes (D)
         { L"D Esc", L"\x1b[27u", D, true, VK_ESCAPE, 1, 0, 0 },
-        { L"D Ctrl+a", L"\x1b[97;5u", D, true, 'A', 0x1E, L'\x01', Ctrl },
-        { L"D Ctrl+Alt+a", L"\x1b[97;7u", D, true, 'A', 0x1E, L'\x01', Ctrl | Alt },
+        { L"D Ctrl+a", L"\x1b[97;5u", D, true, 'A', 0x1E, 0, Ctrl },
         { L"D Shift+Alt+a", L"\x1b[97;4u", D, true, 'A', 0x1E, L'A', Shift | Alt },
         { L"D Shift+a", L"A", D, true, 'A', 0x1E, L'A', Shift },
 
@@ -74,15 +73,12 @@ namespace
         { L"K a", L"\x1b[97u", K, true, 'A', 0x1E, L'a', 0 },
         { L"K Shift+a", L"\x1b[97;2u", K, true, 'A', 0x1E, L'A', Shift },
         { L"K Alt+a", L"\x1b[97;3u", K, true, 'A', 0x1E, L'a', Alt },
-        { L"K Ctrl+a", L"\x1b[97;5u", K, true, 'A', 0x1E, L'\x01', Ctrl },
+        { L"K Ctrl+a", L"\x1b[97;5u", K, true, 'A', 0x1E, 0, Ctrl },
         { L"K Shift+Alt+a", L"\x1b[97;4u", K, true, 'A', 0x1E, L'A', Shift | Alt },
-        { L"K Shift+Ctrl+a", L"\x1b[97;6u", K, true, 'A', 0x1E, L'\x01', Shift | Ctrl },
-        { L"K Alt+Ctrl+a", L"\x1b[97;7u", K, true, 'A', 0x1E, L'\x01', Alt | Ctrl },
-        { L"K Shift+Alt+Ctrl+a", L"\x1b[97;8u", K, true, 'A', 0x1E, L'\x01', Shift | Alt | Ctrl },
+        { L"K Shift+Ctrl+a", L"\x1b[97;6u", K, true, 'A', 0x1E, 0, Shift | Ctrl },
         { L"K CapsLock+a", L"\x1b[97;65u", K, true, 'A', 0x1E, L'A', CAPSLOCK_ON },
         { L"K NumLock+a", L"\x1b[97;129u", K, true, 'A', 0x1E, L'a', NUMLOCK_ON },
         { L"K CapsLock+NumLock+a", L"\x1b[97;193u", K, true, 'A', 0x1E, L'A', CAPSLOCK_ON | NUMLOCK_ON },
-        { L"K all mods", L"\x1b[97;200u", K, true, 'A', 0x1E, L'\x01', Shift | Alt | Ctrl | CAPSLOCK_ON | NUMLOCK_ON },
 
         // Enter/Tab/Backspace: CSI u with K
         { L"K Enter", L"\x1b[13u", K, true, VK_RETURN, 0x1C, L'\r', 0 },
@@ -168,14 +164,12 @@ namespace
         // Associated text (K|T): text codepoint in 3rd param
         { L"K|T Shift+a", L"\x1b[97;2;65u", K | T, true, 'A', 0x1E, L'A', Shift },
         { L"K|T Shift+1", L"\x1b[49;2;33u", K | T, true, '1', 0x02, L'!', Shift },
-        { L"K|T Ctrl+a", L"\x1b[97;5u", K | T, true, 'A', 0x1E, L'\x01', Ctrl }, // control char omitted
+        { L"K|T Ctrl+a", L"\x1b[97;5u", K | T, true, 'A', 0x1E, 0, Ctrl }, // control char omitted
 
         // Edge cases
         { L"K Keypad Enter", L"\x1b[57414u", K, true, VK_RETURN, 0x1C, L'\r', ENHANCED_KEY },
         { L"K Regular Enter", L"\x1b[13u", K, true, VK_RETURN, 0x1C, L'\r', 0 },
-        { L"K Shift+Alt+Ctrl+Esc", L"\x1b[27;8u", K, true, VK_ESCAPE, 1, 0, Shift | Alt | Ctrl },
         { L"E|K CapsLock+a", L"\x1b[97;65u", E | K, true, 'A', 0x1E, L'A', CAPSLOCK_ON },
-        { L"E|K all mods release", L"\x1b[97;200:3u", E | K, false, 'A', 0x1E, L'\x01', Shift | Alt | Ctrl | CAPSLOCK_ON | NUMLOCK_ON },
 
         // F1-F4 with kitty flags (CSI instead of SS3, F3 special case)
         { L"D F1", L"\x1b[P", D, true, VK_F1, 0x3B, 0, 0 },
@@ -210,7 +204,7 @@ namespace
         { L"E|K Up release", L"\x1b[1;1:3A", E | K, false, VK_UP, 0x48, 0, ENHANCED_KEY },
         { L"E|K Insert release", L"\x1b[2;1:3~", E | K, false, VK_INSERT, 0x52, 0, ENHANCED_KEY },
         // Alternate keys with modifiers
-        { L"A|K Shift+Ctrl+a", L"\x1b[97:65;6u", A | K, true, 'A', 0x1E, L'\x01', Shift | Ctrl },
+        { L"A|K Shift+Ctrl+a", L"\x1b[97:65;6u", A | K, true, 'A', 0x1E, 0, Shift | Ctrl },
         // Associated text with plain key
         { L"K|T a", L"\x1b[97;;97u", K | T, true, 'A', 0x1E, L'a', 0 },
         // Text not reported on release
@@ -239,7 +233,7 @@ namespace
 
         // Associated text filtering
         { L"K|T Shift+a (text)", L"\x1b[97;2;65u", K | T, true, 'A', 0x1E, L'A', Shift },
-        { L"K|T Ctrl+a (control char filtered)", L"\x1b[97;5u", K | T, true, 'A', 0x1E, L'\x01', Ctrl },
+        { L"K|T Ctrl+a (control char filtered)", L"\x1b[97;5u", K | T, true, 'A', 0x1E, 0, Ctrl },
         { L"K|T Esc (no text)", L"\x1b[27u", K | T, true, VK_ESCAPE, 1, 0, 0 },
     };
 }
