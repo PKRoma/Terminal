@@ -414,20 +414,32 @@ namespace winrt::TerminalApp::implementation
         }
 
         // Check if we should warn before closing this tab based on the
-        // confirmCloseOn flags (e.g. multiple panes, always, etc.)
+        // confirmCloseOn setting (e.g. multiple panes, always, etc.)
         {
             const auto tabImpl = _GetTabImpl(tab);
             if (tabImpl && _ShouldWarnOnCloseTab(tabImpl))
             {
                 const auto weak = get_weak();
 
+                // Load the dialog (triggers x:Load) so we can reset the checkbox.
+                // BODGY: After a ContentDialog is dismissed, FindName() can no longer
+                // resolve children inside it. Use Content() to get the checkbox directly.
+                const auto dialog = FindName(L"CloseTabDialog").as<ContentDialog>();
+                const auto checkbox = dialog.Content().as<CheckBox>();
+                checkbox.IsChecked(false);
+
                 auto warningResult = co_await _ShowCloseTabWarningDialog();
-
                 strong = weak.get();
-
                 if (!strong || warningResult != ContentDialogResult::Primary)
                 {
                     co_return;
+                }
+
+                // If the user checked "don't ask me again", set the setting to Never.
+                if (checkbox.IsChecked().Value())
+                {
+                    _settings.GlobalSettings().ConfirmCloseOn(ConfirmCloseOn::Never);
+                    _settings.WriteSettingsToDisk();
                 }
             }
         }
@@ -803,17 +815,30 @@ namespace winrt::TerminalApp::implementation
                 const auto weak = get_weak();
 
                 // Check if we should warn before closing a single pane
-                // (only triggers on Always — or MultipleProcesses in the future)
-                const auto flags = _settings.GlobalSettings().ConfirmCloseOn();
-                if (WI_IsFlagSet(flags, ConfirmCloseOn::Always))
+                // (only triggers on Always — Automatic doesn't warn for single pane)
+                const auto setting = _settings.GlobalSettings().ConfirmCloseOn();
+                if (setting == ConfirmCloseOn::Always)
                 {
+                    // Load the dialog (triggers x:Load) so we can reset the checkbox.
+                    // BODGY: After a ContentDialog is dismissed, FindName() can no longer
+                    // resolve children inside it. Use Content() to get the checkbox directly.
+                    const auto dialog = FindName(L"ClosePaneDialog").as<ContentDialog>();
+                    const auto checkbox = dialog.Content().as<CheckBox>();
+                    checkbox.IsChecked(false);
+
                     auto warningResult = co_await _ShowClosePaneWarningDialog();
                     if (warningResult != ContentDialogResult::Primary)
                     {
                         co_return;
                     }
+
+                    // If the user checked "don't ask me again", set the setting to Never.
+                    if (checkbox.IsChecked().Value())
+                    {
+                        _settings.GlobalSettings().ConfirmCloseOn(ConfirmCloseOn::Never);
+                        _settings.WriteSettingsToDisk();
+                    }
                 }
-                // TODO GH#6549: ConfirmCloseOn::MultipleProcesses check here
 
                 if (co_await _PaneConfirmCloseReadOnly(pane))
                 {

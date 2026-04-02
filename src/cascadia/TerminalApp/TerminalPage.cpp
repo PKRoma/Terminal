@@ -2226,9 +2226,17 @@ namespace winrt::TerminalApp::implementation
     //   signal that we want to close everything.
     safe_void_coroutine TerminalPage::RequestQuit()
     {
-        if (!_displayingCloseDialog)
+        const auto setting = _settings.GlobalSettings().ConfirmCloseOn();
+        if (setting != ConfirmCloseOn::Never && !_displayingCloseDialog)
         {
             _displayingCloseDialog = true;
+
+            // Load the dialog (triggers x:Load) so we can reset the checkbox.
+            // BODGY: After a ContentDialog is dismissed, FindName() can no longer
+            // resolve children inside it. Use Content() to get the checkbox directly.
+            const auto dialog = FindName(L"QuitDialog").as<ContentDialog>();
+            const auto checkbox = dialog.Content().as<CheckBox>();
+            checkbox.IsChecked(false);
 
             const auto weak = get_weak();
             auto warningResult = co_await _ShowQuitDialog();
@@ -2245,8 +2253,15 @@ namespace winrt::TerminalApp::implementation
                 co_return;
             }
 
-            QuitRequested.raise(nullptr, nullptr);
+            // If the user checked "don't ask me again", set the setting to Never.
+            if (checkbox.IsChecked().Value())
+            {
+                _settings.GlobalSettings().ConfirmCloseOn(ConfirmCloseOn::Never);
+                _settings.WriteSettingsToDisk();
+            }
         }
+
+        QuitRequested.raise(nullptr, nullptr);
     }
 
     void TerminalPage::PersistState()
@@ -2325,79 +2340,70 @@ namespace winrt::TerminalApp::implementation
 
     // Method Description:
     // - Determines whether a close-window action should show a confirmation
-    //   dialog, based on the confirmCloseOn flags and the current window state.
+    //   dialog, based on the confirmCloseOn setting and the current window state.
     // Arguments:
     // - <none>
     // Return Value:
     // - true if a warning dialog should be shown before closing the window.
     bool TerminalPage::_ShouldWarnOnClose() const
     {
-        const auto flags = _settings.GlobalSettings().ConfirmCloseOn();
+        const auto setting = _settings.GlobalSettings().ConfirmCloseOn();
 
-        // Always flag means warn unconditionally.
-        if (WI_IsFlagSet(flags, ConfirmCloseOn::Always))
+        switch (setting)
         {
+        case ConfirmCloseOn::Always:
             return true;
-        }
 
-        // MultipleTabs: warn if there's more than one tab.
-        if (WI_IsFlagSet(flags, ConfirmCloseOn::MultipleTabs) && _HasMultipleTabs())
+        case ConfirmCloseOn::Automatic:
         {
-            return true;
-        }
-
-        // MultiplePanes: warn if any tab has more than one pane.
-        if (WI_IsFlagSet(flags, ConfirmCloseOn::MultiplePanes))
-        {
-            for (const auto tab : _tabs)
+            // Warn if there's more than one tab.
+            if (_HasMultipleTabs())
             {
-                if (const auto impl = _GetTabImpl(tab))
-                {
-                    if (impl->GetLeafPaneCount() > 1)
-                    {
-                        return true;
-                    }
-                }
+                return true;
             }
+
+            // Warn if the one tab has more than one pane.
+            if (_GetTabImpl(_tabs.GetAt(0))->GetLeafPaneCount() > 1)
+            {
+                return true;
+            }
+            return false;
         }
 
-        // TODO GH#6549: ConfirmCloseOn::MultipleProcesses
-        // Needs TermControl to expose whether >1 client process is connected.
-
-        return false;
+        case ConfirmCloseOn::Never:
+        default:
+            return false;
+        }
     }
 
     // Method Description:
     // - Determines whether closing a specific tab should show a confirmation
-    //   dialog, based on the confirmCloseOn flags and the tab's state.
+    //   dialog, based on the confirmCloseOn setting and the tab's state.
     // Arguments:
     // - tab: The tab being closed.
     // Return Value:
     // - true if a warning dialog should be shown before closing the tab.
     bool TerminalPage::_ShouldWarnOnCloseTab(const winrt::com_ptr<Tab>& tab) const
     {
-        const auto flags = _settings.GlobalSettings().ConfirmCloseOn();
+        const auto setting = _settings.GlobalSettings().ConfirmCloseOn();
 
-        // Always flag means warn unconditionally.
-        if (WI_IsFlagSet(flags, ConfirmCloseOn::Always))
+        switch (setting)
         {
+        case ConfirmCloseOn::Always:
             return true;
+
+        case ConfirmCloseOn::Automatic:
+            // Warn if this tab has more than one pane.
+            return tab->GetLeafPaneCount() > 1;
+
+        case ConfirmCloseOn::Never:
+        default:
+            return false;
         }
-
-        // MultiplePanes: warn if this tab has more than one pane.
-        if (WI_IsFlagSet(flags, ConfirmCloseOn::MultiplePanes) && tab->GetLeafPaneCount() > 1)
-        {
-            return true;
-        }
-
-        // TODO GH#6549: ConfirmCloseOn::MultipleProcesses
-        // Needs TermControl to expose whether >1 client process is connected.
-
-        return false;
     }
 
     // Method Description:
-    // - Close the terminal app. If the confirmCloseOn flags indicate we should
+    // - Close the terminal app. If the confirmCloseOn setting indicates we should
     //   warn for the current window state, show a warning dialog.
     safe_void_coroutine TerminalPage::CloseWindow()
     {
@@ -2410,12 +2416,27 @@ namespace winrt::TerminalApp::implementation
             }
             _DismissTabContextMenus();
             _displayingCloseDialog = true;
+
+            // Load the dialog (triggers x:Load) so we can reset the checkbox.
+            // BODGY: After a ContentDialog is dismissed, FindName() can no longer
+            // resolve children inside it. Use Content() to get the checkbox directly.
+            const auto dialog = FindName(L"CloseAllDialog").as<ContentDialog>();
+            const auto checkbox = dialog.Content().as<CheckBox>();
+            checkbox.IsChecked(false);
+
             auto warningResult = co_await _ShowCloseWarningDialog();
             _displayingCloseDialog = false;
 
             if (warningResult != ContentDialogResult::Primary)
             {
                 co_return;
+            }
+
+            // If the user checked "don't ask me again", set the setting to Never.
+            if (checkbox.IsChecked().Value())
+            {
+                _settings.GlobalSettings().ConfirmCloseOn(ConfirmCloseOn::Never);
+                _settings.WriteSettingsToDisk();
             }
         }
 

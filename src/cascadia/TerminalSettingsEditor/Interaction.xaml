@@ -137,17 +137,12 @@
 
             <!--  Confirm Close On  -->
             <local:SettingContainer x:Name="ConfirmCloseOn"
-                                    x:Uid="Globals_ConfirmCloseOn"
-                                    CurrentValue="{x:Bind ViewModel.ConfirmCloseOnPreview, Mode=OneWay}"
-                                    Style="{StaticResource ExpanderSettingContainerStyle}">
-                <StackPanel>
-                    <CheckBox x:Uid="Globals_ConfirmCloseOnAlways"
-                              IsChecked="{x:Bind ViewModel.IsConfirmCloseOnFlagSet(1), BindBack=ViewModel.SetConfirmCloseOnAlways, Mode=TwoWay}" />
-                    <CheckBox x:Uid="Globals_ConfirmCloseOnMultipleTabs"
-                              IsChecked="{x:Bind ViewModel.IsConfirmCloseOnFlagSet(2), BindBack=ViewModel.SetConfirmCloseOnMultipleTabs, Mode=TwoWay}" />
-                    <CheckBox x:Uid="Globals_ConfirmCloseOnMultiplePanes"
-                              IsChecked="{x:Bind ViewModel.IsConfirmCloseOnFlagSet(4), BindBack=ViewModel.SetConfirmCloseOnMultiplePanes, Mode=TwoWay}" />
-                </StackPanel>
+                                    x:Uid="Globals_ConfirmCloseOn">
+                <ComboBox AutomationProperties.AccessibilityView="Content"
+                          ItemTemplate="{StaticResource EnumComboBoxTemplate}"
+                          ItemsSource="{x:Bind ViewModel.ConfirmCloseOnList}"
+                          SelectedItem="{x:Bind ViewModel.CurrentConfirmCloseOn, Mode=TwoWay}"
+                          Style="{StaticResource ComboBoxSettingStyle}" />
             </local:SettingContainer>
 
             <!--  Input Service Warning  -->

@@ -50,15 +50,11 @@ namespace Microsoft.Terminal.Settings.Model
         AfterCurrentTab,
     };
 
-    [flags]
     enum ConfirmCloseOn
     {
-        Never = 0x0,
-        Always = 0x1,
-        MultipleTabs = 0x2,
-        MultiplePanes = 0x4,
-        // TODO GH#6549: Future - requires TermControl to expose client count
-        // MultipleProcesses = 0x8,
+        Never = 0,
+        Automatic = 1,
+        Always = 2,
     };
 
     [default_interface] runtimeclass GlobalAppSettings {

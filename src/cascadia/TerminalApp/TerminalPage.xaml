@@ -90,25 +90,33 @@
                        x:Uid="QuitDialog"
                        Grid.Row="2"
                        x:Load="False"
-                       DefaultButton="Primary" />
+                       DefaultButton="Primary">
+            <CheckBox x:Uid="DontAskAgainCheckBox" />
+        </ContentDialog>
 
         <ContentDialog x:Name="CloseAllDialog"
                        x:Uid="CloseAllDialog"
                        Grid.Row="2"
                        x:Load="False"
-                       DefaultButton="Primary" />
+                       DefaultButton="Primary">
+            <CheckBox x:Uid="DontAskAgainCheckBox" />
+        </ContentDialog>
 
         <ContentDialog x:Name="CloseTabDialog"
                        x:Uid="CloseTabDialog"
                        Grid.Row="2"
                        x:Load="False"
-                       DefaultButton="Primary" />
+                       DefaultButton="Primary">
+            <CheckBox x:Uid="DontAskAgainCheckBox" />
+        </ContentDialog>
 
         <ContentDialog x:Name="ClosePaneDialog"
                        x:Uid="ClosePaneDialog"
                        Grid.Row="2"
                        x:Load="False"
-                       DefaultButton="Primary" />
+                       DefaultButton="Primary">
+            <CheckBox x:Uid="DontAskAgainCheckBox" />
+        </ContentDialog>
 
         <ContentDialog x:Name="CloseReadOnlyDialog"
                        x:Uid="CloseReadOnlyDialog"

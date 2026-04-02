@@ -88,35 +88,22 @@ JSON_ENUM_MAPPER(::winrt::Microsoft::Terminal::Core::MatchMode)
     };
 };
 
-JSON_FLAG_MAPPER(::winrt::Microsoft::Terminal::Settings::Model::ConfirmCloseOn)
+JSON_ENUM_MAPPER(::winrt::Microsoft::Terminal::Settings::Model::ConfirmCloseOn)
 {
-    static constexpr std::array<pair_type, 4> mappings = {
-        pair_type{ "never", AllClear },
+    JSON_MAPPINGS(3) = {
+        pair_type{ "never", ValueType::Never },
         pair_type{ "always", ValueType::Always },
-        pair_type{ "multipleTabs", ValueType::MultipleTabs },
-        pair_type{ "multiplePanes", ValueType::MultiplePanes },
-        // TODO GH#6549: Future - requires TermControl to expose client count
-        // pair_type{ "multipleProcesses", ValueType::MultipleProcesses },
+        pair_type{ "automatic", ValueType::Automatic },
     };
 
     auto FromJson(const Json::Value& json)
     {
-        // Support legacy boolean: true -> MultipleTabs|MultiplePanes, false -> Never
-        if (json.isBool())
-        {
-            return json.asBool() ? ValueType::MultipleTabs | ValueType::MultiplePanes : AllClear;
-        }
-        return BaseFlagMapper::FromJson(json);
+        return BaseEnumMapper::FromJson(json);
     }
 
     bool CanConvert(const Json::Value& json)
     {
-        return BaseFlagMapper::CanConvert(json) || json.isBool();
-    }
-
-    Json::Value ToJson(const ::winrt::Microsoft::Terminal::Settings::Model::ConfirmCloseOn& val)
-    {
-        return BaseFlagMapper::ToJson(val);
+        return BaseEnumMapper::CanConvert(json);
     }
 };
 
