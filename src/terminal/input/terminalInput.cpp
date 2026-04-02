@@ -281,7 +281,7 @@ TerminalInput::OutputType TerminalInput::HandleKey(const INPUT_RECORD& event)
     // For modifier keys:
     // * Map the vkey to a dwControlKeyState flag
     //   (_controlKeyStateFromVirtualKey returns 0 for non-modifier keys)
-    // * Checking whether the flag was already already set previously
+    // * Checking whether the flag was already set previously
     // For standard keys:
     // * Simply check if the last vkey equals the current one
     //
@@ -308,7 +308,7 @@ TerminalInput::OutputType TerminalInput::HandleKey(const INPUT_RECORD& event)
     if (key.keyRepeat)
     {
         if (
-            // Suppress modifer key events at all times - they aren't reported in any protocol.
+            // Suppress modifier key events at all times - they aren't reported in any protocol.
             (key.virtualKey >= VK_SHIFT && key.virtualKey <= VK_MENU) ||
             (key.virtualKey >= VK_LSHIFT && key.virtualKey <= VK_RMENU) ||
             (_kittyFlags != 0 ?
