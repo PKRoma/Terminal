@@ -11,6 +11,8 @@
 #include <wil/token_helpers.h>
 #include <winrt/TerminalApp.h>
 #include <sddl.h>
+#include <propkey.h>
+#include <propvarutil.h>
 
 #include "AppHost.h"
 #include "resource.h"
@@ -313,6 +315,104 @@ AppHost* WindowEmperor::_mostRecentWindow() const noexcept
     return mostRecent;
 }
 
+// Checks if any pinned taskbar shortcut (.lnk) points to our executable.
+// If one is found without our AUMID, we skip setting the process AUMID for
+// THIS launch (to avoid a mismatch with the shell's cached shortcut identity)
+// and instead stamp the shortcut at process exit so the NEXT launch will match.
+// If the shortcut already carries our AUMID, we set the process AUMID to match.
+// If no matching shortcut is found, we set the process AUMID unconditionally.
+void WindowEmperor::_setupAumid(const std::wstring& aumid)
+{
+    const auto ourExePath = wil::GetModuleFileNameW<std::wstring>(nullptr);
+
+    // Search for a pinned taskbar shortcut targeting our executable.
+    enum class PinState
+    {
+        NotFound,
+        NeedsStamping,
+        AlreadyStamped,
+    } pinState = PinState::NotFound;
+    std::wstring pinnedLnkPath;
+
+    const auto taskbarGlob = wil::ExpandEnvironmentStringsW<std::wstring>(
+        LR"(%APPDATA%\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar\*.lnk)");
+
+    WIN32_FIND_DATAW findData{};
+    const wil::unique_hfind findHandle{ FindFirstFileW(taskbarGlob.c_str(), &findData) };
+    if (findHandle)
+    {
+        const auto lastSlash = taskbarGlob.rfind(L'\\');
+        const auto taskbarDir = taskbarGlob.substr(0, lastSlash + 1);
+
+        do
+        {
+            const auto lnkPath = taskbarDir + findData.cFileName;
+
+            wil::com_ptr<IShellLinkW> shellLink;
+            if (FAILED(CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&shellLink))))
+            {
+                continue;
+            }
+
+            const auto persistFile = shellLink.try_query<IPersistFile>();
+            if (!persistFile || FAILED(persistFile->Load(lnkPath.c_str(), STGM_READ)))
+            {
+                continue;
+            }
+
+            wchar_t targetPath[MAX_PATH]{};
+            if (FAILED(shellLink->GetPath(targetPath, MAX_PATH, nullptr, SLGP_RAWPATH)))
+            {
+                continue;
+            }
+
+            if (_wcsicmp(targetPath, ourExePath.c_str()) != 0)
+            {
+                continue;
+            }
+
+            // Found a pin pointing to us. Check if it has our AUMID.
+            pinnedLnkPath = lnkPath;
+            pinState = PinState::NeedsStamping;
+
+            if (const auto propertyStore = shellLink.try_query<IPropertyStore>())
+            {
+                wil::unique_prop_variant pv;
+                if (SUCCEEDED(propertyStore->GetValue(PKEY_AppUserModel_ID, &pv)) &&
+                    pv.vt == VT_LPWSTR && pv.pwszVal &&
+                    aumid == pv.pwszVal)
+                {
+                    pinState = PinState::AlreadyStamped;
+                }
+            }
+
+            break;
+        } while (FindNextFileW(findHandle.get(), &findData));
+    }
+
+    switch (pinState)
+    {
+    case PinState::AlreadyStamped:
+    case PinState::NotFound:
+        // Either the pin already matches our AUMID, or there's no pin at all.
+        // Safe to set the process AUMID — no mismatch possible.
+        LOG_IF_FAILED(SetCurrentProcessExplicitAppUserModelID(aumid.c_str()));
+        break;
+
+    case PinState::NeedsStamping:
+        // The pin exists but doesn't have our AUMID yet. The shell has already
+        // cached the shortcut's identity (auto-derived from the exe path).
+        // DON'T set the process AUMID or stamp the shortcut now — writing the
+        // shortcut causes the shell to re-read it immediately, which changes
+        // the pin's identity mid-launch and creates a mismatch. Instead,
+        // save the info so we can stamp it at shutdown (right before
+        // TerminateProcess) when the taskbar association no longer matters.
+        _pendingAumidLnkPath = pinnedLnkPath;
+        _pendingAumid = aumid;
+        break;
+    }
+}
+
 void WindowEmperor::HandleCommandlineArgs(int nCmdShow)
 {
     // When running without package identity, set an explicit AppUserModelID so
@@ -373,7 +473,7 @@ void WindowEmperor::HandleCommandlineArgs(int nCmdShow)
 #else
             fmt::format_to(std::back_inserter(unpackagedAumid), FMT_COMPILE(L".{:08x}"), hash);
 #endif
-            LOG_IF_FAILED(SetCurrentProcessExplicitAppUserModelID(unpackagedAumid.c_str()));
+            _setupAumid(unpackagedAumid);
         }
     }
 
@@ -551,6 +651,31 @@ void WindowEmperor::HandleCommandlineArgs(int nCmdShow)
     if (_notificationIconShown)
     {
         Shell_NotifyIconW(NIM_DELETE, &_notificationIcon);
+    }
+
+    // If we deferred stamping a pinned taskbar shortcut with our AUMID
+    // (to avoid a mid-launch mismatch), do it now before exit.
+    if (!_pendingAumidLnkPath.empty())
+    {
+        wil::com_ptr<IShellLinkW> shellLink;
+        if (SUCCEEDED(CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&shellLink))))
+        {
+            if (const auto persistFile = shellLink.try_query<IPersistFile>();
+                persistFile && SUCCEEDED(persistFile->Load(_pendingAumidLnkPath.c_str(), STGM_READWRITE)))
+            {
+                if (const auto propertyStore = shellLink.try_query<IPropertyStore>())
+                {
+                    PROPVARIANT writePv{};
+                    writePv.vt = VT_LPWSTR;
+                    writePv.pwszVal = const_cast<PWSTR>(_pendingAumid.c_str());
+                    if (SUCCEEDED(propertyStore->SetValue(PKEY_AppUserModel_ID, writePv)) &&
+                        SUCCEEDED(propertyStore->Commit()))
+                    {
+                        persistFile->Save(_pendingAumidLnkPath.c_str(), TRUE);
+                    }
+                }
+            }
+        }
     }
 
     // There's a mysterious crash in XAML on Windows 10 if you just let _app get destroyed (GH#15410).
