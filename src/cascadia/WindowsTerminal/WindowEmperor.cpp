@@ -315,23 +315,32 @@ AppHost* WindowEmperor::_mostRecentWindow() const noexcept
     return mostRecent;
 }
 
-// Checks if any pinned taskbar shortcut (.lnk) points to our executable.
-// If one is found without our AUMID, we skip setting the process AUMID for
-// THIS launch (to avoid a mismatch with the shell's cached shortcut identity)
-// and instead stamp the shortcut at process exit so the NEXT launch will match.
-// If the shortcut already carries our AUMID, we set the process AUMID to match.
-// If no matching shortcut is found, we set the process AUMID unconditionally.
+// GH#20053: The shell resolves taskbar grouping identity as: per-window AUMID >
+// per-process AUMID > auto-derived from exe path. Before we started setting a
+// process AUMID, both the pinned .lnk and the process used auto-derived
+// identity, so they matched. Now that we set an explicit AUMID, a pinned .lnk
+// that predates the AUMID change has no AUMID and still uses auto-derived
+// identity, causing a mismatch and a duplicate taskbar button.
+//
+// To fix this, we check if a pinned taskbar shortcut (.lnk) points to our exe.
+// If it already carries our AUMID (or no pin exists), we set the process AUMID
+// normally. If a pin exists WITHOUT our AUMID, we skip setting the process
+// AUMID for THIS launch (both sides use auto-derived identity, so they match)
+// and defer stamping the shortcut to process exit. On the next launch, the pin
+// has our AUMID, so we set the process AUMID to match, and both agree.
+//
+// NOTE: On the first launch after pinning, the process AUMID is not set. If
+// toast notifications are needed in the future, use
+// ToastNotificationManager::CreateToastNotifier(aumid) with the AUMID string
+// directly. That API does not depend on SetCurrentProcessExplicitAppUserModelID.
+// A Start Menu shortcut with the AUMID (separate from the taskbar pin) is also
+// required for toast routing; see
+// https://learn.microsoft.com/windows/apps/develop/notifications/app-notifications/send-local-toast-other-apps
 void WindowEmperor::_setupAumid(const std::wstring& aumid)
 {
     const auto ourExePath = wil::GetModuleFileNameW<std::wstring>(nullptr);
 
-    // Search for a pinned taskbar shortcut targeting our executable.
-    enum class PinState
-    {
-        NotFound,
-        NeedsStamping,
-        AlreadyStamped,
-    } pinState = PinState::NotFound;
+    bool needsDeferredStamping = false;
     std::wstring pinnedLnkPath;
 
     const auto taskbarGlob = wil::ExpandEnvironmentStringsW<std::wstring>(
@@ -371,9 +380,10 @@ void WindowEmperor::_setupAumid(const std::wstring& aumid)
                 continue;
             }
 
-            // Found a pin pointing to us. Check if it has our AUMID.
+            // Found a pin pointing to us. Assume it needs stamping unless
+            // we confirm it already has our AUMID.
             pinnedLnkPath = lnkPath;
-            pinState = PinState::NeedsStamping;
+            needsDeferredStamping = true;
 
             if (const auto propertyStore = shellLink.try_query<IPropertyStore>())
             {
@@ -382,7 +392,7 @@ void WindowEmperor::_setupAumid(const std::wstring& aumid)
                     pv.vt == VT_LPWSTR && pv.pwszVal &&
                     aumid == pv.pwszVal)
                 {
-                    pinState = PinState::AlreadyStamped;
+                    needsDeferredStamping = false;
                 }
             }
 
@@ -390,26 +400,19 @@ void WindowEmperor::_setupAumid(const std::wstring& aumid)
         } while (FindNextFileW(findHandle.get(), &findData));
     }
 
-    switch (pinState)
+    if (needsDeferredStamping)
     {
-    case PinState::AlreadyStamped:
-    case PinState::NotFound:
-        // Either the pin already matches our AUMID, or there's no pin at all.
-        // Safe to set the process AUMID — no mismatch possible.
-        LOG_IF_FAILED(SetCurrentProcessExplicitAppUserModelID(aumid.c_str()));
-        break;
-
-    case PinState::NeedsStamping:
-        // The pin exists but doesn't have our AUMID yet. The shell has already
-        // cached the shortcut's identity (auto-derived from the exe path).
-        // DON'T set the process AUMID or stamp the shortcut now — writing the
-        // shortcut causes the shell to re-read it immediately, which changes
-        // the pin's identity mid-launch and creates a mismatch. Instead,
-        // save the info so we can stamp it at shutdown (right before
-        // TerminateProcess) when the taskbar association no longer matters.
-        _pendingAumidLnkPath = pinnedLnkPath;
+        // The pin exists but doesn't have our AUMID yet. Don't set the process
+        // AUMID or stamp the shortcut now. Writing the shortcut causes the
+        // shell to re-read it immediately, changing the pin's cached identity
+        // mid-launch and creating a mismatch in the opposite direction. Instead,
+        // stamp it at shutdown when the taskbar association no longer matters.
+        _pendingAumidLnkPath = std::move(pinnedLnkPath);
         _pendingAumid = aumid;
-        break;
+    }
+    else
+    {
+        LOG_IF_FAILED(SetCurrentProcessExplicitAppUserModelID(aumid.c_str()));
     }
 }
 
@@ -653,8 +656,7 @@ void WindowEmperor::HandleCommandlineArgs(int nCmdShow)
         Shell_NotifyIconW(NIM_DELETE, &_notificationIcon);
     }
 
-    // If we deferred stamping a pinned taskbar shortcut with our AUMID
-    // (to avoid a mid-launch mismatch), do it now before exit.
+    // GH#20053: Deferred shortcut stamping. See _setupAumid() for context.
     if (!_pendingAumidLnkPath.empty())
     {
         wil::com_ptr<IShellLinkW> shellLink;
@@ -665,10 +667,9 @@ void WindowEmperor::HandleCommandlineArgs(int nCmdShow)
             {
                 if (const auto propertyStore = shellLink.try_query<IPropertyStore>())
                 {
-                    PROPVARIANT writePv{};
-                    writePv.vt = VT_LPWSTR;
-                    writePv.pwszVal = const_cast<PWSTR>(_pendingAumid.c_str());
-                    if (SUCCEEDED(propertyStore->SetValue(PKEY_AppUserModel_ID, writePv)) &&
+                    wil::unique_prop_variant pv;
+                    if (SUCCEEDED(InitPropVariantFromString(_pendingAumid.c_str(), &pv)) &&
+                        SUCCEEDED(propertyStore->SetValue(PKEY_AppUserModel_ID, pv)) &&
                         SUCCEEDED(propertyStore->Commit()))
                     {
                         persistFile->Save(_pendingAumidLnkPath.c_str(), TRUE);
