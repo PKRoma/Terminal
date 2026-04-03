@@ -3,6 +3,7 @@
 
 #include "precomp.h"
 
+#include "TestHook.h"
 #include "../../../interactivity/inc/VtApiRedirection.hpp"
 #include "../../input/terminalInput.hpp"
 #include "../types/inc/IInputEvent.hpp"
@@ -627,13 +628,14 @@ void InputTest::TerminalInputNullKeyTests()
 {
     using namespace std::string_view_literals;
 
+    const auto layout = TestHook::SetTerminalInputKeyboardLayout(L"00000409"); // US English
     unsigned int uiKeystate = LEFT_CTRL_PRESSED;
 
     TerminalInput input;
 
     Log::Comment(L"Sending every possible VKEY at the input stream for interception during key DOWN.");
 
-    BYTE vkey = LOBYTE(OneCoreSafeVkKeyScanW(0));
+    BYTE vkey = LOBYTE(VkKeyScanExW(0, layout));
     Log::Comment(NoThrowString().Format(L"Testing key, state =0x%x, 0x%x", vkey, uiKeystate));
 
     INPUT_RECORD irTest = { 0 };
@@ -649,7 +651,6 @@ void InputTest::TerminalInputNullKeyTests()
     vkey = VK_SPACE;
     Log::Comment(NoThrowString().Format(L"Testing key, state =0x%x, 0x%x", vkey, uiKeystate));
     irTest.Event.KeyEvent.wVirtualKeyCode = vkey;
-    irTest.Event.KeyEvent.uChar.UnicodeChar = vkey;
     VERIFY_ARE_EQUAL(TerminalInput::MakeOutput(L"\0"sv), input.HandleKey(irTest), L"Verify key was handled if it should have been.");
 
     uiKeystate = LEFT_CTRL_PRESSED | LEFT_ALT_PRESSED;

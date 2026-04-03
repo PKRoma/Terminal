@@ -1497,9 +1497,26 @@ void TerminalInput::KeyboardHelper::init() noexcept
     }
 }
 
+#pragma comment(linker, "/alternatename:TestHook_TerminalInput_KeyboardLayout=TestHook_TerminalInput_KeyboardLayout_Default")
+extern "C" HKL TestHook_TerminalInput_KeyboardLayout();
+
+// Thanks to LTCG this should get inlined in Release builds and the test branch removed.
+extern "C" HKL TestHook_TerminalInput_KeyboardLayout_Default()
+{
+    return nullptr;
+}
+
 void TerminalInput::KeyboardHelper::initSlow() noexcept
 {
-    _keyboardLayout = GetKeyboardLayout(GetWindowThreadProcessId(GetForegroundWindow(), nullptr));
+    if (const auto hkl = TestHook_TerminalInput_KeyboardLayout())
+    {
+        _keyboardLayout = hkl;
+    }
+    else
+    {
+        _keyboardLayout = GetKeyboardLayout(GetWindowThreadProcessId(GetForegroundWindow(), nullptr));
+    }
+
     memset(&_keyboardState[0], 0, sizeof(_keyboardState));
     _initialized = true;
 }
