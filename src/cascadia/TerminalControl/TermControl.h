@@ -316,6 +316,8 @@ namespace winrt::Microsoft::Terminal::Control::implementation
         winrt::hstring _restorePath;
         bool _showMarksInScrollbar{ false };
 
+        SafeDispatcherTimer _resizeOverlayTimer;
+
         bool _isBackgroundLight{ false };
         bool _detached{ false };
         til::CoordType _searchScrollOffset = 0;
