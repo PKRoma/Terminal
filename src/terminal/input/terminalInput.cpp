@@ -358,7 +358,7 @@ TerminalInput::OutputType TerminalInput::HandleKey(const INPUT_RECORD& event)
     // be able to detect when the Ctrl key isn't genuine. We do so by tracking
     // the time between the Alt and Ctrl key presses, and only consider the Ctrl
     // key to really be pressed if the difference is more than 50ms.
-    auto leftCtrlIsReallyPressed = WI_IsFlagSet(key.controlKeyState, LEFT_CTRL_PRESSED);
+    auto leftCtrlIsReallyPressed = false;
     if (WI_AreAllFlagsSet(key.controlKeyState, LEFT_CTRL_PRESSED | RIGHT_ALT_PRESSED))
     {
         const auto max = std::max(_lastLeftCtrlTime, _lastRightAltTime);
@@ -366,17 +366,27 @@ TerminalInput::OutputType TerminalInput::HandleKey(const INPUT_RECORD& event)
         leftCtrlIsReallyPressed = (max - min) > 50;
     }
 
-    // In the case of an AltGr key, we may still need to apply a Ctrl
-    // modifier to the char, either because both Ctrl keys were pressed,
-    // or we got a LeftCtrl that was distinctly separate from the RightAlt.
     const auto anyCtrlPressed = WI_IsAnyFlagSet(key.controlKeyState, CTRL_PRESSED);
     const auto bothCtrlPressed = WI_AreAllFlagsSet(key.controlKeyState, CTRL_PRESSED);
     const auto anyAltPressed = WI_IsAnyFlagSet(key.controlKeyState, ALT_PRESSED);
     const auto bothAltPressed = WI_AreAllFlagsSet(key.controlKeyState, ALT_PRESSED);
-    const auto rightAltPressed = WI_IsFlagSet(key.controlKeyState, RIGHT_ALT_PRESSED);
-    key.altGrPressed = anyAltPressed && anyCtrlPressed;
-    key.ctrlPressed = key.altGrPressed ? (bothCtrlPressed || (rightAltPressed && leftCtrlIsReallyPressed)) : anyCtrlPressed;
-    key.altPressed = key.altGrPressed ? bothAltPressed : anyAltPressed;
+    // We distinguish AltGr+Key / Ctrl+Alt+Key combinations on international keyboard layouts from
+    // genuine, intentional Ctrl+Alt+Key combinations by checking whether the codepoint is valid.
+    // Windows should not send a valid codepoint for e.g. Ctrl+Alt+Q on a US ANSI layout,
+    // so we treat it as a genuine Ctrl+Alt+Q.
+    //
+    // However, this isn't universally true and more of a heuristic. Ctrl+Alt+Esc
+    // for instance results in codepoint=0x1b! As such we restrict to graphical codepoints.
+    // This should not be considered "Reference Windows Code". It's a personal best guess.
+    key.altGrPressed = anyAltPressed && anyCtrlPressed && (key.codepoint > 0x20 && key.codepoint != 0x7f);
+    // Ctrl is a bit tricky to detect, since international keyboards with KLLF_ALTGR will
+    // send Left-Ctrl + Right-Alt. If both Ctrl keys are pressed it's unambiguous.
+    // Otherwise, if we haven't guessed this to be an AltGr key, then we can safely
+    // assume this to be a Ctrl combination as well. Otherwise, we also have our
+    // timing logic above to guess if the Left-Ctrl key was pressed by a human.
+    key.ctrlPressed = bothCtrlPressed || (anyCtrlPressed && !key.altGrPressed) || leftCtrlIsReallyPressed;
+    // Alt is a bit simpler than Ctrl and follows the same pattern.
+    key.altPressed = bothAltPressed || (anyAltPressed && !key.altGrPressed);
     key.shiftPressed = WI_IsFlagSet(key.controlKeyState, SHIFT_PRESSED);
 
     KeyboardHelper kbd;
@@ -444,20 +454,6 @@ DWORD TerminalInput::_trackControlKeyState(const KEY_EVENT_RECORD& key) noexcept
     // can be misinterpreted as an Alt+AltGr key combination.
     const auto rightAltDown = key.bKeyDown && key.wVirtualKeyCode == VK_MENU && WI_IsFlagSet(key.dwControlKeyState, ENHANCED_KEY);
     WI_ClearFlagIf(_lastControlKeyState, RIGHT_ALT_PRESSED, WI_IsFlagSet(pressedKeyState, RIGHT_ALT_PRESSED) && !rightAltDown);
-    // We also take this opportunity to record the time at which the LeftCtrl
-    // and RightAlt keys are pressed. This is needed to determine whether the
-    // Ctrl key was pressed by the user, or fabricated by an AltGr key press.
-    if (key.bKeyDown)
-    {
-        if (WI_IsFlagSet(pressedKeyState, LEFT_CTRL_PRESSED))
-        {
-            _lastLeftCtrlTime = GetTickCount64();
-        }
-        if (WI_IsFlagSet(pressedKeyState, RIGHT_ALT_PRESSED))
-        {
-            _lastRightAltTime = GetTickCount64();
-        }
-    }
     return _lastControlKeyState;
 }
 
@@ -909,9 +905,9 @@ void TerminalInput::_encodeRegular(EncodingHelper& enc, const SanitizedKeyEvent&
         // not standard, but a modern terminal convention). The Alt modifier adds
         // an ESC prefix (also not standard).
         enc.altPrefix = true;
-        const auto ctrl = (enc.csiModifier & CSI_CTRL) == 0;
+        const auto ctrl = key.ctrlPressed;
         const auto back = _inputMode.test(Mode::BackarrowKey);
-        enc.plain = ctrl != back ? L"\x7f"sv : L"\b"sv;
+        enc.plain = ctrl == back ? L"\x7f"sv : L"\b"sv;
         break;
     }
     case VK_TAB:
@@ -919,7 +915,7 @@ void TerminalInput::_encodeRegular(EncodingHelper& enc, const SanitizedKeyEvent&
         // The Alt modifier adds an ESC prefix, although in practice all the Alt
         // mappings are likely to be system hotkeys.
         enc.altPrefix = true;
-        if ((enc.csiModifier & CSI_SHIFT) == 0)
+        if (!key.shiftPressed)
         {
             enc.plain = L"\t"sv;
         }
@@ -949,7 +945,7 @@ void TerminalInput::_encodeRegular(EncodingHelper& enc, const SanitizedKeyEvent&
         }
         else
         {
-            if ((enc.csiModifier & CSI_CTRL) == 0)
+            if (!key.ctrlPressed)
             {
                 enc.plain = _inputMode.test(Mode::LineFeed) ? L"\r\n"sv : L"\r"sv;
             }
@@ -1271,13 +1267,6 @@ void TerminalInput::_formatFallback(KeyboardHelper& kbd, const SanitizedKeyEvent
         {
             codepoint = _makeCtrlChar(codepoint);
         }
-
-        // We may also need to apply an Alt prefix to the char sequence, but
-        // if this is an AltGr key, we only do so if both Alts are pressed.
-        if (key.altPressed && _inputMode.test(Mode::Ansi))
-        {
-            seq.push_back(L'\x1b');
-        }
     }
     // If we don't have a UnicodeChar, we'll try and determine what the key
     // would have transmitted without any Ctrl or Alt modifiers applied. But
@@ -1298,12 +1287,6 @@ void TerminalInput::_formatFallback(KeyboardHelper& kbd, const SanitizedKeyEvent
             return;
         }
 
-        // If Alt is pressed, that also needs to be applied to the sequence.
-        if (key.altPressed && _inputMode.test(Mode::Ansi))
-        {
-            seq.push_back(L'\x1b');
-        }
-
         // Once we've got the base character, we can apply the Ctrl modifier.
         if (key.ctrlPressed)
         {
@@ -1321,6 +1304,12 @@ void TerminalInput::_formatFallback(KeyboardHelper& kbd, const SanitizedKeyEvent
     else
     {
         return;
+    }
+
+    // If Alt is pressed, that also needs to be applied to the sequence.
+    if (key.altPressed && _inputMode.test(Mode::Ansi))
+    {
+        seq.push_back(L'\x1b');
     }
 
     _stringPushCodepoint(seq, codepoint);
