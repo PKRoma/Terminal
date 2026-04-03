@@ -646,6 +646,9 @@ namespace winrt::TerminalApp::implementation
         // After split, Close Pane Menu Item should be visible
         _closePaneMenuItem.Visibility(WUX::Visibility::Visible);
 
+        // Show pane headers now that we have multiple panes
+        _rootPane->ShowPaneHeaders(true);
+
         // The active pane has an id if it is a leaf
         if (activePaneId)
         {
@@ -1324,6 +1327,7 @@ namespace winrt::TerminalApp::implementation
         if (_rootPane->GetLeafPaneCount() == 1)
         {
             _closePaneMenuItem.Visibility(WUX::Visibility::Collapsed);
+            _rootPane->ShowPaneHeaders(false);
         }
 
         _RecalculateAndApplyReadOnly();
