@@ -40,7 +40,8 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         INITIALIZE_BINDABLE_ENUM_SETTING_REVERSE_ORDER(CloseOnExitMode, CloseOnExitMode, winrt::Microsoft::Terminal::Settings::Model::CloseOnExitMode, L"Profile_CloseOnExit", L"Content");
         INITIALIZE_BINDABLE_ENUM_SETTING(ScrollState, ScrollbarState, winrt::Microsoft::Terminal::Control::ScrollbarState, L"Profile_ScrollbarVisibility", L"Content");
         INITIALIZE_BINDABLE_ENUM_SETTING(PathTranslationStyle, PathTranslationStyle, winrt::Microsoft::Terminal::Control::PathTranslationStyle, L"Profile_PathTranslationStyle", L"Content");
-        INITIALIZE_BINDABLE_ENUM_SETTING(AutoDetectRunningCommand, AutoDetectRunningCommand, winrt::Microsoft::Terminal::Control::AutoDetectRunningCommand, L"Profile_AutoDetectRunningCommand", L"Content");
+        // Trailing underscore in prefix to match resource keys (e.g. "Profile_AutoDetectRunningCommand_Automatic")
+        INITIALIZE_BINDABLE_ENUM_SETTING(AutoDetectRunningCommand, AutoDetectRunningCommand, winrt::Microsoft::Terminal::Control::AutoDetectRunningCommand, L"Profile_AutoDetectRunningCommand_", L"Content");
 
         _InitializeCurrentBellSounds();
 

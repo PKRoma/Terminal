@@ -213,7 +213,8 @@ namespace winrt::TerminalApp::implementation
 
     void TerminalPaneContent::_controlShowNotification(const IInspectable& /*sender*/, const ShowNotificationEventArgs& args)
     {
-        NotificationRequested.raise(*this, winrt::make<implementation::NotificationEventArgs>(args.Title(), args.Body()));
+        // OSC777 explicitly requests a notification, so always use Notification style
+        NotificationRequested.raise(*this, winrt::make<implementation::NotificationEventArgs>(winrt::Microsoft::Terminal::Control::OutputNotificationStyle::Notification, false, args.Title(), args.Body()));
     }
 
     // Method Description:
