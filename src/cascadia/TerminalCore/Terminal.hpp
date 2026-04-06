@@ -159,7 +159,7 @@ public:
 
     bool IsVtInputEnabled() const noexcept override;
     void NotifyBufferRotation(const int delta) override;
-    void NotifyShellIntegrationMark() override;
+    void NotifyShellIntegrationMark(ShellIntegrationMark mark) override;
 
     void InvokeCompletions(std::wstring_view menuJson, unsigned int replaceLength) override;
 
@@ -238,6 +238,8 @@ public:
     void SetShowNotificationCallback(std::function<void(std::wstring_view, std::wstring_view)> pfn) noexcept;
     void SetClearQuickFixCallback(std::function<void()> pfn) noexcept;
     void SetWindowSizeChangedCallback(std::function<void(int32_t, int32_t)> pfn) noexcept;
+    void SetPromptStartedCallback(std::function<void()> pfn) noexcept;
+    void SetOutputStartedCallback(std::function<void()> pfn) noexcept;
     void SetSearchHighlights(const std::vector<til::point_span>& highlights) noexcept;
     void SetSearchHighlightFocused(size_t focusedIdx) noexcept;
     void ScrollToSearchHighlight(til::CoordType searchScrollOffset);
@@ -347,6 +349,8 @@ private:
     std::function<void(std::wstring_view, std::wstring_view)> _pfnShowNotification;
     std::function<void()> _pfnClearQuickFix;
     std::function<void(int32_t, int32_t)> _pfnWindowSizeChanged;
+    std::function<void()> _pfnPromptStarted;
+    std::function<void()> _pfnOutputStarted;
 
     RenderSettings _renderSettings;
     std::unique_ptr<::Microsoft::Console::VirtualTerminal::StateMachine> _stateMachine;
