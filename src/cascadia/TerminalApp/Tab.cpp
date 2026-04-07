@@ -361,6 +361,10 @@ namespace winrt::TerminalApp::implementation
         // The tabWidthMode may have changed, update the header control accordingly
         _UpdateHeaderControlMaxWidth();
 
+        // Refresh pane header visibility based on the current setting
+        const auto showHeaders = settings.GlobalSettings().ShowPaneHeaders() && _rootPane->GetLeafPaneCount() > 1;
+        _rootPane->ShowPaneHeaders(showHeaders);
+
         // Update the settings on all our panes.
         _rootPane->WalkTree([&](const auto& pane) {
             pane->UpdateSettings(settings);
@@ -646,8 +650,13 @@ namespace winrt::TerminalApp::implementation
         // After split, Close Pane Menu Item should be visible
         _closePaneMenuItem.Visibility(WUX::Visibility::Visible);
 
-        // Show pane headers now that we have multiple panes
-        _rootPane->ShowPaneHeaders(true);
+        // Show pane headers now that we have multiple panes (if the setting is enabled)
+        try
+        {
+            const auto settings{ winrt::TerminalApp::implementation::AppLogic::CurrentAppSettings() };
+            _rootPane->ShowPaneHeaders(settings.GlobalSettings().ShowPaneHeaders());
+        }
+        CATCH_LOG();
 
         // The active pane has an id if it is a leaf
         if (activePaneId)
