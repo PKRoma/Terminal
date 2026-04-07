@@ -242,7 +242,7 @@
                                     ClearSettingValue="{x:Bind Profile.ClearAutoDetectRunningCommand}"
                                     HasSettingValue="{x:Bind Profile.HasAutoDetectRunningCommand, Mode=OneWay}"
                                     SettingOverrideSource="{x:Bind Profile.AutoDetectRunningCommandOverrideSource, Mode=OneWay}">
-                <ComboBox ItemTemplate="{StaticResource EnumComboBoxItemTemplate}"
+                <ComboBox ItemTemplate="{StaticResource EnumComboBoxTemplate}"
                           ItemsSource="{x:Bind Profile.AutoDetectRunningCommandList, Mode=OneWay}"
                           SelectedItem="{x:Bind Profile.CurrentAutoDetectRunningCommand, Mode=TwoWay}"
                           Style="{StaticResource ComboBoxSettingStyle}" />
