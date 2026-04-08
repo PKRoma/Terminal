@@ -1254,7 +1254,7 @@ namespace winrt::TerminalApp::implementation
 
     // Method Description:
     // - Set an indicator on the tab if any pane is in a closed connection state.
-    // - Show/hide the Restart Connection context menu entry depending on active pane's state.
+    // - Show/hide the Restart Session context menu entry depending on active pane's state.
     // Arguments:
     // - <none>
     // Return Value:
@@ -1737,7 +1737,7 @@ namespace winrt::TerminalApp::implementation
         }
 
         {
-            // "Restart connection"
+            // "Restart session"
             Controls::FontIcon restartConnectionSymbol;
             restartConnectionSymbol.FontFamily(Media::FontFamily{ L"Segoe Fluent Icons, Segoe MDL2 Assets" });
             restartConnectionSymbol.Glyph(L"\xE72C");
