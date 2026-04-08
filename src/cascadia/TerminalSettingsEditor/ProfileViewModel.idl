@@ -162,5 +162,6 @@ namespace Microsoft.Terminal.Settings.Editor
         OBSERVABLE_PROJECTED_PROFILE_SETTING(Microsoft.Terminal.Control.OutputNotificationStyle, NotifyOnInactiveOutput);
         OBSERVABLE_PROJECTED_PROFILE_SETTING(Microsoft.Terminal.Control.OutputNotificationStyle, NotifyOnNextPrompt);
         OBSERVABLE_PROJECTED_PROFILE_SETTING(Microsoft.Terminal.Control.AutoDetectRunningCommand, AutoDetectRunningCommand);
+        OBSERVABLE_PROJECTED_PROFILE_SETTING(Boolean, AllowOscNotifications);
     }
 }
