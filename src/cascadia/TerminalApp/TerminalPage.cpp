@@ -884,26 +884,63 @@ namespace winrt::TerminalApp::implementation
     }
 
     // Method Description:
-    // - Displays a dialog to warn the user that they are about to close all open windows.
-    //   Once the user clicks the OK button, shut down the application.
-    //   If cancel is clicked, the dialog will close.
+    // - Displays the unified close confirmation dialog configured for the
+    //   given scenario. Resets the "don't ask me again" checkbox before showing.
+    //   If the user confirms and checked "don't ask me again", sets
+    //   confirmOnClose to Never and writes settings to disk.
     // - Only one dialog can be visible at a time. If another dialog is visible
     //   when this is called, nothing happens. See _ShowDialog for details
-    winrt::Windows::Foundation::IAsyncOperation<ContentDialogResult> TerminalPage::_ShowQuitDialog()
+    winrt::Windows::Foundation::IAsyncOperation<ContentDialogResult> TerminalPage::_ShowConfirmCloseDialog(ConfirmCloseDialogKind kind)
     {
-        return _ShowDialogHelper(L"QuitDialog");
-    }
+        // Load the dialog (triggers x:Load) and configure its strings.
+        const auto dialog = FindName(L"ConfirmCloseDialog").as<ContentDialog>();
+        switch (kind)
+        {
+        case ConfirmCloseDialogKind::CloseAll:
+            dialog.Title(winrt::box_value(RS_(L"ConfirmCloseDialog_CloseAllTitle")));
+            dialog.PrimaryButtonText(RS_(L"ConfirmCloseDialog_CloseAllPrimary"));
+            break;
+        case ConfirmCloseDialogKind::Window:
+            dialog.Title(winrt::box_value(RS_(L"ConfirmCloseDialog_WindowTitle")));
+            dialog.PrimaryButtonText(RS_(L"ConfirmCloseDialog_WindowPrimary"));
+            break;
+        case ConfirmCloseDialogKind::Tab:
+            dialog.Title(winrt::box_value(RS_(L"ConfirmCloseDialog_TabTitle")));
+            dialog.PrimaryButtonText(RS_(L"ConfirmCloseDialog_TabPrimary"));
+            break;
+        case ConfirmCloseDialogKind::MultiplePanes:
+            dialog.Title(winrt::box_value(RS_(L"ConfirmCloseDialog_MultiplePanesTitle")));
+            dialog.PrimaryButtonText(RS_(L"ConfirmCloseDialog_MultiplePanesPrimary"));
+            break;
+        case ConfirmCloseDialogKind::MultipleTabs:
+            dialog.Title(winrt::box_value(RS_(L"ConfirmCloseDialog_MultipleTabsTitle")));
+            dialog.PrimaryButtonText(RS_(L"ConfirmCloseDialog_MultipleTabsPrimary"));
+            break;
+        case ConfirmCloseDialogKind::Pane:
+            dialog.Title(winrt::box_value(RS_(L"ConfirmCloseDialog_PaneTitle")));
+            dialog.PrimaryButtonText(RS_(L"ConfirmCloseDialog_PanePrimary"));
+            break;
+        }
+        dialog.CloseButtonText(RS_(L"ConfirmCloseDialog_Cancel"));
 
-    // Method Description:
-    // - Displays a dialog for warnings found while closing the terminal app using
-    //   key binding with multiple tabs opened. Display messages to warn user
-    //   that more than 1 tab is opened, and once the user clicks the OK button, remove
-    //   all the tabs and shut down and app. If cancel is clicked, the dialog will close
-    // - Only one dialog can be visible at a time. If another dialog is visible
-    //   when this is called, nothing happens. See _ShowDialog for details
-    winrt::Windows::Foundation::IAsyncOperation<ContentDialogResult> TerminalPage::_ShowCloseWarningDialog()
-    {
-        return _ShowDialogHelper(L"CloseAllDialog");
+        // BODGY: After a ContentDialog is dismissed, FindName() can no longer
+        // resolve children inside it. Use Content() to get the checkbox directly.
+        const auto checkbox = dialog.Content().as<CheckBox>();
+        checkbox.IsChecked(false);
+
+        auto result = ContentDialogResult::None;
+        if (auto presenter{ _dialogPresenter.get() })
+        {
+            result = co_await presenter.ShowDialog(dialog);
+        }
+
+        if (result == ContentDialogResult::Primary && checkbox.IsChecked().Value())
+        {
+            _settings.GlobalSettings().ConfirmOnClose(ConfirmOnClose::Never);
+            _settings.WriteSettingsToDisk();
+        }
+
+        co_return result;
     }
 
     // Method Description:
@@ -2209,12 +2246,13 @@ namespace winrt::TerminalApp::implementation
     //   signal that we want to close everything.
     safe_void_coroutine TerminalPage::RequestQuit()
     {
-        if (!_displayingCloseDialog)
+        const auto setting = _settings.GlobalSettings().ConfirmOnClose();
+        if (setting != ConfirmOnClose::Never && !_displayingCloseDialog)
         {
             _displayingCloseDialog = true;
 
             const auto weak = get_weak();
-            auto warningResult = co_await _ShowQuitDialog();
+            auto warningResult = co_await _ShowConfirmCloseDialog(ConfirmCloseDialogKind::CloseAll);
             const auto strong = weak.get();
             if (!strong)
             {
@@ -2227,9 +2265,9 @@ namespace winrt::TerminalApp::implementation
             {
                 co_return;
             }
-
-            QuitRequested.raise(nullptr, nullptr);
         }
+
+        QuitRequested.raise(nullptr, nullptr);
     }
 
     void TerminalPage::PersistState()
@@ -2307,12 +2345,69 @@ namespace winrt::TerminalApp::implementation
     }
 
     // Method Description:
-    // - Close the terminal app. If there is more
-    //   than one tab opened, show a warning dialog.
+    // - Determines whether a close-window action should show a confirmation
+    //   dialog, based on the confirmOnClose setting and the current window state.
+    // Arguments:
+    // - <none>
+    // Return Value:
+    // - true, if a warning dialog should be shown before closing the window
+    bool TerminalPage::_ShouldWarnOnClose() const
+    {
+        const auto setting = _settings.GlobalSettings().ConfirmOnClose();
+        switch (setting)
+        {
+        case ConfirmOnClose::Always:
+            return true;
+        case ConfirmOnClose::Automatic:
+        {
+            // Warn if there's more than one tab.
+            if (_HasMultipleTabs())
+            {
+                return true;
+            }
+
+            // Warn if the one tab has more than one pane.
+            if (_GetTabImpl(_tabs.GetAt(0))->GetLeafPaneCount() > 1)
+            {
+                return true;
+            }
+            return false;
+        }
+        case ConfirmOnClose::Never:
+        default:
+            return false;
+        }
+    }
+
+    // Method Description:
+    // - Determines whether closing a specific tab should show a confirmation
+    //   dialog, based on the confirmOnClose setting and the tab's state.
+    // Arguments:
+    // - tab: The tab being closed
+    // Return Value:
+    // - true, if a warning dialog should be shown before closing the tab
+    bool TerminalPage::_ShouldWarnOnCloseTab(const winrt::com_ptr<Tab>& tab) const
+    {
+        const auto setting = _settings.GlobalSettings().ConfirmOnClose();
+        switch (setting)
+        {
+        case ConfirmOnClose::Always:
+            return true;
+        case ConfirmOnClose::Automatic:
+            // Warn if this tab has more than one pane.
+            return tab->GetLeafPaneCount() > 1;
+        case ConfirmOnClose::Never:
+        default:
+            return false;
+        }
+    }
+
+    // Method Description:
+    // - Close the terminal app. If the confirmOnClose setting indicates we should
+    //   warn for the current window state, show a warning dialog.
     safe_void_coroutine TerminalPage::CloseWindow()
     {
-        if (_HasMultipleTabs() &&
-            _settings.GlobalSettings().ConfirmCloseAllTabs() &&
+        if (_ShouldWarnOnClose() &&
             !_displayingCloseDialog)
         {
             if (_newTabButton && _newTabButton.Flyout())
@@ -2321,7 +2416,14 @@ namespace winrt::TerminalApp::implementation
             }
             _DismissTabContextMenus();
             _displayingCloseDialog = true;
-            auto warningResult = co_await _ShowCloseWarningDialog();
+
+            const auto weak = get_weak();
+            auto warningResult = co_await _ShowConfirmCloseDialog(ConfirmCloseDialogKind::Window);
+            if (!weak.get())
+            {
+                co_return;
+            }
+
             _displayingCloseDialog = false;
 
             if (warningResult != ContentDialogResult::Primary)
