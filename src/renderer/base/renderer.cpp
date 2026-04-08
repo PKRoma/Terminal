@@ -238,14 +238,6 @@ void Renderer::_waitUntilTimerOrRedraw() noexcept
     // point and the instant we know everyone else is blocked. See PaintFrame().
     while (!_redraw.load(std::memory_order_relaxed))
     {
-        // If teardown was requested while _PaintFrame() was clearing _redraw,
-        // the NotifyPaintFrame() signal may have been lost. Bail out so the
-        // render thread can observe _threadKeepRunning == false and exit.
-        if (!_threadKeepRunning.load(std::memory_order_relaxed))
-        {
-            return;
-        }
-
         // Otherwise calculate when the next timer expires.
         const auto wait = _calculateTimerMaxWait();
         if (wait == 0)
