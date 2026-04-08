@@ -1613,6 +1613,10 @@
     <value>Progress</value>
     <comment>An option for the auto-detect running command setting. When selected, the terminal shows command progress by walking the buffer (not yet implemented).</comment>
   </data>
+  <data name="Profile_BellStyleNotification.Content" xml:space="preserve">
+    <value>Desktop notification</value>
+    <comment>An option to choose from for the "bell style" setting. When selected, a Windows desktop notification (toast) is sent to notify the user.</comment>
+  </data>
   <data name="ColorScheme_AddNewButton.Text" xml:space="preserve">
     <value>Add new</value>
     <comment>Button label that creates a new color scheme.</comment>
