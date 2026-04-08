@@ -819,6 +819,8 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         auto currentStyle = NotifyOnNextPrompt();
         WI_UpdateFlag(currentStyle, Control::OutputNotificationStyle::Notification, winrt::unbox_value<bool>(on));
         NotifyOnNextPrompt(currentStyle);
+    }
+
     void ProfileViewModel::SetBellStyleNotification(winrt::Windows::Foundation::IReference<bool> on)
     {
         auto currentStyle = BellStyle();
