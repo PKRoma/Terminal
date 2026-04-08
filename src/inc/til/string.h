@@ -254,6 +254,78 @@ namespace til // Terminal Implementation Library. Also: "Today I Learned"
         return ends_with_insensitive_ascii<>(str, prefix);
     }
 
+    // A textbook Boyer-Moore-Horspool string searcher for case-insensitive ASCII.
+    // NOTE: Passing non-ASCII to `needle` will cause incorrect results.
+    template<typename T, typename Traits>
+    _TIL_INLINEPREFIX size_t find_insensitive_ascii(std::basic_string_view<T, Traits> haystack, std::basic_string_view<T, Traits> needle) noexcept
+    {
+        static constexpr auto clamp = [](size_t v) noexcept -> uint8_t {
+            return static_cast<uint8_t>(std::min<size_t>(v, 255));
+        };
+
+        const auto m = needle.size();
+        if (m == 0)
+        {
+            return 0;
+        }
+        if (m > haystack.size())
+        {
+            return decltype(haystack)::npos;
+        }
+
+        // Bad-character skip table, indexed by folded character value.
+        // Only covers [0, 128); characters outside this range use the default skip (m).
+        uint8_t skip[128];
+        memset(&skip[0], clamp(m), 128);
+
+        for (size_t i = 0; i < m - 1; ++i)
+        {
+            const auto ch = tolower_ascii(needle[i]);
+            if (ch < 128)
+            {
+                skip[ch] = clamp(m - 1 - i);
+            }
+        }
+
+        const auto lastIdx = m - 1;
+        const auto lastCh = tolower_ascii(needle[lastIdx]);
+        T ch = 0;
+
+        for (size_t pos = 0; pos + m <= haystack.size();)
+        {
+            ch = tolower_ascii(haystack[pos + lastIdx]);
+            if (ch != lastCh)
+            {
+                goto retry;
+            }
+
+            // Last char matches — verify the rest left-to-right.
+            for (size_t j = 0; j < lastIdx; ++j)
+            {
+                if (tolower_ascii(haystack[pos + j]) != tolower_ascii(needle[j]))
+                {
+                    goto retry;
+                }
+            }
+            return pos;
+
+        retry:
+            pos += ch < 128 ? skip[ch] : m;
+        }
+
+        return decltype(haystack)::npos;
+    }
+
+    inline size_t find_insensitive_ascii(std::string_view haystack, std::string_view needle) noexcept
+    {
+        return find_insensitive_ascii<>(haystack, needle);
+    }
+
+    inline size_t find_insensitive_ascii(std::wstring_view haystack, std::wstring_view needle) noexcept
+    {
+        return find_insensitive_ascii<>(haystack, needle);
+    }
+
     template<typename T, typename Traits>
     constexpr std::basic_string_view<T, Traits> trim(const std::basic_string_view<T, Traits>& str, const T ch) noexcept
     {

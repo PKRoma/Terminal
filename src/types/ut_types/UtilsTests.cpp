@@ -409,25 +409,25 @@ void UtilsTests::TestMangleWSLPaths()
 
     {
         auto [commandline, path] = MangleStartingDirectoryForWSL(LR"("wsl" -d X)", startingDirectory);
-        VERIFY_ARE_EQUAL(LR"("wsl" --cd "SENTINEL"  -d X)", commandline);
+        VERIFY_ARE_EQUAL(LR"("wsl" --cd "SENTINEL" -d X)", commandline);
         VERIFY_ARE_EQUAL(L"", path);
     }
 
     {
         auto [commandline, path] = MangleStartingDirectoryForWSL(LR"("wsl.exe" -d X)", startingDirectory);
-        VERIFY_ARE_EQUAL(LR"("wsl.exe" --cd "SENTINEL"  -d X)", commandline);
+        VERIFY_ARE_EQUAL(LR"("wsl.exe" --cd "SENTINEL" -d X)", commandline);
         VERIFY_ARE_EQUAL(L"", path);
     }
 
     {
         auto [commandline, path] = MangleStartingDirectoryForWSL(LR"("C:\Windows\system32\wsl.exe" -d X)", startingDirectory);
-        VERIFY_ARE_EQUAL(LR"("C:\Windows\system32\wsl.exe" --cd "SENTINEL"  -d X)", commandline);
+        VERIFY_ARE_EQUAL(LR"("C:\Windows\system32\wsl.exe" --cd "SENTINEL" -d X)", commandline);
         VERIFY_ARE_EQUAL(L"", path);
     }
 
     {
         auto [commandline, path] = MangleStartingDirectoryForWSL(LR"("C:\windows\system32\wsl" -d X)", startingDirectory);
-        VERIFY_ARE_EQUAL(LR"("C:\windows\system32\wsl" --cd "SENTINEL"  -d X)", commandline);
+        VERIFY_ARE_EQUAL(LR"("C:\windows\system32\wsl" --cd "SENTINEL" -d X)", commandline);
         VERIFY_ARE_EQUAL(L"", path);
     }
 
@@ -437,19 +437,20 @@ void UtilsTests::TestMangleWSLPaths()
         VERIFY_ARE_EQUAL(L"", path);
     }
 
-    // MUST NOT MANGLE
+    // Any wsl.exe is treated as a WSL profile, regardless of directory.
     {
         auto [commandline, path] = MangleStartingDirectoryForWSL(LR"("C:\wsl.exe" -d X)", startingDirectory);
-        VERIFY_ARE_EQUAL(LR"("C:\wsl.exe" -d X)", commandline);
-        VERIFY_ARE_EQUAL(startingDirectory, path);
+        VERIFY_ARE_EQUAL(LR"("C:\wsl.exe" --cd "SENTINEL" -d X)", commandline);
+        VERIFY_ARE_EQUAL(L"", path);
     }
 
     {
         auto [commandline, path] = MangleStartingDirectoryForWSL(LR"(C:\wsl.exe)", startingDirectory);
-        VERIFY_ARE_EQUAL(LR"(C:\wsl.exe)", commandline);
-        VERIFY_ARE_EQUAL(startingDirectory, path);
+        VERIFY_ARE_EQUAL(LR"("C:\wsl.exe" --cd "SENTINEL" )", commandline);
+        VERIFY_ARE_EQUAL(L"", path);
     }
 
+    // MUST NOT MANGLE
     {
         auto [commandline, path] = MangleStartingDirectoryForWSL(LR"(wsl --cd C:\)", startingDirectory);
         VERIFY_ARE_EQUAL(LR"(wsl --cd C:\)", commandline);
