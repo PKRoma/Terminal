@@ -2459,7 +2459,7 @@ namespace winrt::Microsoft::Terminal::Control::implementation
             _automationPeer.UpdateControlBounds();
         }
 
-        // Show resize overlay with COLSxROWS
+        // Show resize overlay with columns x rows
         const auto coreImpl = winrt::get_self<ControlCore>(_core);
         const auto cols = coreImpl->ViewWidth();
         const auto rows = coreImpl->ViewHeight();

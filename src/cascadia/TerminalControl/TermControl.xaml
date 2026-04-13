@@ -1365,7 +1365,7 @@
 
         </Grid>
 
-        <!--  Resize overlay: shows COLSxROWS when terminal is resized  -->
+        <!--  Resize overlay: shows columns x rows when terminal is resized  -->
         <Border x:Name="ResizeOverlay"
                 Padding="16,8,16,8"
                 HorizontalAlignment="Center"
