@@ -1365,11 +1365,11 @@
 
         </Grid>
 
-        <!-- Resize overlay: shows COLSxROWS when terminal is resized -->
+        <!--  Resize overlay: shows COLSxROWS when terminal is resized  -->
         <Border x:Name="ResizeOverlay"
+                Padding="16,8,16,8"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
-                Padding="16,8,16,8"
                 Background="{ThemeResource SystemControlBackgroundAltHighBrush}"
                 BorderBrush="{ThemeResource SystemAccentColor}"
                 BorderThickness="1"
