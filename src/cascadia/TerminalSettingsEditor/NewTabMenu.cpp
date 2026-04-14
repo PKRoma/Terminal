@@ -36,6 +36,42 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         Automation::AutomationProperties::SetName(AddFolderButton(), RS_(L"NewTabMenu_AddFolderButton/[using:Windows.UI.Xaml.Controls]ToolTipService/ToolTip"));
         Automation::AutomationProperties::SetName(AddMatchProfilesButton(), RS_(L"NewTabMenu_AddMatchProfilesTextBlock/Text"));
         Automation::AutomationProperties::SetName(AddRemainingProfilesButton(), RS_(L"NewTabMenu_AddRemainingProfilesButton/[using:Windows.UI.Xaml.Controls]ToolTipService/ToolTip"));
+
+        // Constrain the page to the parent ScrollViewer's viewport so the preview
+        // stays fixed while only the left column scrolls internally.
+        Loaded([this](auto&&, auto&&) {
+            auto parent = Media::VisualTreeHelper::GetParent(*this);
+            while (parent)
+            {
+                if (const auto sv = parent.try_as<Controls::ScrollViewer>())
+                {
+                    _parentScrollViewer = sv;
+                    // Set the layout grid height to fill the viewport exactly
+                    const auto updateHeight = [this]() {
+                        if (_parentScrollViewer)
+                        {
+                            // Account for the Frame's bottom padding (48px) that reduces available space
+                            const auto availableHeight = _parentScrollViewer.ViewportHeight() - 48;
+                            if (availableHeight > 0)
+                            {
+                                MainLayoutGrid().Height(availableHeight);
+                            }
+                        }
+                    };
+                    updateHeight();
+                    _sizeChangedRevoker = sv.SizeChanged(winrt::auto_revoke, [updateHeight](auto&&, auto&&) {
+                        updateHeight();
+                    });
+                    break;
+                }
+                parent = Media::VisualTreeHelper::GetParent(parent);
+            }
+        });
+
+        Unloaded([this](auto&&, auto&&) {
+            _sizeChangedRevoker.revoke();
+            _parentScrollViewer = nullptr;
+        });
     }
 
     void NewTabMenu::OnNavigatedTo(const NavigationEventArgs& e)

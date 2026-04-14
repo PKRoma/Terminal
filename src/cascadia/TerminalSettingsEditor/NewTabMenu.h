@@ -45,6 +45,8 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
     private:
         Editor::NewTabMenuEntryViewModel _draggedEntry{ nullptr };
         winrt::weak_ref<Editor::IHostedInWindow> _weakWindowRoot;
+        winrt::Windows::UI::Xaml::Controls::ScrollViewer _parentScrollViewer{ nullptr };
+        winrt::Windows::UI::Xaml::FrameworkElement::SizeChanged_revoker _sizeChangedRevoker;
 
         void _ScrollToEntry(const Editor::NewTabMenuEntryViewModel& entry);
     };
