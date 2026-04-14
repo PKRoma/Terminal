@@ -494,6 +494,13 @@ void UtilsTests::TestMangleWSLPaths()
         VERIFY_ARE_EQUAL(L"", path);
     }
 
+    /// Tests for OSC 7-style file URI to UNC path mangling
+    {
+        auto [commandline, path] = MangleStartingDirectoryForWSL(LR"(wsl -d Ubuntu)", LR"(\\antares\home\user)");
+        VERIFY_ARE_EQUAL(LR"("wsl" --cd "/home/user" -d Ubuntu)", commandline);
+        VERIFY_ARE_EQUAL(L"", path);
+    }
+
     /// Tests for GH #12353
 
     const auto expectedUserProfilePath = wil::ExpandEnvironmentStringsW<std::wstring>(L"%USERPROFILE%");

@@ -1158,6 +1158,11 @@ std::tuple<std::wstring, std::wstring> Utils::MangleStartingDirectoryForWSL(std:
         // meant as Windows paths, so we convert them to \\ here.
         std::ranges::replace(dir, L'/', L'\\');
     }
+    else if (til::starts_with(dir, LR"(\\wsl$)") || til::starts_with(dir, LR"(\\wsl.localhost)"))
+    {
+        // Some users have configured shells in WSL to emit OSC 9;9 paths with wslpath.
+        // Do nothing with them (pass them through with --cd.)
+    }
     else if (til::starts_with(dir, L"\\\\") && !IsValidDirectory(dir.c_str()))
     {
         // WSL shells use OSC 7 which uses file URIs. We turn those into UNC paths for
