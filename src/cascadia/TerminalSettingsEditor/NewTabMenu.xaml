@@ -227,13 +227,7 @@
         </ResourceDictionary>
     </Page.Resources>
 
-    <Grid RowSpacing="12">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-
+    <Grid>
         <!--  Folder Picker Dialog: used to select a folder to move entries to  -->
         <ContentDialog x:Name="FolderPickerDialog"
                        x:Uid="NewTabMenu_FolderPickerDialog"
@@ -267,113 +261,100 @@
             </muxc:TreeView>
         </ContentDialog>
 
-        <!--  New Tab Menu Content  -->
-        <StackPanel Grid.Row="0"
-                    MaxWidth="{StaticResource StandardControlMaxWidth}"
-                    Spacing="8">
-            <Border Height="300"
-                    MaxWidth="{StaticResource StandardControlMaxWidth}"
-                    Margin="0,12,0,0"
-                    BorderBrush="{ThemeResource SystemControlForegroundBaseMediumLowBrush}"
-                    BorderThickness="1"
-                    CornerRadius="{ThemeResource ControlCornerRadius}">
-                <ListView x:Name="NewTabMenuListView"
-                          AllowDrop="True"
-                          CanDragItems="True"
-                          CanReorderItems="True"
-                          ItemTemplateSelector="{StaticResource NewTabMenuEntryTemplateSelector}"
-                          ItemsSource="{x:Bind ViewModel.CurrentView, Mode=OneWay}"
-                          SelectionMode="Multiple" />
-            </Border>
+        <!--
+            Main layout Grid: supports both side-by-side (wide) and stacked (narrow) modes.
+            In wide mode: left column = controls, right column = preview (always visible).
+            In narrow mode: single column, preview on top (current behavior).
+        -->
+        <Grid x:Name="MainLayoutGrid"
+              ColumnSpacing="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition x:Name="ControlsColumn" Width="*" MaxWidth="600" />
+                <ColumnDefinition x:Name="PreviewColumn" Width="*" MaxWidth="600" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-            <!--  General Controls  -->
-            <StackPanel Orientation="Horizontal"
-                        Spacing="10">
-                <Button x:Name="MoveToFolderButton"
-                        Click="MoveMultiple_Click"
-                        IsEnabled="False">
-                    <StackPanel Orientation="Horizontal">
-                        <FontIcon FontSize="{StaticResource StandardIconSize}"
-                                  Glyph="&#xE8DE;" />
-                        <TextBlock x:Uid="NewTabMenu_MoveToFolderTextBlock"
-                                   Margin="8,0,0,0" />
+            <!--  Left column: all controls  -->
+            <ScrollViewer x:Name="ControlsScrollViewer"
+                          Grid.Row="0"
+                          Grid.RowSpan="2"
+                          Grid.Column="0"
+                          VerticalScrollBarVisibility="Auto">
+                <StackPanel Spacing="0">
+
+                    <!--  Current Folder Properties header  -->
+                    <TextBlock x:Name="FolderControlsHeader"
+                               Margin="0,0,0,0"
+                               x:Uid="NewTabMenu_CurrentFolderTextBlock"
+                               Style="{StaticResource TextBlockSubHeaderStyle}"
+                               Visibility="{x:Bind ViewModel.IsFolderView, Mode=OneWay}" />
+
+                    <!--  Folder View Controls  -->
+                    <StackPanel x:Name="FolderControlsPanel"
+                                MaxWidth="{StaticResource StandardControlMaxWidth}"
+                                Visibility="{x:Bind ViewModel.IsFolderView, Mode=OneWay}">
+                        <!--  Name  -->
+                        <local:SettingContainer x:Name="CurrentFolderName"
+                                                x:Uid="NewTabMenu_CurrentFolderName"
+                                                CurrentValue="{x:Bind ViewModel.CurrentFolderName, Mode=OneWay}"
+                                                Style="{StaticResource ExpanderSettingContainerStyle}">
+                            <TextBox Style="{StaticResource TextBoxSettingStyle}"
+                                     Text="{x:Bind ViewModel.CurrentFolderName, Mode=TwoWay}" />
+                        </local:SettingContainer>
+
+                        <!--  Icon  -->
+                        <local:SettingContainer x:Name="CurrentFolderIcon"
+                                                x:Uid="NewTabMenu_CurrentFolderIcon"
+                                                CurrentValueAccessibleName="{x:Bind ViewModel.CurrentFolderLocalizedIcon, Mode=OneWay}"
+                                                Style="{StaticResource ExpanderSettingContainerStyleWithComplexPreview}">
+                            <local:SettingContainer.CurrentValue>
+                                <Grid>
+                                    <ContentControl Width="16"
+                                                    Height="16"
+                                                    Content="{x:Bind ViewModel.CurrentFolderIconPreview, Mode=OneWay}"
+                                                    IsTabStop="False"
+                                                    Visibility="{x:Bind mtu:Converters.InvertedBooleanToVisibility(ViewModel.CurrentFolderUsingNoIcon), Mode=OneWay}" />
+                                    <TextBlock Margin="0,0,0,0"
+                                               HorizontalAlignment="Right"
+                                               VerticalAlignment="Center"
+                                               FontFamily="Segoe UI, Segoe Fluent Icons, Segoe MDL2 Assets"
+                                               Style="{StaticResource SettingsPageItemDescriptionStyle}"
+                                               Text="{x:Bind ViewModel.CurrentFolderLocalizedIcon, Mode=OneWay}"
+                                               Visibility="{x:Bind ViewModel.CurrentFolderUsingNoIcon, Mode=OneWay}" />
+                                </Grid>
+                            </local:SettingContainer.CurrentValue>
+                            <local:SettingContainer.Content>
+                                <local:IconPicker CurrentIconPath="{x:Bind ViewModel.CurrentFolderIconPath, Mode=TwoWay}"
+                                                  WindowRoot="{x:Bind WindowRoot, Mode=OneWay}" />
+                            </local:SettingContainer.Content>
+                        </local:SettingContainer>
+
+                        <!--  Inlining  -->
+                        <local:SettingContainer x:Name="CurrentFolderInlining"
+                                                x:Uid="NewTabMenu_CurrentFolderInlining">
+                            <ToggleSwitch IsOn="{x:Bind ViewModel.CurrentFolderInlining, Mode=TwoWay}"
+                                          Style="{StaticResource ToggleSwitchInExpanderStyle}" />
+                        </local:SettingContainer>
+
+                        <!--  Allow Empty  -->
+                        <local:SettingContainer x:Name="CurrentFolderAllowEmpty"
+                                                x:Uid="NewTabMenu_CurrentFolderAllowEmpty">
+                            <ToggleSwitch IsOn="{x:Bind ViewModel.CurrentFolderAllowEmpty, Mode=TwoWay}"
+                                          Style="{StaticResource ToggleSwitchInExpanderStyle}" />
+                        </local:SettingContainer>
                     </StackPanel>
-                </Button>
-                <Button x:Name="DeleteMultipleButton"
-                        Click="DeleteMultiple_Click"
-                        IsEnabled="False"
-                        Style="{StaticResource DeleteButtonStyle}">
-                    <StackPanel Orientation="Horizontal">
-                        <FontIcon FontSize="{StaticResource StandardIconSize}"
-                                  Glyph="&#xE74D;" />
-                        <TextBlock x:Uid="NewTabMenu_DeleteMultipleTextBlock"
-                                   Margin="8,0,0,0" />
-                    </StackPanel>
-                </Button>
-            </StackPanel>
-        </StackPanel>
 
-        <!--  Folder View Controls  -->
-        <StackPanel Grid.Row="1"
-                    MaxWidth="{StaticResource StandardControlMaxWidth}"
-                    Visibility="{x:Bind ViewModel.IsFolderView, Mode=OneWay}">
-            <TextBlock x:Uid="NewTabMenu_CurrentFolderTextBlock"
-                       Style="{StaticResource TextBlockSubHeaderStyle}" />
-            <!--  Name  -->
-            <local:SettingContainer x:Name="CurrentFolderName"
-                                    x:Uid="NewTabMenu_CurrentFolderName"
-                                    CurrentValue="{x:Bind ViewModel.CurrentFolderName, Mode=OneWay}"
-                                    Style="{StaticResource ExpanderSettingContainerStyle}">
-                <TextBox Style="{StaticResource TextBoxSettingStyle}"
-                         Text="{x:Bind ViewModel.CurrentFolderName, Mode=TwoWay}" />
-            </local:SettingContainer>
+                    <!--  Add Entries header  -->
+                    <TextBlock x:Name="AddEntriesHeader"
+                               Margin="0,0,0,0"
+                               x:Uid="NewTabMenu_AddEntriesTextBlock"
+                               Style="{StaticResource TextBlockSubHeaderStyle}" />
 
-            <!--  Icon  -->
-            <local:SettingContainer x:Name="CurrentFolderIcon"
-                                    x:Uid="NewTabMenu_CurrentFolderIcon"
-                                    CurrentValueAccessibleName="{x:Bind ViewModel.CurrentFolderLocalizedIcon, Mode=OneWay}"
-                                    Style="{StaticResource ExpanderSettingContainerStyleWithComplexPreview}">
-                <local:SettingContainer.CurrentValue>
-                    <Grid>
-                        <ContentControl Width="16"
-                                        Height="16"
-                                        Content="{x:Bind ViewModel.CurrentFolderIconPreview, Mode=OneWay}"
-                                        IsTabStop="False"
-                                        Visibility="{x:Bind mtu:Converters.InvertedBooleanToVisibility(ViewModel.CurrentFolderUsingNoIcon), Mode=OneWay}" />
-                        <TextBlock Margin="0,0,0,0"
-                                   HorizontalAlignment="Right"
-                                   VerticalAlignment="Center"
-                                   FontFamily="Segoe UI, Segoe Fluent Icons, Segoe MDL2 Assets"
-                                   Style="{StaticResource SettingsPageItemDescriptionStyle}"
-                                   Text="{x:Bind ViewModel.CurrentFolderLocalizedIcon, Mode=OneWay}"
-                                   Visibility="{x:Bind ViewModel.CurrentFolderUsingNoIcon, Mode=OneWay}" />
-                    </Grid>
-                </local:SettingContainer.CurrentValue>
-                <local:SettingContainer.Content>
-                    <local:IconPicker CurrentIconPath="{x:Bind ViewModel.CurrentFolderIconPath, Mode=TwoWay}"
-                                      WindowRoot="{x:Bind WindowRoot, Mode=OneWay}" />
-                </local:SettingContainer.Content>
-            </local:SettingContainer>
-
-            <!--  Inlining  -->
-            <local:SettingContainer x:Name="CurrentFolderInlining"
-                                    x:Uid="NewTabMenu_CurrentFolderInlining">
-                <ToggleSwitch IsOn="{x:Bind ViewModel.CurrentFolderInlining, Mode=TwoWay}"
-                              Style="{StaticResource ToggleSwitchInExpanderStyle}" />
-            </local:SettingContainer>
-
-            <!--  Allow Empty  -->
-            <local:SettingContainer x:Name="CurrentFolderAllowEmpty"
-                                    x:Uid="NewTabMenu_CurrentFolderAllowEmpty">
-                <ToggleSwitch IsOn="{x:Bind ViewModel.CurrentFolderAllowEmpty, Mode=TwoWay}"
-                              Style="{StaticResource ToggleSwitchInExpanderStyle}" />
-            </local:SettingContainer>
-        </StackPanel>
-
-        <!--  Add Entries  -->
-        <StackPanel Grid.Row="2">
-            <TextBlock x:Uid="NewTabMenu_AddEntriesTextBlock"
-                       Style="{StaticResource TextBlockSubHeaderStyle}" />
+                    <!--  Add Entries  -->
+                    <StackPanel x:Name="AddEntriesPanel">
 
             <!--  Add Profile  -->
             <local:SettingContainer x:Name="AddProfile"
@@ -515,5 +496,102 @@
                 </Button>
             </local:SettingContainer>
         </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!--  Dropdown Menu Content (Preview)  -->
+            <StackPanel x:Name="PreviewPanel"
+                        Grid.Row="0"
+                        Grid.RowSpan="2"
+                        Grid.Column="1">
+                <!--  Spacer matching left column header height so preview aligns with first setting card  -->
+                <Border x:Name="PreviewSpacer"
+                        Height="24" />
+                <Border x:Name="PreviewBorder"
+                        Height="300"
+                        VerticalAlignment="Top"
+                        BorderBrush="{ThemeResource SystemControlForegroundBaseMediumLowBrush}"
+                        BorderThickness="1"
+                        CornerRadius="{ThemeResource ControlCornerRadius}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <ListView x:Name="NewTabMenuListView"
+                              Grid.Row="0"
+                              AllowDrop="True"
+                              CanDragItems="True"
+                              CanReorderItems="True"
+                              ItemTemplateSelector="{StaticResource NewTabMenuEntryTemplateSelector}"
+                              ItemsSource="{x:Bind ViewModel.CurrentView, Mode=OneWay}"
+                              SelectionMode="Multiple" />
+
+                    <!--  General Controls  -->
+                    <StackPanel Grid.Row="1"
+                                Padding="8"
+                                Orientation="Horizontal"
+                                Spacing="10">
+                        <Button x:Name="MoveToFolderButton"
+                                Click="MoveMultiple_Click"
+                                IsEnabled="False">
+                            <StackPanel Orientation="Horizontal">
+                                <FontIcon FontSize="{StaticResource StandardIconSize}"
+                                          Glyph="&#xE8DE;" />
+                                <TextBlock x:Uid="NewTabMenu_MoveToFolderTextBlock"
+                                           Margin="8,0,0,0" />
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="DeleteMultipleButton"
+                                Click="DeleteMultiple_Click"
+                                IsEnabled="False"
+                                Style="{StaticResource DeleteButtonStyle}">
+                            <StackPanel Orientation="Horizontal">
+                                <FontIcon FontSize="{StaticResource StandardIconSize}"
+                                          Glyph="&#xE74D;" />
+                                <TextBlock x:Uid="NewTabMenu_DeleteMultipleTextBlock"
+                                           Margin="8,0,0,0" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+            </StackPanel>
+
+            <VisualStateManager.VisualStateGroups>
+                <VisualStateGroup>
+                    <!--  Narrow: single column, stacked vertically  -->
+                    <VisualState x:Name="Narrow">
+                        <VisualState.StateTriggers>
+                            <AdaptiveTrigger MinWindowWidth="0" />
+                        </VisualState.StateTriggers>
+                        <VisualState.Setters>
+                            <Setter Target="ControlsColumn.Width" Value="0" />
+                            <Setter Target="ControlsColumn.MaxWidth" Value="0" />
+                            <Setter Target="PreviewColumn.Width" Value="*" />
+                            <Setter Target="PreviewColumn.MaxWidth" Value="Infinity" />
+                            <Setter Target="MainLayoutGrid.ColumnSpacing" Value="0" />
+                            <Setter Target="PreviewPanel.(Grid.Column)" Value="1" />
+                            <Setter Target="PreviewPanel.(Grid.Row)" Value="0" />
+                            <Setter Target="PreviewBorder.MaxWidth" Value="{StaticResource StandardControlMaxWidth}" />
+                            <Setter Target="PreviewBorder.Height" Value="300" />
+                            <Setter Target="PreviewSpacer.Height" Value="0" />
+                            <Setter Target="ControlsScrollViewer.(Grid.Column)" Value="1" />
+                            <Setter Target="ControlsScrollViewer.(Grid.Row)" Value="1" />
+                        </VisualState.Setters>
+                    </VisualState>
+                    <!--  Wide: two columns, preview on the right  -->
+                    <VisualState x:Name="Wide">
+                        <VisualState.StateTriggers>
+                            <AdaptiveTrigger MinWindowWidth="900" />
+                        </VisualState.StateTriggers>
+                        <VisualState.Setters>
+                            <Setter Target="PreviewBorder.Height" Value="NaN" />
+                            <Setter Target="PreviewBorder.MinHeight" Value="300" />
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateManager.VisualStateGroups>
+        </Grid>
     </Grid>
 </Page>
