@@ -1032,7 +1032,7 @@ static bool _isWslExe(
 
     // Shared by both branches: split arguments after the exe, skipping one optional space.
     const auto splitArgs = [&](size_t pos) noexcept {
-        if (pos < commandLine.size() && commandLine[pos] == L' ')
+        if (pos < commandLine.size() && til::at(commandLine, pos) == L' ')
         {
             pos++;
         }
