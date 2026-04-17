@@ -358,8 +358,13 @@ void UtilsTests::TestMangleWSLPaths()
     const WEX::TestExecution::DisableVerifyExceptions disableExceptionsScope;
     const SetVerifyOutput verifySettings{ VerifyOutputSettings::LogOnlyFailures };
 
+    wchar_t computerName[64];
+    DWORD computerNameLen = ARRAYSIZE(computerName);
+    THROW_IF_WIN32_BOOL_FALSE(GetComputerNameExW(ComputerNamePhysicalDnsHostname, computerName, &computerNameLen));
+
     const auto startingDirectory{ L"SENTINEL" };
-    const auto expectedUserProfilePath = wil::ExpandEnvironmentStringsW<std::wstring>(L"%USERPROFILE%");
+    const auto expectedUserProfilePath = wil::GetEnvironmentVariableW<std::wstring>(L"USERPROFILE");
+    const auto osc7 = fmt::format(FMT_COMPILE(LR"(\\{}\home\user)"), &computerName[0]);
 
     struct Test
     {
@@ -404,7 +409,7 @@ void UtilsTests::TestMangleWSLPaths()
         { LR"(wsl -d Ubuntu)",                      LR"(\\wsl.localhost\Ubuntu\home\user)", LR"("wsl" --cd "\\wsl.localhost\Ubuntu\home\user" -d Ubuntu)", L"" },
 
         /// Tests for OSC 7-style file URI to UNC path mangling
-        { LR"(wsl -d Ubuntu)",                      LR"(\\notexist.localhost\home\user)",   LR"("wsl" --cd "/home/user" -d Ubuntu)",                       L"" },
+        { LR"(wsl -d Ubuntu)",                      osc7,                                   LR"("wsl" --cd "/home/user" -d Ubuntu)",                       L"" },
 
         /// Tests for GH #12353
         { LR"(wsl -d Ubuntu)",                      L"~",                                   LR"("wsl" --cd "~" -d Ubuntu)",                                L"" },

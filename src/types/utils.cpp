@@ -1037,6 +1037,7 @@ static bool _isWslExe(
             pos++;
         }
         outArguments = til::safe_slice_abs(commandLine, pos, std::wstring_view::npos);
+        return true;
     };
 
     // Quoted: the executable path extends from the first to the second double-quote.
@@ -1058,42 +1059,58 @@ static bool _isWslExe(
         }
 
         outExePath = path;
-        splitArgs(close + 1);
-        return true;
+        return splitArgs(close + 1);
     }
 
-    // Unquoted: find "wsl" as a filename component preceded by '\', '/' or BOL,
+    const auto beg = commandLine.begin();
+    const auto end = commandLine.end();
+    auto it = beg;
+
+    // Unquoted: find "wsl" as a filename component preceded by '\', '/' or start-of-string,
     // optionally followed by ".exe", then ' ' or end-of-string.
-    for (size_t searchFrom = 0;;)
+    for (;;)
     {
-        const auto pos = til::find_insensitive_ascii(commandLine.substr(searchFrom), L"wsl");
-        if (pos == std::wstring_view::npos)
+        static constexpr auto needle = L"wsl";
+        it = std::search(
+            it,
+            end,
+            needle,
+            needle + 3,
+            [](wchar_t c1, wchar_t c2) {
+                return til::tolower_ascii(c1) == c2;
+            });
+        if (it == end)
         {
             return false;
         }
 
-        const auto absPos = searchFrom + pos;
-        searchFrom = absPos + 1;
+        // Ensure that no matter what, we advance at least 1 char per iteration.
+        ++it;
 
-        if (absPos > 0 && commandLine[absPos - 1] != L'\\' && commandLine[absPos - 1] != L'/')
+        // Verify if it's "/wsl" and not some freestanding word.
+        if ((it - beg) >= 2 && it[-2] != L'\\' && it[-2] != L'/')
         {
             continue;
         }
 
-        auto end = absPos + 3;
-        auto hasExeSuffix = false;
-        if (til::equals_insensitive_ascii(til::safe_slice_len(commandLine, end, 4), L".exe"))
+        // Skip past "wsl" (we have already advanced by 1 above).
+        it += 2;
+
+        // Consume an optional ".exe" suffix.
+        const auto hasExeSuffix = (end - it) >= 4 && til::equals_insensitive_ascii(std::wstring_view{ &*it, 4 }, L".exe");
+        if (hasExeSuffix)
         {
-            hasExeSuffix = true;
-            end += 4;
+            it += 4;
         }
 
-        if (end < commandLine.size() && commandLine[end] != L' ')
+        // Ensure that wsl.exe is followed by either whitespace or the end of the string.
+        // (Aka: It's its own word.)
+        if (it != end && *it != L' ')
         {
             continue;
         }
 
-        const auto candidate = commandLine.substr(0, end);
+        const std::wstring_view candidate{ beg, it };
 
         // For paths with spaces (e.g. "C:\Program Files\WSL\wsl.exe ..."), the
         // boundary between exe and arguments is ambiguous. Verify the file exists.
@@ -1115,9 +1132,75 @@ static bool _isWslExe(
         }
 
         outExePath = candidate;
-        splitArgs(end);
+        return splitArgs(it - beg);
+    }
+}
+
+// Checks whether the given hostname refers to the local machine.
+// WSL uses GetComputerNameExA(ComputerNamePhysicalDnsHostname) to produce
+// the hostname in OSC 7 URIs (see WSL's GetLinuxHostName/CleanHostname).
+static bool _isLocalHost(std::wstring_view hostname) noexcept
+{
+    if (til::equals_insensitive_ascii(hostname, L"localhost"))
+    {
         return true;
     }
+
+    static const auto cachedHostname = []() {
+        wchar_t buf[64];
+        DWORD len = ARRAYSIZE(buf);
+        if (!GetComputerNameExW(ComputerNamePhysicalDnsHostname, &buf[0], &len))
+        {
+            len = 0;
+        }
+        return std::wstring{ &buf[0], static_cast<size_t>(len) };
+    }();
+    return til::equals_insensitive_ascii(hostname, cachedHostname);
+}
+
+static std::wstring _mangleStartingDirectoryForWSL(std::wstring_view startingDirectory)
+{
+    std::wstring dir{ startingDirectory };
+
+    if (til::starts_with(dir, L"//wsl$") || til::starts_with(dir, L"//wsl.localhost"))
+    {
+        // GH#11994: `wsl --cd` treats forward-slash paths as linux-relative.
+        // We routinely see these two paths being used, but they're actually
+        // meant as Windows paths, so we convert them to \\ here.
+        std::ranges::replace(dir, L'/', L'\\');
+        return dir;
+    }
+
+    if (!til::starts_with(dir, LR"(\\)"))
+    {
+        // Any other paths, primarily C:\..., etc., are not our concern.
+        return dir;
+    }
+
+    if (til::starts_with(dir, LR"(\\wsl$)") || til::starts_with(dir, LR"(\\wsl.localhost)"))
+    {
+        // Some users have configured shells in WSL to emit OSC 9;9 paths with wslpath.
+        // Do nothing with them (pass them through with --cd.)
+        return dir;
+    }
+
+    // WSL shells use OSC 7 which uses file URIs. We turn those into UNC paths for
+    // storage and here we turn them back (\\hostname\bar\baz --> /bar/baz).
+    // Only do this for UNC paths whose hostname refers to the local machine.
+    // Our OSC 7 parser already rejects lexically invalid paths (via til::is_legal_path).
+    const auto slash = dir.find_first_of(L"\\/", 2);
+    const auto hostname = til::safe_slice_abs(dir, 2, slash);
+
+    if (!_isLocalHost(hostname))
+    {
+        // Leave (most likely) genuine UNC SMB paths alone.
+        return dir;
+    }
+
+    // Extract the path component and convert it to forward slashes (= UNIX path).
+    dir.erase(0, std::min(slash, dir.size()));
+    std::ranges::replace(dir, L'\\', L'/');
+    return dir;
 }
 
 // Function Description:
@@ -1135,49 +1218,28 @@ std::tuple<std::wstring, std::wstring> Utils::MangleStartingDirectoryForWSL(std:
                (t + 1 == args.size() || til::at(args, t + 1) == L' ');
     };
 
-    std::wstring_view exePath, arguments;
-    if (startingDirectory.empty() ||
-        !_isWslExe(commandLine, exePath, arguments) ||
-        arguments.find(L"--cd") != std::wstring_view::npos ||
-        hasBareTilde(arguments))
+    std::wstring_view exePath;
+    std::wstring_view arguments;
+    std::wstring newCmd;
+    std::wstring newDir;
+
+    if (!startingDirectory.empty() &&
+        _isWslExe(commandLine, exePath, arguments) &&
+        arguments.find(L"--cd") == std::wstring_view::npos &&
+        !hasBareTilde(arguments))
+    {
+        const auto dir = _mangleStartingDirectoryForWSL(startingDirectory);
+        newCmd = fmt::format(FMT_COMPILE(LR"("{}" --cd "{}" {})"), exePath, dir, arguments);
+    }
+    else
     {
         // GH#12353: ~ is never a valid Windows path. We can only accept it
         // when the exe is wsl.exe. So, we mangle it to %USERPROFILE% here.
-        return {
-            std::wstring{ commandLine },
-            startingDirectory == L"~" ? wil::ExpandEnvironmentStringsW<std::wstring>(L"%USERPROFILE%") :
-                                        std::wstring{ startingDirectory }
-        };
+        newCmd = commandLine;
+        newDir = startingDirectory == L"~" ? wil::GetEnvironmentVariableW<std::wstring>(L"USERPROFILE") : std::wstring{ startingDirectory };
     }
 
-    std::wstring dir{ startingDirectory };
-    if (til::starts_with(dir, L"//wsl$") || til::starts_with(dir, L"//wsl.localhost"))
-    {
-        // GH#11994: `wsl --cd` treats forward-slash paths as linux-relative.
-        // We routinely see these two paths being used but they're actually
-        // meant as Windows paths, so we convert them to \\ here.
-        std::ranges::replace(dir, L'/', L'\\');
-    }
-    else if (til::starts_with(dir, LR"(\\wsl$)") || til::starts_with(dir, LR"(\\wsl.localhost)"))
-    {
-        // Some users have configured shells in WSL to emit OSC 9;9 paths with wslpath.
-        // Do nothing with them (pass them through with --cd.)
-    }
-    else if (til::starts_with(dir, L"\\\\") && !IsValidDirectory(dir.c_str()))
-    {
-        // WSL shells use OSC 7 which uses file URIs. We turn those into UNC paths for
-        // storage and here we turn them back (\\hostname\bar\baz --> /bar/baz).
-        // The idea is that any UNC path that doesn't actually exist is likely to be a UNIX path.
-        // Our OSC 7 parser already rejects lexically invalid paths (via til::is_legal_path).
-        const auto del = dir.find_first_of(L"\\/", 2);
-        dir.erase(0, std::min(del, dir.size()));
-        std::ranges::replace(dir, L'\\', L'/');
-    }
-
-    return {
-        fmt::format(FMT_COMPILE(LR"("{}" --cd "{}" {})"), exePath, dir, arguments),
-        std::wstring{}
-    };
+    return { std::move(newCmd), std::move(newDir) };
 }
 
 std::wstring_view Utils::TrimPaste(std::wstring_view textView) noexcept
