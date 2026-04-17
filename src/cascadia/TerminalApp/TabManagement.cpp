@@ -153,12 +153,12 @@ namespace winrt::TerminalApp::implementation
 
         // When a tab requests a desktop toast notification, send the toast
         // and handle activation by summoning this window and switching to the tab.
-        newTabImpl->TabToastNotificationRequested([weakThis{ get_weak() }, weakTab{ newTabImpl->get_weak() }](const winrt::hstring& title, const winrt::hstring& body) {
+        newTabImpl->TabToastNotificationRequested([weakThis{ get_weak() }, weakTab{ newTabImpl->get_weak() }](const winrt::hstring& title, const winrt::hstring& body, const winrt::TerminalApp::IPaneContent& content) {
             if (const auto page{ weakThis.get() })
             {
                 if (const auto tab{ weakTab.get() })
                 {
-                    page->_SendDesktopNotification(title, body, tab);
+                    page->_SendDesktopNotification(title, body, tab, content);
                 }
             }
         });
@@ -1223,8 +1223,21 @@ namespace winrt::TerminalApp::implementation
     // - tabTitle: The title to display in the notification.
     // - body: The body text. If empty, a standard tab-activity message is built.
     // - tab: The tab to switch to when the toast is activated.
-    void TerminalPage::_SendDesktopNotification(const winrt::hstring& tabTitle, const winrt::hstring& body, const winrt::com_ptr<Tab>& tab)
+    void TerminalPage::_SendDesktopNotification(const winrt::hstring& tabTitle, const winrt::hstring& body, const winrt::com_ptr<Tab>& tab, const winrt::TerminalApp::IPaneContent& content)
     {
+        // Don't send a notification if the window is focused and the requesting
+        // pane is the active pane. The user is already looking at it.
+        if (_activated && tab == _GetFocusedTabImpl())
+        {
+            if (const auto activePane{ tab->GetActivePane() })
+            {
+                if (activePane->GetContent() == content)
+                {
+                    return;
+                }
+            }
+        }
+
         // Build the notification message.
         // If a custom body is provided (e.g. from OSC 777), use the title/body directly.
         // Otherwise, build the standard tab-activity notification message.
@@ -1263,12 +1276,12 @@ namespace winrt::TerminalApp::implementation
             .Tag = tabTag
         };
 
-        implementation::DesktopNotification::SendNotification(args, [weakThis{ get_weak() }, weakTab{ tab->get_weak() }]() {
+        implementation::DesktopNotification::SendNotification(args, [weakThis{ get_weak() }, weakTab{ tab->get_weak() }, weakContent{ winrt::make_weak(content) }]() {
             if (const auto page{ weakThis.get() })
             {
                 // The toast Activated callback runs on a background thread.
                 // Marshal to the UI thread for tab focus and window summon.
-                page->Dispatcher().RunAsync(winrt::Windows::UI::Core::CoreDispatcherPriority::Normal, [weakPage{ page->get_weak() }, weakTab]() {
+                page->Dispatcher().RunAsync(winrt::Windows::UI::Core::CoreDispatcherPriority::Normal, [weakPage{ page->get_weak() }, weakTab, weakContent]() {
                     if (const auto p{ weakPage.get() })
                     {
                         if (const auto t{ weakTab.get() })
@@ -1278,6 +1291,18 @@ namespace winrt::TerminalApp::implementation
                             {
                                 p->SummonWindowRequested.raise(nullptr, nullptr);
                                 p->_SelectTab(tabIndex.value());
+
+                                // Focus the specific pane that raised the notification.
+                                if (const auto paneContent{ weakContent.get() })
+                                {
+                                    const auto rootPane = t->GetRootPane();
+                                    rootPane->WalkTree([&](const auto& pane) {
+                                        if (pane->GetContent() == paneContent)
+                                        {
+                                            rootPane->FocusPane(pane);
+                                        }
+                                    });
+                                }
                             }
                             else
                             {
