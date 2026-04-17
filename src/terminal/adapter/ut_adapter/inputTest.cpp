@@ -628,12 +628,8 @@ void InputTest::TerminalInputNullKeyTests()
 {
     using namespace std::string_view_literals;
 
-    TestHook::LayoutGuard layout;
-    try
-    {
-        layout = TestHook::SetTerminalInputKeyboardLayout(L"00000409"); // US English
-    }
-    catch (...)
+    auto layout = TestHook::SetTerminalInputKeyboardLayout(L"00000409"); // US English
+    if (!layout)
     {
         Log::Result(TestResults::Result::Skipped);
         return;

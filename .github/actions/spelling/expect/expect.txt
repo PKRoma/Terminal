@@ -28,7 +28,6 @@ ALIGNRIGHT
 allocing
 alpc
 ALTERNATENAME
-alternatename
 ALTF
 ALTGR
 ALTNUMPAD

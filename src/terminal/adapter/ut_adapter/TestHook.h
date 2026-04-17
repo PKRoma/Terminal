@@ -13,6 +13,7 @@ namespace TestHook
         LayoutGuard(LayoutGuard&& other) noexcept;
         LayoutGuard& operator=(LayoutGuard&& other) noexcept;
 
+        explicit operator bool() const noexcept;
         operator HKL() const noexcept;
 
     private:

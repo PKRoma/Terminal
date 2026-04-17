@@ -258,11 +258,8 @@ class KittyKeyboardProtocolTests
 
     TEST_CLASS_SETUP(ClassSetup)
     {
-        try
-        {
-            layout = TestHook::SetTerminalInputKeyboardLayout(L"0001040c"); // French (Standard, AZERTY)
-        }
-        catch (...)
+        layout = TestHook::SetTerminalInputKeyboardLayout(L"0001040c"); // French (Standard, AZERTY)
+        if (!layout)
         {
             Log::Result(TestResults::Result::Skipped);
         }

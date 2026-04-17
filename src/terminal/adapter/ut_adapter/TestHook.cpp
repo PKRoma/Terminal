@@ -94,6 +94,11 @@ LayoutGuard& LayoutGuard::operator=(LayoutGuard&& other) noexcept
     return *this;
 }
 
+LayoutGuard::operator bool() const noexcept
+{
+    return _layout != nullptr;
+}
+
 LayoutGuard::operator HKL() const noexcept
 {
     return _layout;
@@ -102,6 +107,15 @@ LayoutGuard::operator HKL() const noexcept
 LayoutGuard TestHook::SetTerminalInputKeyboardLayout(const wchar_t* klid)
 {
     THROW_HR_IF_MSG(E_UNEXPECTED, g_keyboardLayout != nullptr, "Nested layout test overrides are not supported");
+
+    // Check if the layout is installed. LoadKeyboardLayoutW silently returns the
+    // current active layout if the requested one is missing.
+    const auto keyPath = fmt::format(FMT_COMPILE(L"SYSTEM\\CurrentControlSet\\Control\\Keyboard Layouts\\{}"), klid);
+    wil::unique_hkey key;
+    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, keyPath.c_str(), 0, KEY_READ, key.addressof()) != ERROR_SUCCESS)
+    {
+        return {};
+    }
 
     const auto layout = LoadKeyboardLayoutW(klid, KLF_NOTELLSHELL);
     THROW_LAST_ERROR_IF_NULL(layout);
