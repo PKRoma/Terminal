@@ -1031,7 +1031,7 @@ static bool _isWslExe(
     }
 
     // Shared by both branches: split arguments after the exe, skipping one optional space.
-    const auto splitArgs = [&](size_t pos) {
+    const auto splitArgs = [&](size_t pos) noexcept {
         if (pos < commandLine.size() && commandLine[pos] == L' ')
         {
             pos++;
@@ -1076,7 +1076,7 @@ static bool _isWslExe(
             end,
             needle,
             needle + 3,
-            [](wchar_t c1, wchar_t c2) {
+            [](wchar_t c1, wchar_t c2) noexcept {
                 return til::tolower_ascii(c1) == c2;
             });
         if (it == end)
@@ -1088,7 +1088,7 @@ static bool _isWslExe(
         ++it;
 
         // Verify if it's "/wsl" and not some freestanding word.
-        if ((it - beg) >= 2 && it[-2] != L'\\' && it[-2] != L'/')
+        if ((it - beg) >= 2 && til::at(it, -2) != L'\\' && til::at(it, -2) != L'/')
         {
             continue;
         }
@@ -1139,7 +1139,7 @@ static bool _isWslExe(
 // Checks whether the given hostname refers to the local machine.
 // WSL uses GetComputerNameExA(ComputerNamePhysicalDnsHostname) to produce
 // the hostname in OSC 7 URIs (see WSL's GetLinuxHostName/CleanHostname).
-static bool _isLocalHost(std::wstring_view hostname) noexcept
+static bool _isLocalHost(std::wstring_view hostname)
 {
     if (til::equals_insensitive_ascii(hostname, L"localhost"))
     {
