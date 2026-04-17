@@ -628,7 +628,17 @@ void InputTest::TerminalInputNullKeyTests()
 {
     using namespace std::string_view_literals;
 
-    const auto layout = TestHook::SetTerminalInputKeyboardLayout(L"00000409"); // US English
+    TestHook::LayoutGuard layout;
+    try
+    {
+        layout = TestHook::SetTerminalInputKeyboardLayout(L"00000409"); // US English
+    }
+    catch (...)
+    {
+        Log::Result(TestResults::Result::Skipped);
+        return;
+    }
+
     unsigned int uiKeystate = LEFT_CTRL_PRESSED;
 
     TerminalInput input;

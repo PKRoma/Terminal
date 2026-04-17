@@ -1497,14 +1497,9 @@ void TerminalInput::KeyboardHelper::init() noexcept
     }
 }
 
-#pragma comment(linker, "/alternatename:TestHook_TerminalInput_KeyboardLayout=TestHook_TerminalInput_KeyboardLayout_Default")
+// The default no-op implementation lives in TestHook.cpp (its own .obj) so the
+// linker can skip it when a test DLL supplies its own definition.
 extern "C" HKL TestHook_TerminalInput_KeyboardLayout();
-
-// Thanks to LTCG this should get inlined in Release builds and the test branch removed.
-extern "C" HKL TestHook_TerminalInput_KeyboardLayout_Default()
-{
-    return nullptr;
-}
 
 void TerminalInput::KeyboardHelper::initSlow() noexcept
 {

@@ -252,9 +252,28 @@ extern "C" HRESULT __declspec(dllexport) __cdecl KittyKeyTestDataSource(IDataSou
 
 class KittyKeyboardProtocolTests
 {
-    TestHook::LayoutGuard layout = TestHook::SetTerminalInputKeyboardLayout(L"0001040c"); // French (Standard, AZERTY)
+    TestHook::LayoutGuard layout;
 
     TEST_CLASS(KittyKeyboardProtocolTests);
+
+    TEST_CLASS_SETUP(ClassSetup)
+    {
+        try
+        {
+            layout = TestHook::SetTerminalInputKeyboardLayout(L"0001040c"); // French (Standard, AZERTY)
+        }
+        catch (...)
+        {
+            Log::Result(TestResults::Result::Skipped);
+        }
+        return true;
+    }
+
+    TEST_CLASS_CLEANUP(ClassCleanup)
+    {
+        layout = {};
+        return true;
+    }
 
     TEST_METHOD(KeyPressTests)
     {

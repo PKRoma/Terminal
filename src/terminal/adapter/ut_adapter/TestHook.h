@@ -4,6 +4,7 @@ namespace TestHook
 {
     struct LayoutGuard
     {
+        LayoutGuard() = default;
         LayoutGuard(HKL layout, bool needsUnload) noexcept;
         ~LayoutGuard();
 
