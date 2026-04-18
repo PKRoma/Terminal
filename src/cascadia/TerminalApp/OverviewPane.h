@@ -21,6 +21,9 @@ namespace winrt::TerminalApp::implementation
         int32_t SelectedIndex() const;
         void SelectedIndex(int32_t value);
 
+        bool UseMica() const;
+        void UseMica(bool value);
+
         // Events
         til::typed_event<Windows::Foundation::IInspectable, Windows::Foundation::IReference<int32_t>> TabSelected;
         til::typed_event<> Dismissed;
@@ -50,6 +53,8 @@ namespace winrt::TerminalApp::implementation
         int32_t _selectedIndex{ 0 };
         int32_t _columnCount{ 3 }; // must match WrapGrid MaximumRowsOrColumns in OverviewPane.xaml
         bool _pendingEnterAnimation{ false };
+        bool _useMica{ false };
+        void _UpdateBackgroundForMica();
         winrt::event_token _exitAnimationToken{};
         Windows::UI::Xaml::Media::Animation::Storyboard _exitContentStoryboard{ nullptr };
 

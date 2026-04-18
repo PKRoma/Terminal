@@ -11,6 +11,7 @@ namespace TerminalApp
         void UpdateTabContent(Windows.Foundation.Collections.IVector<Tab> tabs, Int32 focusedIndex);
         void ClearTabContent();
         Int32 SelectedIndex;
+        Boolean UseMica;
 
         event Windows.Foundation.TypedEventHandler<Object, Windows.Foundation.IReference<Int32> > TabSelected;
         event Windows.Foundation.TypedEventHandler<Object, Object> Dismissed;

@@ -27,6 +27,11 @@ namespace winrt::TerminalApp::implementation
     {
         InitializeComponent();
 
+        // Apply the initial background (opaque by default, since _useMica
+        // starts false). Without this the XAML-declared brush stays in place
+        // until someone explicitly calls UseMica().
+        _UpdateBackgroundForMica();
+
         // Listen for layout passes so we can start the zoom-in animation
         // once the WrapGrid has measured and positioned its children.
         PreviewGrid().LayoutUpdated([weakThis = get_weak()](auto&&, auto&&) {
@@ -163,6 +168,46 @@ namespace winrt::TerminalApp::implementation
         {
             _selectedIndex = value;
             _UpdateSelection();
+        }
+    }
+
+    bool OverviewPane::UseMica() const
+    {
+        return _useMica;
+    }
+
+    void OverviewPane::UseMica(bool value)
+    {
+        if (_useMica != value)
+        {
+            _useMica = value;
+            _UpdateBackgroundForMica();
+        }
+    }
+
+    void OverviewPane::_UpdateBackgroundForMica()
+    {
+        auto overlay = BackgroundOverlay();
+        if (_useMica)
+        {
+            // Transparent background — let the Mica backdrop show through
+            overlay.Background(SolidColorBrush{ winrt::Windows::UI::Colors::Transparent() });
+        }
+        else
+        {
+            // Opaque background when Mica is not active.
+            // Use the theme-aware SolidBackgroundFillColorBaseBrush so we
+            // match the correct color for light / dark theme.
+            auto res = Application::Current().Resources();
+            auto brush = res.TryLookup(winrt::box_value(L"SolidBackgroundFillColorBaseBrush"));
+            if (brush)
+            {
+                overlay.Background(brush.as<Brush>());
+            }
+            else
+            {
+                overlay.Background(SolidColorBrush{ winrt::Windows::UI::ColorHelper::FromArgb(255, 32, 32, 32) });
+            }
         }
     }
 
