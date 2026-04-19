@@ -316,7 +316,7 @@ namespace winrt::Microsoft::Terminal::Control::implementation
         winrt::hstring _restorePath;
         bool _showMarksInScrollbar{ false };
 
-        SafeDispatcherTimer _resizeOverlayTimer;
+        std::optional<SafeDispatcherTimer> _resizeOverlayTimer;
         void _ShowResizeOverlay();
 
         bool _isBackgroundLight{ false };

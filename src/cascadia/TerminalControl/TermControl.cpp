@@ -2483,15 +2483,20 @@ namespace winrt::Microsoft::Terminal::Control::implementation
             ResizeOverlayText().Text(fmt::format(FMT_COMPILE(L"{} \u00D7 {}"), cols, rows));
             ResizeOverlay().Visibility(Visibility::Visible);
 
-            _resizeOverlayTimer.Interval(std::chrono::milliseconds(750));
-            _resizeOverlayTimer.Tick([weakThis = get_weak()](auto&&, auto&&) {
-                if (auto self = weakThis.get())
-                {
-                    self->ResizeOverlay().Visibility(Visibility::Collapsed);
-                    self->_resizeOverlayTimer.Stop();
-                }
-            });
-            _resizeOverlayTimer.Start();
+            if (!_resizeOverlayTimer)
+            {
+                _resizeOverlayTimer.emplace();
+                _resizeOverlayTimer->Interval(std::chrono::milliseconds(750));
+                _resizeOverlayTimer->Tick([weakThis = get_weak()](auto&&, auto&&) {
+                    if (auto self = weakThis.get())
+                    {
+                        self->ResizeOverlay().Visibility(Visibility::Collapsed);
+                        self->_resizeOverlayTimer->Stop();
+                    }
+                });
+            }
+
+            _resizeOverlayTimer->Start();
         }
     }
 
@@ -3706,9 +3711,6 @@ namespace winrt::Microsoft::Terminal::Control::implementation
         }
 
         _searchScrollOffset = _calculateSearchScrollOffset();
-
-        // Show resize overlay when font size change alters the grid dimensions
-        _ShowResizeOverlay();
     }
 
     void TermControl::_coreRaisedNotice(const IInspectable& /*sender*/,
