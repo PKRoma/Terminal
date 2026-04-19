@@ -35,3 +35,6 @@
 - **Rule:** External tab switches (anything driven by `TabView.SelectedIndex` outside our own `_SelectTab` path) must tear down the overview visuals BEFORE `_UpdatedSelectedTab` runs. Do NOT call `_ExitOverview` from `_OnTabSelectionChanged` — it would re-enter `_SelectTab` -> `_tabView.SelectedItem(...)` -> `SelectionChanged` again.
 - **Pattern:** Whenever a control reparents XAML elements out of their normal tree, every external code path that touches those elements needs a "release first" hook. A small idempotent `_Dismiss*Visuals()` helper (early-return when not active) is the right shape.
 - **Files:** `src/cascadia/TerminalApp/TerminalPage.h`, `src/cascadia/TerminalApp/TerminalPage.cpp`, `src/cascadia/TerminalApp/TabManagement.cpp`
+
+### 2026-04-19: Overview keybinding passthrough
+- Overlay elements that reparent tab content (OverviewPane, CommandPalette, SuggestionsControl) hook `PreviewKeyDown="_KeyDownHandler"` on the overlay element in `TerminalPage.xaml`. This routes unrecognized keychords to TerminalPage's global action dispatch while the overlay is visible. Local keys stay local by being marked Handled in the control's `_OnKeyDown`.

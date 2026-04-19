@@ -2,6 +2,12 @@
 
 ## Active Decisions
 
+### 2026-04-19: OverviewPane keybinding passthrough (Coordinator)
+
+- **Decision:** `OverviewPane` follows the `CommandPalette` pattern — hook `PreviewKeyDown` to `_KeyDownHandler` in XAML so unrecognized keychords bubble to the global action dispatch. Local grid keys (Tab/arrows/Enter/Escape) are marked `Handled` in `_OnKeyDown` and never bubble.
+- **Why:** Global keybindings must continue to work while the overview is visible; local navigation must stay local.
+- **Files:** `src/cascadia/TerminalApp/TerminalPage.xaml`
+
 ### 2026-04-18: Overview must be dismissed on external tab selection (Dallas)
 
 - **Decision:** External tab switches (TabView SelectionChanged driven by user clicks in the tab row) must tear down the OverviewPane's reparented content BEFORE `_UpdatedSelectedTab` runs.
