@@ -371,6 +371,7 @@ namespace winrt::TerminalApp::implementation
         bool _SelectTab(uint32_t tabIndex);
         void _EnterOverview();
         void _ExitOverview(const std::optional<uint32_t>& selectedIndex);
+        void _DismissOverviewVisuals();
         bool _MoveFocus(const Microsoft::Terminal::Settings::Model::FocusDirection& direction);
         bool _SwapPane(const Microsoft::Terminal::Settings::Model::FocusDirection& direction);
         bool _MovePane(const Microsoft::Terminal::Settings::Model::MovePaneArgs args);

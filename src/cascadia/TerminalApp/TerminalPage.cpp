@@ -4159,17 +4159,7 @@ namespace winrt::TerminalApp::implementation
             }
         }
 
-        if (overview)
-        {
-            // Revoke event handlers to avoid stale callbacks
-            overview.TabSelected(_overviewTabSelectedToken);
-            overview.Dismissed(_overviewDismissedToken);
-
-            overview.ClearTabContent();
-            overview.Visibility(WUX::Visibility::Collapsed);
-        }
-
-        _isInOverviewMode = false;
+        _DismissOverviewVisuals();
 
         if (tabToSelect.has_value())
         {
@@ -4177,6 +4167,35 @@ namespace winrt::TerminalApp::implementation
         }
 
         _UpdatedSelectedTab(_GetFocusedTab());
+    }
+
+    // Method Description:
+    // - Tears down the overview's reparented content and hides the overlay,
+    //   without changing tab selection. Safe to call when not in overview mode.
+    // - Used by both _ExitOverview (which then selects a tab) and by
+    //   _OnTabSelectionChanged (where the TabView has already updated the
+    //   selection and we just need to release the reparented content before
+    //   _UpdatedSelectedTab tries to mount it back into the content area).
+    void TerminalPage::_DismissOverviewVisuals()
+    {
+        if (!_isInOverviewMode)
+        {
+            return;
+        }
+
+        if (auto overview = FindName(L"OverviewPaneElement").try_as<OverviewPane>())
+        {
+            // Revoke event handlers to avoid stale callbacks
+            overview.TabSelected(_overviewTabSelectedToken);
+            overview.Dismissed(_overviewDismissedToken);
+            _overviewTabSelectedToken = {};
+            _overviewDismissedToken = {};
+
+            overview.ClearTabContent();
+            overview.Visibility(WUX::Visibility::Collapsed);
+        }
+
+        _isInOverviewMode = false;
     }
 
     bool TerminalPage::OverviewMode() const
