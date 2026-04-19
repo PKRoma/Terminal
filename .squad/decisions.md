@@ -2,6 +2,13 @@
 
 ## Active Decisions
 
+### 2026-04-19: Overview pre-dismiss before DoAction (Coordinator)
+
+- **Decision:** When `OverviewPane` is visible and a keybinding resolves to any action other than `ToggleOverview`, dismiss the overview BEFORE `DoAction` (not after, unlike `CommandPalette`) because the overview reparents live tab `Content()` and actions that mutate tab state (NewTab, CloseTab, SplitPane, etc.) need the XAML tree restored first.
+- **Where:** `TerminalPage::_KeyDownHandler`, after command resolution, guarded by `_isInOverviewMode && action != ShortcutAction::ToggleOverview`.
+- **Why exclude `ToggleOverview`:** Its own animated exit path owns teardown.
+- **Files:** `src/cascadia/TerminalApp/TerminalPage.cpp`
+
 ### 2026-04-19: OverviewPane keybinding passthrough (Coordinator)
 
 - **Decision:** `OverviewPane` follows the `CommandPalette` pattern — hook `PreviewKeyDown` to `_KeyDownHandler` in XAML so unrecognized keychords bubble to the global action dispatch. Local grid keys (Tab/arrows/Enter/Escape) are marked `Handled` in `_OnKeyDown` and never bubble.

@@ -38,3 +38,6 @@
 
 ### 2026-04-19: Overview keybinding passthrough
 - Overlay elements that reparent tab content (OverviewPane, CommandPalette, SuggestionsControl) hook `PreviewKeyDown="_KeyDownHandler"` on the overlay element in `TerminalPage.xaml`. This routes unrecognized keychords to TerminalPage's global action dispatch while the overlay is visible. Local keys stay local by being marked Handled in the control's `_OnKeyDown`.
+
+### 2026-04-19: Overview pre-dismiss before DoAction
+- In `_KeyDownHandler`, after the keychord resolves to a command and BEFORE `_actionDispatch->DoAction(...)`, call `_DismissOverviewVisuals()` when `_isInOverviewMode && action != ShortcutAction::ToggleOverview`. Overview reparents live tab `Content()`, so global actions that mutate tab state (NewTab/CloseTab/SplitPane/etc.) must see a restored XAML tree. Unlike `CommandPalette`, which can be dismissed after DoAction, overview MUST dismiss first. `ToggleOverview` is excluded — its animated exit path owns teardown.

@@ -1787,6 +1787,17 @@ namespace winrt::TerminalApp::implementation
             return;
         }
 
+        // If the overview pane is open, most actions mutate tab state whose
+        // Content() is currently reparented under the overview. Tear down the
+        // overview's visuals first so the content is back under its original
+        // parent before the action runs. ToggleOverview is the exception — it
+        // handles its own exit.
+        if (_isInOverviewMode &&
+            cmd.ActionAndArgs().Action() != ShortcutAction::ToggleOverview)
+        {
+            _DismissOverviewVisuals();
+        }
+
         if (!_actionDispatch->DoAction(cmd.ActionAndArgs()))
         {
             return;
