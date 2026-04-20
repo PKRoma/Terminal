@@ -242,10 +242,8 @@ namespace winrt::Microsoft::Terminal::Control::implementation
     // - Initiate a paste operation.
     void ControlInteractivity::RequestPasteTextFromClipboard()
     {
-        auto args = winrt::make<PasteFromClipboardEventArgs>(_core->BracketedPasteEnabled());
-
         // send paste event up to TermApp
-        PasteFromClipboard.raise(*this, std::move(args));
+        PasteFromClipboard.raise(*this, nullptr);
     }
 
     void ControlInteractivity::PointerPressed(const uint32_t /*pointerId*/,

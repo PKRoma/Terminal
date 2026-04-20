@@ -68,11 +68,6 @@ namespace Microsoft.Terminal.Control
         byte[] Rtf { get; }; // UTF-8, as required by "Rich Text Format"
     }
 
-    runtimeclass PasteFromClipboardEventArgs
-    {
-        Boolean BracketedPasteEnabled { get; };
-    }
-
     runtimeclass OpenHyperlinkEventArgs
     {
         OpenHyperlinkEventArgs(String uri);

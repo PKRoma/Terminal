@@ -2945,9 +2945,7 @@ namespace winrt::TerminalApp::implementation
     // - Sends the text back to the TermControl through the event's
     //   `HandleClipboardData` member function.
     // - Does some of this in a background thread, as to not hang/crash the UI thread.
-    // Arguments:
-    // - eventArgs: the PasteFromClipboard event sent from the TermControl
-    safe_void_coroutine TerminalPage::_PasteFromClipboardHandler(const IInspectable sender, const PasteFromClipboardEventArgs eventArgs)
+    safe_void_coroutine TerminalPage::_PasteFromClipboardHandler(const IInspectable sender, const IInspectable /* args */)
     try
     {
         // The old Win32 clipboard API as used below is somewhere in the order of 300-1000x faster than
@@ -2955,7 +2953,14 @@ namespace winrt::TerminalApp::implementation
         const auto weakThis = get_weak();
         const auto dispatcher = Dispatcher();
         const auto globalSettings = _settings.GlobalSettings();
-        const auto bracketedPaste = eventArgs.BracketedPasteEnabled();
+        const auto control = sender.as<TermControl>();
+        // TODO GH#20164 these were added to ease the transition to broadcast group management; fill them in
+        // Used to determine whether to emit empty pastes and strip extra whitespace
+        const auto anyHasBracketedPaste = control && !control.ReadOnly() && control.BracketedPasteEnabled();
+        // Used to determine whether to warn on multi-line paste
+        // If none have bracketed paste, we can short-circuit.
+        const auto anyHasUnbracketedPaste = !anyHasBracketedPaste;
+
         // GetClipboardData might block for up to 30s for delay-rendered contents.
         co_await winrt::resume_background();
 
@@ -2965,8 +2970,11 @@ namespace winrt::TerminalApp::implementation
             text = clipboard::read();
         }
 
-        if (!bracketedPaste && globalSettings.TrimPaste())
+        if (!anyHasBracketedPaste && globalSettings.TrimPaste())
         {
+            // Warning - when broadcast is enabled, this will trim the paste for all receivers.
+            // Until we propagate this decision-making elsewhere, this is safer; broadcast will not auto-submit commands in other panes.
+            // Tracked in GH#20164
             text = winrt::hstring{ Utils::TrimPaste(text) };
         }
 
@@ -2974,7 +2982,7 @@ namespace winrt::TerminalApp::implementation
         // Bracketed Paste provides an application a way to know whether the
         // user pasted, even if there was no applicable content on it. This
         // behavior is observed in GNOME Terminal, among others.
-        if (!bracketedPaste && text.empty())
+        if (!anyHasBracketedPaste && text.empty())
         {
             co_return;
         }
@@ -2986,7 +2994,7 @@ namespace winrt::TerminalApp::implementation
             // NOTE that this is unsafe, because a shell that doesn't support bracketed paste
             // will allow an attacker to enable the mode, not realize that, and then accept
             // the paste as if it was a series of legitimate commands. See GH#13014.
-            warnMultiLine = !bracketedPaste;
+            warnMultiLine = anyHasUnbracketedPaste;
             break;
         case WarnAboutMultiLinePaste::Always:
             warnMultiLine = true;
@@ -3052,8 +3060,6 @@ namespace winrt::TerminalApp::implementation
 
             co_await winrt::resume_background();
         }
-
-        const auto control = sender.as<TermControl>();
 
         // This will end up calling ConptyConnection::WriteInput which calls WriteFile which may block for
         // an indefinite amount of time. Avoid freezes and deadlocks by running this on a background thread.
@@ -3433,16 +3439,6 @@ namespace winrt::TerminalApp::implementation
                 { plain.data(), plain.size() },
                 { reinterpret_cast<const char*>(html.data()), html.size() },
                 { reinterpret_cast<const char*>(rtf.data()), rtf.size() });
-        }
-    }
-
-    // Method Description:
-    // - Paste text from the Windows Clipboard to the focused terminal
-    void TerminalPage::_PasteText()
-    {
-        if (const auto& control{ _GetActiveControl() })
-        {
-            control.PasteTextFromClipboard();
         }
     }
 

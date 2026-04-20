@@ -7,7 +7,6 @@
 #include "TitleChangedEventArgs.g.h"
 #include "ContextMenuRequestedEventArgs.g.h"
 #include "WriteToClipboardEventArgs.g.h"
-#include "PasteFromClipboardEventArgs.g.h"
 #include "OpenHyperlinkEventArgs.g.h"
 #include "NoticeEventArgs.g.h"
 #include "ScrollPositionChangedArgs.g.h"
@@ -81,15 +80,6 @@ namespace winrt::Microsoft::Terminal::Control::implementation
         winrt::hstring _plain;
         std::string _html;
         std::string _rtf;
-    };
-
-    struct PasteFromClipboardEventArgs : public PasteFromClipboardEventArgsT<PasteFromClipboardEventArgs>
-    {
-    public:
-        PasteFromClipboardEventArgs(bool bracketedPasteEnabled) :
-            _BracketedPasteEnabled{ bracketedPasteEnabled } {}
-
-        WINRT_PROPERTY(bool, BracketedPasteEnabled, false);
     };
 
     struct OpenHyperlinkEventArgs : public OpenHyperlinkEventArgsT<OpenHyperlinkEventArgs>

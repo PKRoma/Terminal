@@ -452,8 +452,11 @@ namespace winrt::TerminalApp::implementation
     void TerminalPage::_HandlePasteText(const IInspectable& /*sender*/,
                                         const ActionEventArgs& args)
     {
-        _PasteText();
-        args.Handled(true);
+        if (const auto& control{ _GetActiveControl() })
+        {
+            _PasteFromClipboardHandler(control, nullptr);
+            args.Handled(true);
+        }
     }
 
     void TerminalPage::_HandleNewTab(const IInspectable& /*sender*/,
