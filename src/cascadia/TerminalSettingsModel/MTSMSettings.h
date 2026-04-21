@@ -8,6 +8,7 @@ Module Name:
 Abstract:
 - Contains most of the settings within Terminal Settings Model (global, profile, font, appearance)
 - To add a new setting to any one of those classes, simply add it to the respective list below, following the macro format
+- Also defines SettingKey enums for generic setting access
 
 Author(s):
 - Pankaj Bhojwani - October 2021
@@ -62,13 +63,11 @@ Author(s):
     X(Model::WindowingMode, WindowingBehavior, "windowingBehavior", Model::WindowingMode::UseNew)                                                                                                     \
     X(bool, MinimizeToNotificationArea, "minimizeToNotificationArea", false)                                                                                                                          \
     X(bool, AlwaysShowNotificationIcon, "alwaysShowNotificationIcon", false)                                                                                                                          \
-    X(winrt::Windows::Foundation::Collections::IVector<winrt::hstring>, DisabledProfileSources, "disabledProfileSources", nullptr)                                                                    \
     X(bool, ShowAdminShield, "showAdminShield", true)                                                                                                                                                 \
     X(bool, TrimPaste, "trimPaste", true)                                                                                                                                                             \
     X(bool, EnableColorSelection, "experimental.enableColorSelection", false)                                                                                                                         \
     X(bool, EnableShellCompletionMenu, "experimental.enableShellCompletionMenu", false)                                                                                                               \
     X(bool, EnableUnfocusedAcrylic, "compatibility.enableUnfocusedAcrylic", true)                                                                                                                     \
-    X(winrt::Windows::Foundation::Collections::IVector<Model::NewTabMenuEntry>, NewTabMenu, "newTabMenu", winrt::single_threaded_vector<Model::NewTabMenuEntry>({ Model::RemainingProfilesEntry{} })) \
     X(bool, AllowHeadless, "compatibility.allowHeadless", false)                                                                                                                                      \
     X(hstring, SearchWebDefaultQueryUrl, "searchWebDefaultQueryUrl", L"https://www.bing.com/search?q=%22%s%22")                                                                                       \
     X(bool, ShowTabsFullscreen, "showTabsFullscreen", false)
@@ -88,15 +87,12 @@ Author(s):
     X(Microsoft::Terminal::Control::ScrollbarState, ScrollState, "scrollbarState", Microsoft::Terminal::Control::ScrollbarState::Visible)                      \
     X(Microsoft::Terminal::Control::TextAntialiasingMode, AntialiasingMode, "antialiasingMode", Microsoft::Terminal::Control::TextAntialiasingMode::Grayscale) \
     X(hstring, StartingDirectory, "startingDirectory")                                                                                                         \
-    X(IMediaResource, Icon, "icon", implementation::MediaResource::FromString(L"\uE756"))                                                                      \
     X(bool, SuppressApplicationTitle, "suppressApplicationTitle", false)                                                                                       \
     X(guid, ConnectionType, "connectionType")                                                                                                                  \
     X(CloseOnExitMode, CloseOnExit, "closeOnExit", CloseOnExitMode::Automatic)                                                                                 \
     X(hstring, TabTitle, "tabTitle")                                                                                                                           \
     X(Model::BellStyle, BellStyle, "bellStyle", BellStyle::Audible)                                                                                            \
-    X(IEnvironmentVariableMap, EnvironmentVariables, "environment", nullptr)                                                                                   \
     X(bool, RightClickContextMenu, "rightClickContextMenu", false)                                                                                             \
-    X(Windows::Foundation::Collections::IVector<IMediaResource>, BellSound, "bellSound", nullptr)                                                              \
     X(bool, Elevate, "elevate", false)                                                                                                                         \
     X(bool, AutoMarkPrompts, "autoMarkPrompts", true)                                                                                                          \
     X(bool, ShowMarks, "showMarksOnScrollbar", false)                                                                                                          \
@@ -124,8 +120,6 @@ Author(s):
     X(hstring, FontFace, "face", DEFAULT_FONT_FACE)                                    \
     X(float, FontSize, "size", DEFAULT_FONT_SIZE)                                      \
     X(winrt::Windows::UI::Text::FontWeight, FontWeight, "weight", DEFAULT_FONT_WEIGHT) \
-    X(IFontAxesMap, FontAxes, "axes")                                                  \
-    X(IFontFeatureMap, FontFeatures, "features")                                       \
     X(bool, EnableBuiltinGlyphs, "builtinGlyphs", true)                                \
     X(bool, EnableColorGlyphs, "colorGlyphs", true)                                    \
     X(winrt::hstring, CellWidth, "cellWidth")                                          \
@@ -137,10 +131,7 @@ Author(s):
     X(float, BackgroundImageOpacity, "backgroundImageOpacity", 1.0f)                                                                                               \
     X(winrt::Windows::UI::Xaml::Media::Stretch, BackgroundImageStretchMode, "backgroundImageStretchMode", winrt::Windows::UI::Xaml::Media::Stretch::UniformToFill) \
     X(bool, RetroTerminalEffect, "experimental.retroTerminalEffect", false)                                                                                        \
-    X(IMediaResource, PixelShaderPath, "experimental.pixelShaderPath", implementation::MediaResource::Empty())                                                     \
-    X(IMediaResource, PixelShaderImagePath, "experimental.pixelShaderImagePath", implementation::MediaResource::Empty())                                           \
     X(ConvergedAlignment, BackgroundImageAlignment, "backgroundImageAlignment", ConvergedAlignment::Horizontal_Center | ConvergedAlignment::Vertical_Center)       \
-    X(IMediaResource, BackgroundImagePath, "backgroundImage", implementation::MediaResource::Empty())                                                              \
     X(Model::IntenseStyle, IntenseTextStyle, "intenseTextStyle", Model::IntenseStyle::Bright)                                                                      \
     X(Core::AdjustTextMode, AdjustIndistinguishableColors, "adjustIndistinguishableColors", Core::AdjustTextMode::Automatic)                                       \
     X(bool, UseAcrylic, "useAcrylic", false)
@@ -174,3 +165,176 @@ Author(s):
     X(winrt::Microsoft::Terminal::Settings::Model::ThemeColor, UnfocusedBackground, "unfocusedBackground", nullptr)                                    \
     X(winrt::Microsoft::Terminal::Settings::Model::IconStyle, IconStyle, "iconStyle", winrt::Microsoft::Terminal::Settings::Model::IconStyle::Default) \
     X(winrt::Microsoft::Terminal::Settings::Model::TabCloseButtonVisibility, ShowCloseButton, "showCloseButton", winrt::Microsoft::Terminal::Settings::Model::TabCloseButtonVisibility::Always)
+
+// SettingKey enums: provide a generic way to reference settings by key.
+// Generated from the MTSM macros above. Also includes special-cased settings
+// that are not part of the macro lists (prefixed with _ to avoid name collisions).
+// SETTINGS_SIZE is a sentinel value that must remain last in each enum.
+namespace winrt::Microsoft::Terminal::Settings::Model::implementation
+{
+#define _MTSM_ENUM_VALUE(type, name, jsonKey, ...) name,
+
+    enum class ProfileSettingKey : int
+    {
+        MTSM_PROFILE_SETTINGS(_MTSM_ENUM_VALUE)
+        // Special-cased profile settings (not in MTSM_PROFILE_SETTINGS due to
+        // custom JSON parsing, but included here for completeness)
+        _Name,
+        _Guid,
+        _Source,
+        _Hidden,
+        _Padding,
+        _TabColor,
+        // Complex/mutable settings with backing fields
+        _Icon,
+        _EnvironmentVariables,
+        _BellSound,
+        SETTINGS_SIZE
+    };
+
+    enum class GlobalSettingKey : int
+    {
+        MTSM_GLOBAL_SETTINGS(_MTSM_ENUM_VALUE)
+        // Special-cased global settings
+        _UnparsedDefaultProfile,
+        // Complex/mutable settings with backing fields
+        _DisabledProfileSources,
+        _NewTabMenu,
+        SETTINGS_SIZE
+    };
+
+    enum class FontSettingKey : int
+    {
+        MTSM_FONT_SETTINGS(_MTSM_ENUM_VALUE)
+        // Complex/mutable settings with backing fields
+        _FontAxes,
+        _FontFeatures,
+        SETTINGS_SIZE
+    };
+
+    enum class AppearanceSettingKey : int
+    {
+        MTSM_APPEARANCE_SETTINGS(_MTSM_ENUM_VALUE)
+        // Special-cased appearance settings
+        _Foreground,
+        _Background,
+        _SelectionBackground,
+        _CursorColor,
+        _Opacity,
+        _DarkColorSchemeName,
+        _LightColorSchemeName,
+        // Complex/mutable settings with backing fields
+        _PixelShaderPath,
+        _PixelShaderImagePath,
+        _BackgroundImagePath,
+        SETTINGS_SIZE
+    };
+
+#undef _MTSM_ENUM_VALUE
+
+    // JSON key lookup: returns the JSON key string for a given SettingKey.
+    // Generated from the same macros to maintain a single source of truth.
+    constexpr std::string_view JsonKeyForSetting(ProfileSettingKey key)
+    {
+#define _MTSM_KEY_CASE(type, name, jsonKey, ...) \
+    case ProfileSettingKey::name:                 \
+        return jsonKey;
+        switch (key)
+        {
+            MTSM_PROFILE_SETTINGS(_MTSM_KEY_CASE)
+        case ProfileSettingKey::_Name:
+            return "name";
+        case ProfileSettingKey::_Guid:
+            return "guid";
+        case ProfileSettingKey::_Source:
+            return "source";
+        case ProfileSettingKey::_Hidden:
+            return "hidden";
+        case ProfileSettingKey::_Padding:
+            return "padding";
+        case ProfileSettingKey::_TabColor:
+            return "tabColor";
+        case ProfileSettingKey::_Icon:
+            return "icon";
+        case ProfileSettingKey::_EnvironmentVariables:
+            return "environment";
+        case ProfileSettingKey::_BellSound:
+            return "bellSound";
+        default:
+            return {};
+        }
+#undef _MTSM_KEY_CASE
+    }
+
+    constexpr std::string_view JsonKeyForSetting(GlobalSettingKey key)
+    {
+#define _MTSM_KEY_CASE(type, name, jsonKey, ...) \
+    case GlobalSettingKey::name:                  \
+        return jsonKey;
+        switch (key)
+        {
+            MTSM_GLOBAL_SETTINGS(_MTSM_KEY_CASE)
+        case GlobalSettingKey::_UnparsedDefaultProfile:
+            return "defaultProfile";
+        case GlobalSettingKey::_DisabledProfileSources:
+            return "disabledProfileSources";
+        case GlobalSettingKey::_NewTabMenu:
+            return "newTabMenu";
+        default:
+            return {};
+        }
+#undef _MTSM_KEY_CASE
+    }
+
+    constexpr std::string_view JsonKeyForSetting(FontSettingKey key)
+    {
+#define _MTSM_KEY_CASE(type, name, jsonKey, ...) \
+    case FontSettingKey::name:                    \
+        return jsonKey;
+        switch (key)
+        {
+            MTSM_FONT_SETTINGS(_MTSM_KEY_CASE)
+        case FontSettingKey::_FontAxes:
+            return "axes";
+        case FontSettingKey::_FontFeatures:
+            return "features";
+        default:
+            return {};
+        }
+#undef _MTSM_KEY_CASE
+    }
+
+    constexpr std::string_view JsonKeyForSetting(AppearanceSettingKey key)
+    {
+#define _MTSM_KEY_CASE(type, name, jsonKey, ...) \
+    case AppearanceSettingKey::name:              \
+        return jsonKey;
+        switch (key)
+        {
+            MTSM_APPEARANCE_SETTINGS(_MTSM_KEY_CASE)
+        case AppearanceSettingKey::_Foreground:
+            return "foreground";
+        case AppearanceSettingKey::_Background:
+            return "background";
+        case AppearanceSettingKey::_SelectionBackground:
+            return "selectionBackground";
+        case AppearanceSettingKey::_CursorColor:
+            return "cursorColor";
+        case AppearanceSettingKey::_Opacity:
+            return "opacity";
+        case AppearanceSettingKey::_DarkColorSchemeName:
+            return "colorScheme";
+        case AppearanceSettingKey::_LightColorSchemeName:
+            return "colorScheme";
+        case AppearanceSettingKey::_PixelShaderPath:
+            return "experimental.pixelShaderPath";
+        case AppearanceSettingKey::_PixelShaderImagePath:
+            return "experimental.pixelShaderImagePath";
+        case AppearanceSettingKey::_BackgroundImagePath:
+            return "backgroundImage";
+        default:
+            return {};
+        }
+#undef _MTSM_KEY_CASE
+    }
+}

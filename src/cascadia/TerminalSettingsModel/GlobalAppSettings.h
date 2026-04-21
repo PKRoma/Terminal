@@ -18,6 +18,7 @@ Author(s):
 #include "GlobalAppSettings.g.h"
 #include "IInheritable.h"
 #include "MTSMSettings.h"
+#include "TerminalSettingsSerializationHelpers.h"
 
 #include "ActionMap.h"
 #include "Command.h"
@@ -56,6 +57,11 @@ namespace winrt::Microsoft::Terminal::Settings::Model::implementation
         Json::Value ToJson();
         bool FixupsAppliedDuringLoad();
 
+        // Generic setting access via SettingKey
+        bool HasSetting(GlobalSettingKey key) const;
+        void ClearSetting(GlobalSettingKey key);
+        std::vector<GlobalSettingKey> CurrentSettings() const;
+
         const std::vector<SettingsLoadWarnings>& KeybindingsWarnings() const;
 
         // This DefaultProfile() setter is called by CascadiaSettings,
@@ -80,12 +86,16 @@ namespace winrt::Microsoft::Terminal::Settings::Model::implementation
 
         winrt::hstring SourceBasePath;
 
-        INHERITABLE_SETTING(Model::GlobalAppSettings, hstring, UnparsedDefaultProfile, L"");
+        INHERITABLE_SETTING(Model::GlobalAppSettings, hstring, UnparsedDefaultProfile, "defaultProfile", L"");
 
 #define GLOBAL_SETTINGS_INITIALIZE(type, name, jsonKey, ...) \
     INHERITABLE_SETTING_WITH_LOGGING(Model::GlobalAppSettings, type, name, jsonKey, ##__VA_ARGS__)
         MTSM_GLOBAL_SETTINGS(GLOBAL_SETTINGS_INITIALIZE)
 #undef GLOBAL_SETTINGS_INITIALIZE
+
+        // Complex/mutable settings that need backing fields (not JSON-backed)
+        INHERITABLE_MUTABLE_SETTING(Model::GlobalAppSettings, winrt::Windows::Foundation::Collections::IVector<winrt::hstring>, DisabledProfileSources, nullptr);
+        INHERITABLE_MUTABLE_SETTING(Model::GlobalAppSettings, winrt::Windows::Foundation::Collections::IVector<Model::NewTabMenuEntry>, NewTabMenu, winrt::single_threaded_vector<Model::NewTabMenuEntry>({ Model::RemainingProfilesEntry{} }));
 
     private:
 #ifdef NDEBUG
@@ -93,6 +103,10 @@ namespace winrt::Microsoft::Terminal::Settings::Model::implementation
 #else
         static constexpr bool debugFeaturesDefault{ true };
 #endif
+
+        // Raw JSON for this layer. Populated by LayerJson(), will become the
+        // source of truth for settings once the JSON-backed refactor is complete.
+        Json::Value _json{ Json::ValueType::objectValue };
 
         winrt::guid _defaultProfile{};
         bool _fixupsAppliedDuringLoad{ false };

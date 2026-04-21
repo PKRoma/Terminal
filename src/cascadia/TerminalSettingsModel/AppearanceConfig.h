@@ -18,6 +18,7 @@ Author(s):
 
 #include "AppearanceConfig.g.h"
 #include "JsonUtils.h"
+#include "TerminalSettingsSerializationHelpers.h"
 #include "IInheritable.h"
 #include "MTSMSettings.h"
 #include "MediaResourceSupport.h"
@@ -38,22 +39,39 @@ namespace winrt::Microsoft::Terminal::Settings::Model::implementation
 
         void ResolveMediaResources(const Model::MediaResourceResolver& resolver);
 
-        INHERITABLE_NULLABLE_SETTING(Model::IAppearanceConfig, Microsoft::Terminal::Core::Color, Foreground, nullptr);
-        INHERITABLE_NULLABLE_SETTING(Model::IAppearanceConfig, Microsoft::Terminal::Core::Color, Background, nullptr);
-        INHERITABLE_NULLABLE_SETTING(Model::IAppearanceConfig, Microsoft::Terminal::Core::Color, SelectionBackground, nullptr);
-        INHERITABLE_NULLABLE_SETTING(Model::IAppearanceConfig, Microsoft::Terminal::Core::Color, CursorColor, nullptr);
-        INHERITABLE_SETTING(Model::IAppearanceConfig, float, Opacity, 1.0f);
+        // Generic setting access via SettingKey
+        bool HasSetting(AppearanceSettingKey key) const;
+        void ClearSetting(AppearanceSettingKey key);
+        std::vector<AppearanceSettingKey> CurrentSettings() const;
 
-        INHERITABLE_SETTING(Model::IAppearanceConfig, hstring, DarkColorSchemeName, L"Campbell");
-        INHERITABLE_SETTING(Model::IAppearanceConfig, hstring, LightColorSchemeName, L"Campbell");
+        // Nullable color settings (JSON-backed)
+        INHERITABLE_NULLABLE_SETTING(Model::IAppearanceConfig, Microsoft::Terminal::Core::Color, Foreground, "foreground", nullptr)
+        INHERITABLE_NULLABLE_SETTING(Model::IAppearanceConfig, Microsoft::Terminal::Core::Color, Background, "background", nullptr)
+        INHERITABLE_NULLABLE_SETTING(Model::IAppearanceConfig, Microsoft::Terminal::Core::Color, SelectionBackground, "selectionBackground", nullptr)
+        INHERITABLE_NULLABLE_SETTING(Model::IAppearanceConfig, Microsoft::Terminal::Core::Color, CursorColor, "cursorColor", nullptr)
+
+        // Opacity: JSON-backed with normalization (int percent → float in LayerJson)
+        INHERITABLE_SETTING(Model::IAppearanceConfig, float, Opacity, "opacity", 1.0f)
+
+        INHERITABLE_MUTABLE_SETTING(Model::IAppearanceConfig, hstring, DarkColorSchemeName, L"Campbell");
+        INHERITABLE_MUTABLE_SETTING(Model::IAppearanceConfig, hstring, LightColorSchemeName, L"Campbell");
 
 #define APPEARANCE_SETTINGS_INITIALIZE(type, name, jsonKey, ...) \
-    INHERITABLE_SETTING(Model::IAppearanceConfig, type, name, ##__VA_ARGS__)
+    INHERITABLE_SETTING(Model::IAppearanceConfig, type, name, jsonKey, ##__VA_ARGS__)
         MTSM_APPEARANCE_SETTINGS(APPEARANCE_SETTINGS_INITIALIZE)
 #undef APPEARANCE_SETTINGS_INITIALIZE
 
+        // Complex/mutable settings that need backing fields (not JSON-backed)
+        INHERITABLE_MUTABLE_SETTING(Model::IAppearanceConfig, IMediaResource, PixelShaderPath, implementation::MediaResource::Empty());
+        INHERITABLE_MUTABLE_SETTING(Model::IAppearanceConfig, IMediaResource, PixelShaderImagePath, implementation::MediaResource::Empty());
+        INHERITABLE_MUTABLE_SETTING(Model::IAppearanceConfig, IMediaResource, BackgroundImagePath, implementation::MediaResource::Empty());
+
     private:
         winrt::weak_ref<Profile> _sourceProfile;
+
+        // Raw JSON for this layer (appearance-relevant keys only).
+        Json::Value _json{ Json::ValueType::objectValue };
+
         std::set<std::string> _changeLog;
 
         void _logSettingSet(const std::string_view& setting);

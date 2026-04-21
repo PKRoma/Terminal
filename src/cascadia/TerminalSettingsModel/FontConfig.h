@@ -19,6 +19,7 @@ Author(s):
 #include "pch.h"
 #include "FontConfig.g.h"
 #include "JsonUtils.h"
+#include "TerminalSettingsSerializationHelpers.h"
 #include "MTSMSettings.h"
 #include "IInheritable.h"
 #include <DefaultSettings.h>
@@ -39,13 +40,26 @@ namespace winrt::Microsoft::Terminal::Settings::Model::implementation
 
         Model::Profile SourceProfile();
 
+        // Generic setting access via SettingKey
+        bool HasSetting(FontSettingKey key) const;
+        void ClearSetting(FontSettingKey key);
+        std::vector<FontSettingKey> CurrentSettings() const;
+
 #define FONT_SETTINGS_INITIALIZE(type, name, jsonKey, ...) \
-    INHERITABLE_SETTING(Model::FontConfig, type, name, ##__VA_ARGS__)
+    INHERITABLE_SETTING(Model::FontConfig, type, name, jsonKey, ##__VA_ARGS__)
         MTSM_FONT_SETTINGS(FONT_SETTINGS_INITIALIZE)
 #undef FONT_SETTINGS_INITIALIZE
 
+        // Complex/mutable settings that need backing fields (not JSON-backed)
+        INHERITABLE_MUTABLE_SETTING(Model::FontConfig, IFontAxesMap, FontAxes);
+        INHERITABLE_MUTABLE_SETTING(Model::FontConfig, IFontFeatureMap, FontFeatures);
+
     private:
         winrt::weak_ref<Profile> _sourceProfile;
+
+        // Raw JSON for this layer (font sub-object shape).
+        Json::Value _json{ Json::ValueType::objectValue };
+
         std::set<std::string> _changeLog;
 
         void _logSettingSet(const std::string_view& setting);
