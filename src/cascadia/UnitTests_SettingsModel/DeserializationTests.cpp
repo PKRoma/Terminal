@@ -550,7 +550,7 @@ namespace SettingsModelUnitTests
         VERIFY_ARE_EQUAL(L"profile0", settings->AllProfiles().GetAt(0).Name());
         VERIFY_ARE_EQUAL(L"profile1", settings->AllProfiles().GetAt(1).Name());
         VERIFY_ARE_EQUAL(L"cmdFromUserSettings", settings->AllProfiles().GetAt(2).Name());
-        VERIFY_ARE_EQUAL(L"Windows PowerShell", settings->AllProfiles().GetAt(3).Name());
+        VERIFY_ARE_EQUAL(L"Windows PowerShell 5.1", settings->AllProfiles().GetAt(3).Name());
     }
 
     void DeserializationTests::TestReorderingWithoutGuid()
@@ -628,7 +628,7 @@ namespace SettingsModelUnitTests
         VERIFY_ARE_EQUAL(L"Command Prompt", settings->AllProfiles().GetAt(0).Name());
         VERIFY_ARE_EQUAL(L"ThisProfileShouldNotCrash", settings->AllProfiles().GetAt(1).Name());
         VERIFY_ARE_EQUAL(L"Ubuntu", settings->AllProfiles().GetAt(2).Name());
-        VERIFY_ARE_EQUAL(L"Windows PowerShell", settings->AllProfiles().GetAt(3).Name());
+        VERIFY_ARE_EQUAL(L"Windows PowerShell 5.1", settings->AllProfiles().GetAt(3).Name());
     }
 
     void DeserializationTests::TestLayeringNameOnlyProfiles()
@@ -660,7 +660,7 @@ namespace SettingsModelUnitTests
         VERIFY_ARE_EQUAL(L"ThisProfileIsGood", profiles.GetAt(0).Name());
         VERIFY_ARE_EQUAL(L"ThisProfileShouldNotLayer", profiles.GetAt(1).Name());
         VERIFY_ARE_EQUAL(L"NeitherShouldThisOne", profiles.GetAt(2).Name());
-        VERIFY_ARE_EQUAL(L"Windows PowerShell", profiles.GetAt(3).Name());
+        VERIFY_ARE_EQUAL(L"Windows PowerShell 5.1", profiles.GetAt(3).Name());
         VERIFY_ARE_EQUAL(L"Command Prompt", profiles.GetAt(4).Name());
     }
 

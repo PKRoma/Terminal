@@ -502,7 +502,7 @@ void Profile::_logSettingIfSet(const std::string_view& setting, const bool isSet
 
         // Exclude some false positives from userDefaults.json
         // NOTE: we can't use the OriginTag here because it hasn't been set yet!
-        const bool isWinPow = _Guid.has_value() && *_Guid == DEFAULT_WINDOWS_POWERSHELL_GUID; //_Name.has_value() && til::equals_insensitive_ascii(*_Name, L"Windows PowerShell");
+        const bool isWinPow = _Guid.has_value() && *_Guid == DEFAULT_WINDOWS_POWERSHELL_GUID; //_Name.has_value() && til::equals_insensitive_ascii(*_Name, L"Windows PowerShell 5.1");
         const bool isCmd = _Guid.has_value() && *_Guid == DEFAULT_COMMAND_PROMPT_GUID; //_Name.has_value() && til::equals_insensitive_ascii(*_Name, L"Command Prompt");
         const bool isACS = _Name.has_value() && til::equals_insensitive_ascii(*_Name, L"Azure Cloud Shell");
         const bool isWTDynamicProfile = _Source.has_value() && til::starts_with(*_Source, L"Windows.Terminal");

@@ -411,7 +411,7 @@ namespace SettingsModelUnitTests
             "profiles": [
                 {
                     "guid": "{61c54bbd-c2c6-5271-96e7-009a87ff44bf}",
-                    "name": "Windows PowerShell",
+                    "name": "Windows PowerShell 5.1",
                     "commandline": "%SystemRoot%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
                 },
                 {

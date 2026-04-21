@@ -595,7 +595,7 @@ namespace TerminalAppLocalTests
         }
         {
             AppCommandlineArgs appArgs{};
-            std::vector<const wchar_t*> rawCommands{ L"wt.exe", subcommand, L"-p", L"Windows PowerShell" };
+            std::vector<const wchar_t*> rawCommands{ L"wt.exe", subcommand, L"-p", L"Windows PowerShell 5.1" };
             _buildCommandlinesHelper(appArgs, 1u, rawCommands);
 
             VERIFY_ARE_EQUAL(1u, appArgs._startupActions.size());
@@ -613,7 +613,7 @@ namespace TerminalAppLocalTests
             VERIFY_IS_NULL(terminalArgs.TabColor());
             VERIFY_IS_NULL(terminalArgs.ProfileIndex());
             VERIFY_IS_FALSE(terminalArgs.Profile().empty());
-            VERIFY_ARE_EQUAL(L"Windows PowerShell", terminalArgs.Profile());
+            VERIFY_ARE_EQUAL(L"Windows PowerShell 5.1", terminalArgs.Profile());
             VERIFY_IS_TRUE(terminalArgs.ColorScheme().empty());
         }
         {

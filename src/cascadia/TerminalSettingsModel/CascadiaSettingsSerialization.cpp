@@ -667,6 +667,16 @@ bool SettingsLoader::FixupUserSettings()
                 }
             }
         }
+
+        // MSFT-59472435: Rename "Windows PowerShell" to "Windows PowerShell 5.1"
+        // to avoid confusion with PowerShell 7+ (aka pwsh).
+        // TODO: This can be removed in ~2028?
+        static constexpr winrt::guid powershell51{ 0x61c54bbd, 0xc2c6, 0x5271, { 0x96, 0xe7, 0x00, 0x9a, 0x87, 0xff, 0x44, 0xbf } };
+        if (profile->Guid() == powershell51 && profile->HasName() && profile->Name() == L"Windows PowerShell")
+        {
+            profile->Name(L"Windows PowerShell 5.1");
+            fixedUp = true;
+        }
     }
 
     // Terminal 1.19: Migrate the global
