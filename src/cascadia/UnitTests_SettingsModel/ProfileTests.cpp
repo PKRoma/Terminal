@@ -38,6 +38,7 @@ namespace SettingsModelUnitTests
         TEST_METHOD(CurrentSettingsReturnsCorrectKeys);
         TEST_METHOD(SpecialCasedSettingsJsonBacked);
         TEST_METHOD(NullableSettingJsonBacked);
+        TEST_METHOD(ColorSchemeJsonBacked);
     };
 
     void ProfileTests::ProfileGeneratesGuid()
@@ -808,5 +809,155 @@ namespace SettingsModelUnitTests
         // ToJson should not have tabColor after clearing
         const auto json = profileImpl->ToJson();
         VERIFY_IS_FALSE(json.isMember("tabColor"));
+    }
+
+    void ProfileTests::ColorSchemeJsonBacked()
+    {
+        // Verify that DarkColorSchemeName/LightColorSchemeName are JSON-backed,
+        // including round-trip through LayerJson/ToJson, parent inheritance,
+        // and the polymorphic colorScheme key (string vs object forms).
+
+        // Case 1: string form input — sets both dark and light to the same scheme
+        {
+            static constexpr std::string_view settingsJson{ R"({
+                "profiles": {
+                    "list": [
+                        {
+                            "name": "profile0",
+                            "guid": "{6239a42c-0000-49a3-80bd-e8fdd045185c}",
+                            "colorScheme": "One Half Dark"
+                        }
+                    ]
+                }
+            })" };
+
+            const auto settings = winrt::make_self<implementation::CascadiaSettings>(settingsJson);
+            const auto profile = settings->AllProfiles().GetAt(0);
+            const auto profileImpl = winrt::get_self<implementation::Profile>(profile);
+            const auto appearance = profile.DefaultAppearance();
+            const auto appearanceImpl = winrt::get_self<implementation::AppearanceConfig>(appearance);
+
+            // Both dark and light should be set to the same value
+            VERIFY_ARE_EQUAL(L"One Half Dark", appearance.DarkColorSchemeName());
+            VERIFY_ARE_EQUAL(L"One Half Dark", appearance.LightColorSchemeName());
+            VERIFY_IS_TRUE(appearanceImpl->HasDarkColorSchemeName());
+            VERIFY_IS_TRUE(appearanceImpl->HasLightColorSchemeName());
+
+            // ToJson should collapse to a string since dark == light
+            const auto json = profileImpl->ToJson();
+            VERIFY_IS_TRUE(json.isMember("colorScheme"));
+            VERIFY_IS_TRUE(json["colorScheme"].isString());
+            VERIFY_ARE_EQUAL("One Half Dark", json["colorScheme"].asString());
+        }
+
+        // Case 2: object form input — dark and light are different
+        {
+            static constexpr std::string_view settingsJson{ R"({
+                "profiles": {
+                    "list": [
+                        {
+                            "name": "profile0",
+                            "guid": "{6239a42c-0000-49a3-80bd-e8fdd045185c}",
+                            "colorScheme": {
+                                "dark": "One Half Dark",
+                                "light": "One Half Light"
+                            }
+                        }
+                    ]
+                }
+            })" };
+
+            const auto settings = winrt::make_self<implementation::CascadiaSettings>(settingsJson);
+            const auto profile = settings->AllProfiles().GetAt(0);
+            const auto profileImpl = winrt::get_self<implementation::Profile>(profile);
+            const auto appearance = profile.DefaultAppearance();
+            const auto appearanceImpl = winrt::get_self<implementation::AppearanceConfig>(appearance);
+
+            // Each should return its own value
+            VERIFY_ARE_EQUAL(L"One Half Dark", appearance.DarkColorSchemeName());
+            VERIFY_ARE_EQUAL(L"One Half Light", appearance.LightColorSchemeName());
+
+            // ToJson should produce an object since dark != light
+            const auto json = profileImpl->ToJson();
+            VERIFY_IS_TRUE(json.isMember("colorScheme"));
+            VERIFY_IS_TRUE(json["colorScheme"].isObject());
+            VERIFY_ARE_EQUAL("One Half Dark", json["colorScheme"]["dark"].asString());
+            VERIFY_ARE_EQUAL("One Half Light", json["colorScheme"]["light"].asString());
+        }
+
+        // Case 3: setter updates — setting dark should preserve light, and vice versa
+        {
+            static constexpr std::string_view settingsJson{ R"({
+                "profiles": {
+                    "list": [
+                        {
+                            "name": "profile0",
+                            "guid": "{6239a42c-0000-49a3-80bd-e8fdd045185c}",
+                            "colorScheme": "Campbell"
+                        }
+                    ]
+                }
+            })" };
+
+            const auto settings = winrt::make_self<implementation::CascadiaSettings>(settingsJson);
+            const auto profile = settings->AllProfiles().GetAt(0);
+            const auto profileImpl = winrt::get_self<implementation::Profile>(profile);
+            const auto appearance = profile.DefaultAppearance();
+            const auto appearanceImpl = winrt::get_self<implementation::AppearanceConfig>(appearance);
+
+            // Change dark only — light should stay "Campbell"
+            appearance.DarkColorSchemeName(L"Tango Dark");
+            VERIFY_ARE_EQUAL(L"Tango Dark", appearance.DarkColorSchemeName());
+            VERIFY_ARE_EQUAL(L"Campbell", appearance.LightColorSchemeName());
+
+            // ToJson should produce an object since dark != light
+            const auto json1 = profileImpl->ToJson();
+            VERIFY_IS_TRUE(json1["colorScheme"].isObject());
+            VERIFY_ARE_EQUAL("Tango Dark", json1["colorScheme"]["dark"].asString());
+            VERIFY_ARE_EQUAL("Campbell", json1["colorScheme"]["light"].asString());
+
+            // Change light to match dark — should collapse to string on ToJson
+            appearance.LightColorSchemeName(L"Tango Dark");
+            VERIFY_ARE_EQUAL(L"Tango Dark", appearance.LightColorSchemeName());
+            const auto json2 = profileImpl->ToJson();
+            VERIFY_IS_TRUE(json2["colorScheme"].isString());
+            VERIFY_ARE_EQUAL("Tango Dark", json2["colorScheme"].asString());
+        }
+
+        // Case 4: clear — removes colorScheme entirely, falls back to default "Campbell"
+        {
+            static constexpr std::string_view settingsJson{ R"({
+                "profiles": {
+                    "list": [
+                        {
+                            "name": "profile0",
+                            "guid": "{6239a42c-0000-49a3-80bd-e8fdd045185c}",
+                            "colorScheme": "One Half Dark"
+                        }
+                    ]
+                }
+            })" };
+
+            const auto settings = winrt::make_self<implementation::CascadiaSettings>(settingsJson);
+            const auto profile = settings->AllProfiles().GetAt(0);
+            const auto profileImpl = winrt::get_self<implementation::Profile>(profile);
+            const auto appearance = profile.DefaultAppearance();
+            const auto appearanceImpl = winrt::get_self<implementation::AppearanceConfig>(appearance);
+
+            VERIFY_IS_TRUE(appearanceImpl->HasDarkColorSchemeName());
+
+            // Clear removes colorScheme from this layer
+            appearanceImpl->ClearDarkColorSchemeName();
+            VERIFY_IS_FALSE(appearanceImpl->HasDarkColorSchemeName());
+            VERIFY_IS_FALSE(appearanceImpl->HasLightColorSchemeName());
+
+            // Falls back to default "Campbell"
+            VERIFY_ARE_EQUAL(L"Campbell", appearance.DarkColorSchemeName());
+            VERIFY_ARE_EQUAL(L"Campbell", appearance.LightColorSchemeName());
+
+            // ToJson should not have colorScheme
+            const auto json = profileImpl->ToJson();
+            VERIFY_IS_FALSE(json.isMember("colorScheme"));
+        }
     }
 }

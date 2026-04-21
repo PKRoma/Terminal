@@ -32,12 +32,11 @@ winrt::com_ptr<AppearanceConfig> AppearanceConfig::CopyAppearance(const Appearan
 {
     auto appearance{ winrt::make_self<AppearanceConfig>(std::move(sourceProfile)) };
 
-    appearance->_DarkColorSchemeName = source->_DarkColorSchemeName;
-    appearance->_LightColorSchemeName = source->_LightColorSchemeName;
     appearance->_json = source->_json;
 
     // JSON-backed settings (Foreground, Background, SelectionBackground, CursorColor,
-    // Opacity, MTSM settings) all live in _json, which is already deep-copied above.
+    // Opacity, DarkColorSchemeName, LightColorSchemeName, MTSM settings) all live in
+    // _json, which is already deep-copied above.
 
     // Complex/mutable settings with backing fields
     appearance->_PixelShaderPath = source->_PixelShaderPath;
@@ -60,19 +59,9 @@ Json::Value AppearanceConfig::ToJson() const
     // Opacity: copy from _json (may be int or float — preserves original form)
     JsonUtils::CopyKeyIfPresent(_json, json, OpacityKey);
 
-    if (HasDarkColorSchemeName() || HasLightColorSchemeName())
-    {
-        // check if the setting is coming from the UI, if so grab the ColorSchemeName until the settings UI is fixed.
-        if (_LightColorSchemeName != _DarkColorSchemeName)
-        {
-            JsonUtils::SetValueForKey(json["colorScheme"], "dark", _DarkColorSchemeName);
-            JsonUtils::SetValueForKey(json["colorScheme"], "light", _LightColorSchemeName);
-        }
-        else
-        {
-            JsonUtils::SetValueForKey(json, "colorScheme", _DarkColorSchemeName);
-        }
-    }
+    // ColorScheme: ConversionTrait<ColorSchemeReference> handles string<->object form.
+    // _json already has the correct serialized form from SetValueForKey.
+    JsonUtils::CopyKeyIfPresent(_json, json, ColorSchemeKey);
 
     // MTSM appearance settings: copy from _json (the source of truth)
 #define APPEARANCE_SETTINGS_TO_JSON(type, name, jsonKey, ...) \
@@ -217,23 +206,9 @@ void AppearanceConfig::LayerJson(const Json::Value& json)
     }
     _logSettingIfSet(OpacityKey, HasOpacity());
 
-    // ColorScheme: still uses backing fields (DarkColorSchemeName, LightColorSchemeName)
-    if (json["colorScheme"].isString())
-    {
-        // to make the UI happy, set ColorSchemeName.
-        JsonUtils::GetValueForKey(json, ColorSchemeKey, _DarkColorSchemeName);
-        _LightColorSchemeName = _DarkColorSchemeName;
-        _logSettingSet(ColorSchemeKey);
-    }
-    else if (json["colorScheme"].isObject())
-    {
-        // to make the UI happy, set ColorSchemeName to whatever the dark value is.
-        JsonUtils::GetValueForKey(json["colorScheme"], "dark", _DarkColorSchemeName);
-        JsonUtils::GetValueForKey(json["colorScheme"], "light", _LightColorSchemeName);
-
-        _logSettingSet("colorScheme.dark");
-        _logSettingSet("colorScheme.light");
-    }
+    // ColorScheme: ConversionTrait<ColorSchemeReference> handles string↔object normalization.
+    // The raw JSON is stored in _json; the trait interprets it on read.
+    _logSettingIfSet(ColorSchemeKey, HasColorSchemeRef());
 
     // MTSM settings are now JSON-backed (no backing fields).
     // Values are already in _json from the merge step above.

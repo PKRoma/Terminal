@@ -165,7 +165,6 @@ namespace winrt::Microsoft::Terminal::Settings::Model::implementation
 
         // Complex/mutable settings that need backing fields (not JSON-backed)
         INHERITABLE_MUTABLE_SETTING(Model::Profile, IMediaResource, Icon, implementation::MediaResource::FromString(L"\uE756"));
-        INHERITABLE_MUTABLE_SETTING(Model::Profile, IEnvironmentVariableMap, EnvironmentVariables, nullptr);
         INHERITABLE_MUTABLE_SETTING(Model::Profile, Windows::Foundation::Collections::IVector<IMediaResource>, BellSound, nullptr);
 
     private:

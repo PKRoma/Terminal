@@ -94,7 +94,6 @@ namespace winrt::Microsoft::Terminal::Settings::Model::implementation
 #undef GLOBAL_SETTINGS_INITIALIZE
 
         // Complex/mutable settings that need backing fields (not JSON-backed)
-        INHERITABLE_MUTABLE_SETTING(Model::GlobalAppSettings, winrt::Windows::Foundation::Collections::IVector<winrt::hstring>, DisabledProfileSources, nullptr);
         INHERITABLE_MUTABLE_SETTING(Model::GlobalAppSettings, winrt::Windows::Foundation::Collections::IVector<Model::NewTabMenuEntry>, NewTabMenu, winrt::single_threaded_vector<Model::NewTabMenuEntry>({ Model::RemainingProfilesEntry{} }));
 
     private:

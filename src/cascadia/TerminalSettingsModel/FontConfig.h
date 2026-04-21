@@ -50,10 +50,6 @@ namespace winrt::Microsoft::Terminal::Settings::Model::implementation
         MTSM_FONT_SETTINGS(FONT_SETTINGS_INITIALIZE)
 #undef FONT_SETTINGS_INITIALIZE
 
-        // Complex/mutable settings that need backing fields (not JSON-backed)
-        INHERITABLE_MUTABLE_SETTING(Model::FontConfig, IFontAxesMap, FontAxes);
-        INHERITABLE_MUTABLE_SETTING(Model::FontConfig, IFontFeatureMap, FontFeatures);
-
     private:
         winrt::weak_ref<Profile> _sourceProfile;
 

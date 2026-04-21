@@ -93,14 +93,6 @@ winrt::com_ptr<GlobalAppSettings> GlobalAppSettings::Copy() const
             globals->_NewTabMenu->Append(get_self<NewTabMenuEntry>(entry)->Copy());
         }
     }
-    if (_DisabledProfileSources)
-    {
-        globals->_DisabledProfileSources = winrt::single_threaded_vector<hstring>();
-        for (const auto& src : *_DisabledProfileSources)
-        {
-            globals->_DisabledProfileSources->Append(src);
-        }
-    }
 
     for (const auto& parent : _parents)
     {
@@ -185,8 +177,6 @@ void GlobalAppSettings::LayerJson(const Json::Value& json, const OriginTag origi
 #undef GLOBAL_SETTINGS_LAYER_JSON
 
     // Complex/mutable settings that have backing fields (not JSON-backed)
-    JsonUtils::GetValueForKey(json, "disabledProfileSources", _DisabledProfileSources);
-    _logSettingIfSet("disabledProfileSources", _DisabledProfileSources.has_value());
     JsonUtils::GetValueForKey(json, "newTabMenu", _NewTabMenu);
     _logSettingIfSet("newTabMenu", _NewTabMenu.has_value());
 
@@ -363,7 +353,6 @@ Json::Value GlobalAppSettings::ToJson()
 #undef GLOBAL_SETTINGS_TO_JSON
 
     // Complex/mutable settings with backing fields
-    JsonUtils::SetValueForKey(json, "disabledProfileSources", _DisabledProfileSources);
     JsonUtils::SetValueForKey(json, "newTabMenu", _NewTabMenu);
 
     json[JsonKey(ActionsKey)] = _actionMap->ToJson();
@@ -383,8 +372,6 @@ bool GlobalAppSettings::HasSetting(GlobalSettingKey key) const
 #undef _GLOBAL_HAS_SETTING
     case GlobalSettingKey::_UnparsedDefaultProfile:
         return HasUnparsedDefaultProfile();
-    case GlobalSettingKey::_DisabledProfileSources:
-        return HasDisabledProfileSources();
     case GlobalSettingKey::_NewTabMenu:
         return HasNewTabMenu();
     default:
@@ -404,9 +391,6 @@ void GlobalAppSettings::ClearSetting(GlobalSettingKey key)
 #undef _GLOBAL_CLEAR_SETTING
     case GlobalSettingKey::_UnparsedDefaultProfile:
         ClearUnparsedDefaultProfile();
-        break;
-    case GlobalSettingKey::_DisabledProfileSources:
-        ClearDisabledProfileSources();
         break;
     case GlobalSettingKey::_NewTabMenu:
         ClearNewTabMenu();

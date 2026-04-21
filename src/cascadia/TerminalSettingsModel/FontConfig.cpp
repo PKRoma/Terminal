@@ -29,24 +29,9 @@ winrt::com_ptr<FontConfig> FontConfig::CopyFontInfo(const FontConfig* source, wi
 
     fontInfo->_json = source->_json;
 
-    // We cannot simply copy the font axes and features with `fontInfo->_FontAxes = source->_FontAxes;`
-    // since that'll just create a reference; we have to manually copy the values.
-    static constexpr auto cloneFontMap = [](const IFontFeatureMap& map) {
-        std::map<winrt::hstring, float> fontAxes;
-        for (const auto& [k, v] : map)
-        {
-            fontAxes.emplace(k, v);
-        }
-        return winrt::single_threaded_map(std::move(fontAxes));
-    };
-    if (source->_FontAxes)
-    {
-        fontInfo->_FontAxes = cloneFontMap(*source->_FontAxes);
-    }
-    if (source->_FontFeatures)
-    {
-        fontInfo->_FontFeatures = cloneFontMap(*source->_FontFeatures);
-    }
+    // FontAxes and FontFeatures are now JSON-backed — handled by _json copy above.
+    // No manual deep-copy needed; the JSON-backed getter returns a fresh deserialized
+    // collection each time.
 
     return fontInfo;
 }
@@ -61,10 +46,6 @@ Json::Value FontConfig::ToJson() const
     MTSM_FONT_SETTINGS(FONT_SETTINGS_TO_JSON)
 #undef FONT_SETTINGS_TO_JSON
 
-    // Complex/mutable settings with backing fields
-    JsonUtils::SetValueForKey(json, FontAxesKey, _FontAxes);
-    JsonUtils::SetValueForKey(json, FontFeaturesKey, _FontFeatures);
-
     return json;
 }
 
@@ -77,10 +58,6 @@ bool FontConfig::HasSetting(FontSettingKey key) const
         return Has##name();
         MTSM_FONT_SETTINGS(_FONT_HAS_SETTING)
 #undef _FONT_HAS_SETTING
-    case FontSettingKey::_FontAxes:
-        return HasFontAxes();
-    case FontSettingKey::_FontFeatures:
-        return HasFontFeatures();
     default:
         return false;
     }
@@ -96,12 +73,6 @@ void FontConfig::ClearSetting(FontSettingKey key)
         break;
         MTSM_FONT_SETTINGS(_FONT_CLEAR_SETTING)
 #undef _FONT_CLEAR_SETTING
-    case FontSettingKey::_FontAxes:
-        ClearFontAxes();
-        break;
-    case FontSettingKey::_FontFeatures:
-        ClearFontFeatures();
-        break;
     default:
         break;
     }
@@ -144,19 +115,13 @@ void FontConfig::LayerJson(const Json::Value& json)
         // Merge the font sub-object into stored _json (font-object shape).
         JsonUtils::MergeJsonKeys(fontInfoJson, _json);
 
-        // MTSM font settings are now JSON-backed. Values are already in _json.
-        // We only need to log which settings were set.
+        // MTSM font settings are now JSON-backed (including FontAxes/FontFeatures).
+        // Values are already in _json. We only need to log which settings were set.
 #define FONT_SETTINGS_LAYER_JSON(type, name, jsonKey, ...) \
     _logSettingIfSet(jsonKey, fontInfoJson.isMember(jsonKey) && !fontInfoJson[jsonKey].isNull());
 
         MTSM_FONT_SETTINGS(FONT_SETTINGS_LAYER_JSON)
 #undef FONT_SETTINGS_LAYER_JSON
-
-        // Complex/mutable settings that have backing fields (not JSON-backed)
-        JsonUtils::GetValueForKey(fontInfoJson, FontAxesKey, _FontAxes);
-        _logSettingIfSet(FontAxesKey, _FontAxes.has_value());
-        JsonUtils::GetValueForKey(fontInfoJson, FontFeaturesKey, _FontFeatures);
-        _logSettingIfSet(FontFeaturesKey, _FontFeatures.has_value());
     }
     else
     {

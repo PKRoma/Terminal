@@ -117,17 +117,6 @@ winrt::com_ptr<Profile> Profile::CopySettings() const
     // Complex/mutable settings with backing fields need explicit deep copy
     profile->_Icon = _Icon;
 
-    // We cannot simply copy the environment variables with `profile->_EnvironmentVariables = _EnvironmentVariables;`
-    // since that'll just create a reference; we have to manually copy the values.
-    if (_EnvironmentVariables)
-    {
-        std::map<winrt::hstring, winrt::hstring> envVars;
-        for (const auto& [k, v] : *_EnvironmentVariables)
-        {
-            envVars.emplace(k, v);
-        }
-        profile->_EnvironmentVariables = winrt::single_threaded_map(std::move(envVars));
-    }
 
     // BellSound is an IVector<>, so we need to make a new vector pointing at the same objects
     if (_BellSound)
@@ -232,8 +221,6 @@ void Profile::LayerJson(const Json::Value& json)
     // Complex/mutable settings that have backing fields (not JSON-backed)
     JsonUtils::GetValueForKey(json, "icon", _Icon);
     _logSettingIfSet("icon", _Icon.has_value());
-    JsonUtils::GetValueForKey(json, "environment", _EnvironmentVariables);
-    _logSettingIfSet("environment", _EnvironmentVariables.has_value());
     JsonUtils::GetValueForKey(json, "bellSound", _BellSound);
     _logSettingIfSet("bellSound", _BellSound.has_value());
 
@@ -396,7 +383,6 @@ Json::Value Profile::ToJson() const
 
     // Complex/mutable settings with backing fields
     JsonUtils::SetValueForKey(json, "icon", _Icon);
-    JsonUtils::SetValueForKey(json, "environment", _EnvironmentVariables);
     JsonUtils::SetValueForKey(json, "bellSound", _BellSound);
 
     if (auto fontJSON = winrt::get_self<FontConfig>(_FontInfo)->ToJson(); !fontJSON.empty())
@@ -435,8 +421,6 @@ bool Profile::HasSetting(ProfileSettingKey key) const
         return HasTabColor();
     case ProfileSettingKey::_Icon:
         return HasIcon();
-    case ProfileSettingKey::_EnvironmentVariables:
-        return HasEnvironmentVariables();
     case ProfileSettingKey::_BellSound:
         return HasBellSound();
     default:
@@ -474,9 +458,6 @@ void Profile::ClearSetting(ProfileSettingKey key)
         break;
     case ProfileSettingKey::_Icon:
         ClearIcon();
-        break;
-    case ProfileSettingKey::_EnvironmentVariables:
-        ClearEnvironmentVariables();
         break;
     case ProfileSettingKey::_BellSound:
         ClearBellSound();

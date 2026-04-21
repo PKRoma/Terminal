@@ -70,7 +70,8 @@ Author(s):
     X(bool, EnableUnfocusedAcrylic, "compatibility.enableUnfocusedAcrylic", true)                                                                                                                     \
     X(bool, AllowHeadless, "compatibility.allowHeadless", false)                                                                                                                                      \
     X(hstring, SearchWebDefaultQueryUrl, "searchWebDefaultQueryUrl", L"https://www.bing.com/search?q=%22%s%22")                                                                                       \
-    X(bool, ShowTabsFullscreen, "showTabsFullscreen", false)
+    X(bool, ShowTabsFullscreen, "showTabsFullscreen", false)                                                                                                                                          \
+    X(winrt::Windows::Foundation::Collections::IVector<winrt::hstring>, DisabledProfileSources, "disabledProfileSources", nullptr)
 
 // Also add these settings to:
 // * Profile.idl
@@ -105,7 +106,8 @@ Author(s):
     X(bool, AllowVtClipboardWrite, "compatibility.allowOSC52", true)                                                                                           \
     X(bool, AllowKeypadMode, "compatibility.allowDECNKM", false)                                                                                               \
     X(hstring, DragDropDelimiter, "dragDropDelimiter", L" ")                                                                                                   \
-    X(Microsoft::Terminal::Control::PathTranslationStyle, PathTranslationStyle, "pathTranslationStyle", Microsoft::Terminal::Control::PathTranslationStyle::None)
+    X(Microsoft::Terminal::Control::PathTranslationStyle, PathTranslationStyle, "pathTranslationStyle", Microsoft::Terminal::Control::PathTranslationStyle::None) \
+    X(IEnvironmentVariableMap, EnvironmentVariables, "environment", nullptr)
 
 // Intentionally omitted Profile settings:
 // * Name
@@ -123,7 +125,9 @@ Author(s):
     X(bool, EnableBuiltinGlyphs, "builtinGlyphs", true)                                \
     X(bool, EnableColorGlyphs, "colorGlyphs", true)                                    \
     X(winrt::hstring, CellWidth, "cellWidth")                                          \
-    X(winrt::hstring, CellHeight, "cellHeight")
+    X(winrt::hstring, CellHeight, "cellHeight")                                        \
+    X(IFontAxesMap, FontAxes, "axes")                                                  \
+    X(IFontFeatureMap, FontFeatures, "features")
 
 #define MTSM_APPEARANCE_SETTINGS(X)                                                                                                                                \
     X(Core::CursorStyle, CursorShape, "cursorShape", Core::CursorStyle::Bar)                                                                                       \
@@ -187,7 +191,6 @@ namespace winrt::Microsoft::Terminal::Settings::Model::implementation
         _TabColor,
         // Complex/mutable settings with backing fields
         _Icon,
-        _EnvironmentVariables,
         _BellSound,
         SETTINGS_SIZE
     };
@@ -198,7 +201,6 @@ namespace winrt::Microsoft::Terminal::Settings::Model::implementation
         // Special-cased global settings
         _UnparsedDefaultProfile,
         // Complex/mutable settings with backing fields
-        _DisabledProfileSources,
         _NewTabMenu,
         SETTINGS_SIZE
     };
@@ -206,9 +208,6 @@ namespace winrt::Microsoft::Terminal::Settings::Model::implementation
     enum class FontSettingKey : int
     {
         MTSM_FONT_SETTINGS(_MTSM_ENUM_VALUE)
-        // Complex/mutable settings with backing fields
-        _FontAxes,
-        _FontFeatures,
         SETTINGS_SIZE
     };
 
@@ -256,8 +255,6 @@ namespace winrt::Microsoft::Terminal::Settings::Model::implementation
             return "tabColor";
         case ProfileSettingKey::_Icon:
             return "icon";
-        case ProfileSettingKey::_EnvironmentVariables:
-            return "environment";
         case ProfileSettingKey::_BellSound:
             return "bellSound";
         default:
@@ -276,8 +273,6 @@ namespace winrt::Microsoft::Terminal::Settings::Model::implementation
             MTSM_GLOBAL_SETTINGS(_MTSM_KEY_CASE)
         case GlobalSettingKey::_UnparsedDefaultProfile:
             return "defaultProfile";
-        case GlobalSettingKey::_DisabledProfileSources:
-            return "disabledProfileSources";
         case GlobalSettingKey::_NewTabMenu:
             return "newTabMenu";
         default:
@@ -294,10 +289,6 @@ namespace winrt::Microsoft::Terminal::Settings::Model::implementation
         switch (key)
         {
             MTSM_FONT_SETTINGS(_MTSM_KEY_CASE)
-        case FontSettingKey::_FontAxes:
-            return "axes";
-        case FontSettingKey::_FontFeatures:
-            return "features";
         default:
             return {};
         }
