@@ -93,8 +93,20 @@ namespace winrt::Microsoft::Terminal::Settings::Model::implementation
         MTSM_GLOBAL_SETTINGS(GLOBAL_SETTINGS_INITIALIZE)
 #undef GLOBAL_SETTINGS_INITIALIZE
 
-        // Complex/mutable settings that need backing fields (not JSON-backed)
-        INHERITABLE_MUTABLE_SETTING(Model::GlobalAppSettings, winrt::Windows::Foundation::Collections::IVector<Model::NewTabMenuEntry>, NewTabMenu, winrt::single_threaded_vector<Model::NewTabMenuEntry>({ Model::RemainingProfilesEntry{} }));
+        // NewTabMenu: mutable with backing field for editor in-place mutation.
+        // _json is the source of truth for serialization. Setter dual-writes to both.
+        _BASE_INHERITABLE_MUTABLE_SETTING(Model::GlobalAppSettings, std::optional<winrt::Windows::Foundation::Collections::IVector<Model::NewTabMenuEntry>>, NewTabMenu, winrt::single_threaded_vector<Model::NewTabMenuEntry>({ Model::RemainingProfilesEntry{} }))
+    public:
+        winrt::Windows::Foundation::Collections::IVector<Model::NewTabMenuEntry> NewTabMenu() const
+        {
+            const auto val{ _getNewTabMenuImpl() };
+            return val ? *val : winrt::single_threaded_vector<Model::NewTabMenuEntry>({ Model::RemainingProfilesEntry{} });
+        }
+        void NewTabMenu(const winrt::Windows::Foundation::Collections::IVector<Model::NewTabMenuEntry>& value)
+        {
+            _NewTabMenu = value;
+            ::Microsoft::Terminal::Settings::Model::JsonUtils::SetValueForKey(_json, "newTabMenu", value);
+        }
 
     private:
 #ifdef NDEBUG

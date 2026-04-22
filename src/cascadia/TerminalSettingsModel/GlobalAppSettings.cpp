@@ -84,7 +84,8 @@ winrt::com_ptr<GlobalAppSettings> GlobalAppSettings::Copy() const
         }
     }
 
-    // Complex/mutable settings with backing fields need explicit deep copy
+    // Complex/mutable settings — backing fields for mutation lifecycle.
+    // _json (copied above) is the source of truth; backing fields hold runtime state.
     if (_NewTabMenu)
     {
         globals->_NewTabMenu = winrt::single_threaded_vector<Model::NewTabMenuEntry>();
@@ -176,7 +177,8 @@ void GlobalAppSettings::LayerJson(const Json::Value& json, const OriginTag origi
     MTSM_GLOBAL_SETTINGS(GLOBAL_SETTINGS_LAYER_JSON)
 #undef GLOBAL_SETTINGS_LAYER_JSON
 
-    // Complex/mutable settings that have backing fields (not JSON-backed)
+    // Complex/mutable settings — backing fields populated from _json for runtime use.
+    // _json is the source of truth for serialization; backing fields are for mutation lifecycle.
     JsonUtils::GetValueForKey(json, "newTabMenu", _NewTabMenu);
     _logSettingIfSet("newTabMenu", _NewTabMenu.has_value());
 
@@ -352,8 +354,8 @@ Json::Value GlobalAppSettings::ToJson()
     MTSM_GLOBAL_SETTINGS(GLOBAL_SETTINGS_TO_JSON)
 #undef GLOBAL_SETTINGS_TO_JSON
 
-    // Complex/mutable settings with backing fields
-    JsonUtils::SetValueForKey(json, "newTabMenu", _NewTabMenu);
+    // Complex/mutable settings — read from _json (source of truth), not backing fields
+    JsonUtils::CopyKeyIfPresent(_json, json, "newTabMenu");
 
     json[JsonKey(ActionsKey)] = _actionMap->ToJson();
     json[JsonKey(KeybindingsKey)] = _actionMap->KeyBindingsToJson();
