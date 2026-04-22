@@ -599,3 +599,36 @@ public:                                                                         
             _##name = std::optional<type>{ std::nullopt };                               \
         }                                                                                \
     }
+
+// =============================================================================
+// IMediaResource settings with backing fields for resolution lifecycle.
+// =============================================================================
+//
+// Use for settings of type IMediaResource that need in-place resolution
+// (e.g., Icon, PixelShaderPath, BackgroundImagePath). The backing field
+// holds the runtime-resolved object. _json is the source of truth for
+// serialization. The setter dual-writes to both.
+//
+// Parameters:
+//   projectedType - the WinRT projected type (e.g., Model::Profile)
+//   name          - the setting name (e.g., Icon)
+//   jsonKey       - the JSON key (e.g., "icon")
+//   ...           - default value (e.g., implementation::MediaResource::Empty())
+//
+#define INHERITABLE_MEDIA_RESOURCE_SETTING(projectedType, name, jsonKey, ...)                       \
+    _BASE_INHERITABLE_MUTABLE_SETTING(projectedType, std::optional<IMediaResource>, name,          \
+                                      implementation::MediaResource::Empty())                       \
+public:                                                                                            \
+    /* Returns the resolved value: this layer --> inherited --> default */                          \
+    IMediaResource name() const                                                                    \
+    {                                                                                              \
+        const auto v{ _get##name##Impl() };                                                        \
+        return v ? *v : IMediaResource{ __VA_ARGS__ };                                             \
+    }                                                                                              \
+                                                                                                   \
+    /* Dual-write: backing field (for resolution) + _json (for serialization) */                   \
+    void name(const IMediaResource& value)                                                         \
+    {                                                                                              \
+        _##name = value;                                                                           \
+        ::Microsoft::Terminal::Settings::Model::JsonUtils::SetValueForKey(_json, jsonKey, value);   \
+    }

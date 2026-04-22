@@ -38,7 +38,8 @@ winrt::com_ptr<AppearanceConfig> AppearanceConfig::CopyAppearance(const Appearan
     // Opacity, DarkColorSchemeName, LightColorSchemeName, MTSM settings) all live in
     // _json, which is already deep-copied above.
 
-    // Complex/mutable settings with backing fields
+    // Complex/mutable settings — backing fields for resolution lifecycle.
+    // _json (copied above) is the source of truth; backing fields hold resolved runtime state.
     appearance->_PixelShaderPath = source->_PixelShaderPath;
     appearance->_PixelShaderImagePath = source->_PixelShaderImagePath;
     appearance->_BackgroundImagePath = source->_BackgroundImagePath;
@@ -69,10 +70,10 @@ Json::Value AppearanceConfig::ToJson() const
     MTSM_APPEARANCE_SETTINGS(APPEARANCE_SETTINGS_TO_JSON)
 #undef APPEARANCE_SETTINGS_TO_JSON
 
-    // Complex/mutable settings with backing fields
-    JsonUtils::SetValueForKey(json, "experimental.pixelShaderPath", _PixelShaderPath);
-    JsonUtils::SetValueForKey(json, "experimental.pixelShaderImagePath", _PixelShaderImagePath);
-    JsonUtils::SetValueForKey(json, "backgroundImage", _BackgroundImagePath);
+    // Complex/mutable settings — read from _json (source of truth), not backing fields
+    JsonUtils::CopyKeyIfPresent(_json, json, "experimental.pixelShaderPath");
+    JsonUtils::CopyKeyIfPresent(_json, json, "experimental.pixelShaderImagePath");
+    JsonUtils::CopyKeyIfPresent(_json, json, "backgroundImage");
 
     return json;
 }
@@ -219,7 +220,8 @@ void AppearanceConfig::LayerJson(const Json::Value& json)
     MTSM_APPEARANCE_SETTINGS(APPEARANCE_SETTINGS_LAYER_JSON)
 #undef APPEARANCE_SETTINGS_LAYER_JSON
 
-    // Complex/mutable settings that have backing fields (not JSON-backed)
+    // Complex/mutable settings — backing fields populated from _json for resolution lifecycle.
+    // _json is the source of truth for serialization; backing fields are for resolution lifecycle.
     JsonUtils::GetValueForKey(json, "experimental.pixelShaderPath", _PixelShaderPath);
     _logSettingIfSet("experimental.pixelShaderPath", _PixelShaderPath.has_value());
     JsonUtils::GetValueForKey(json, "experimental.pixelShaderImagePath", _PixelShaderImagePath);

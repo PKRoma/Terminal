@@ -154,10 +154,11 @@ namespace winrt::Microsoft::Terminal::Settings::Model::implementation
         MTSM_APPEARANCE_SETTINGS(APPEARANCE_SETTINGS_INITIALIZE)
 #undef APPEARANCE_SETTINGS_INITIALIZE
 
-        // Complex/mutable settings that need backing fields (not JSON-backed)
-        INHERITABLE_MUTABLE_SETTING(Model::IAppearanceConfig, IMediaResource, PixelShaderPath, implementation::MediaResource::Empty());
-        INHERITABLE_MUTABLE_SETTING(Model::IAppearanceConfig, IMediaResource, PixelShaderImagePath, implementation::MediaResource::Empty());
-        INHERITABLE_MUTABLE_SETTING(Model::IAppearanceConfig, IMediaResource, BackgroundImagePath, implementation::MediaResource::Empty());
+        // IMediaResource settings with backing fields for resolution lifecycle.
+        // See IInheritable.h for the INHERITABLE_MEDIA_RESOURCE_SETTING macro definition.
+        INHERITABLE_MEDIA_RESOURCE_SETTING(Model::IAppearanceConfig, PixelShaderPath, "experimental.pixelShaderPath", implementation::MediaResource::Empty())
+        INHERITABLE_MEDIA_RESOURCE_SETTING(Model::IAppearanceConfig, PixelShaderImagePath, "experimental.pixelShaderImagePath", implementation::MediaResource::Empty())
+        INHERITABLE_MEDIA_RESOURCE_SETTING(Model::IAppearanceConfig, BackgroundImagePath, "backgroundImage", implementation::MediaResource::Empty())
 
     private:
         winrt::weak_ref<Profile> _sourceProfile;

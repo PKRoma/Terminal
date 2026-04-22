@@ -114,7 +114,8 @@ winrt::com_ptr<Profile> Profile::CopySettings() const
     // JSON-backed settings (Name, Source, Hidden, Guid, Padding, TabColor, MTSM settings)
     // all live in _json, which is already deep-copied above. No per-setting copy needed.
 
-    // Complex/mutable settings with backing fields need explicit deep copy
+    // Complex/mutable settings — backing fields for resolution lifecycle.
+    // _json (copied above) is the source of truth; backing fields hold resolved runtime state.
     profile->_Icon = _Icon;
 
 
@@ -218,7 +219,8 @@ void Profile::LayerJson(const Json::Value& json)
     MTSM_PROFILE_SETTINGS(PROFILE_SETTINGS_LAYER_JSON)
 #undef PROFILE_SETTINGS_LAYER_JSON
 
-    // Complex/mutable settings that have backing fields (not JSON-backed)
+    // Complex/mutable settings — backing fields populated from _json for runtime resolution.
+    // _json is the source of truth for serialization; backing fields are for resolution lifecycle.
     JsonUtils::GetValueForKey(json, "icon", _Icon);
     _logSettingIfSet("icon", _Icon.has_value());
     JsonUtils::GetValueForKey(json, "bellSound", _BellSound);
@@ -381,9 +383,10 @@ Json::Value Profile::ToJson() const
     MTSM_PROFILE_SETTINGS(PROFILE_SETTINGS_TO_JSON)
 #undef PROFILE_SETTINGS_TO_JSON
 
-    // Complex/mutable settings with backing fields
-    JsonUtils::SetValueForKey(json, "icon", _Icon);
-    JsonUtils::SetValueForKey(json, "bellSound", _BellSound);
+    // Complex/mutable settings with backing fields (runtime resolution)
+    // Read from _json (source of truth), not from backing fields
+    JsonUtils::CopyKeyIfPresent(_json, json, "icon");
+    JsonUtils::CopyKeyIfPresent(_json, json, "bellSound");
 
     if (auto fontJSON = winrt::get_self<FontConfig>(_FontInfo)->ToJson(); !fontJSON.empty())
     {
