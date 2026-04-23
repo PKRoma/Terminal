@@ -354,6 +354,7 @@ namespace winrt::Microsoft::Terminal::Settings
         _AllowVtChecksumReport = profile.AllowVtChecksumReport();
         _AllowVtClipboardWrite = profile.AllowVtClipboardWrite();
         _PathTranslationStyle = profile.PathTranslationStyle();
+        _DragDropDelimiter = profile.DragDropDelimiter();
     }
 
     // Method Description:
@@ -367,21 +368,22 @@ namespace winrt::Microsoft::Terminal::Settings
         _InitialRows = windowSettings.InitialRows();
         _InitialCols = windowSettings.InitialCols();
 
-        _WordDelimiters = windowSettings.WordDelimiters();
-        _CopyOnSelect = windowSettings.CopyOnSelect();
-        _CopyFormatting = windowSettings.CopyFormatting();
-        _FocusFollowMouse = windowSettings.FocusFollowMouse();
-        _ScrollToZoom = windowSettings.ScrollToZoom();
-        _ScrollToChangeOpacity = windowSettings.ScrollToChangeOpacity();
-        _GraphicsAPI = windowSettings.GraphicsAPI();
-        _DisablePartialInvalidation = windowSettings.DisablePartialInvalidation();
-        _SoftwareRendering = windowSettings.SoftwareRendering();
-        _TextMeasurement = windowSettings.TextMeasurement();
-        _DefaultInputScope = windowSettings.DefaultInputScope();
-        _UseBackgroundImageForWindow = windowSettings.UseBackgroundImageForWindow();
-        _TrimBlockSelection = windowSettings.TrimBlockSelection();
-        _DetectURLs = windowSettings.DetectURLs();
-        _EnableUnfocusedAcrylic = windowSettings.EnableUnfocusedAcrylic();
+        _WordDelimiters = globalSettings.WordDelimiters();
+        _CopyOnSelect = globalSettings.CopyOnSelect();
+        _CopyFormatting = globalSettings.CopyFormatting();
+        _FocusFollowMouse = globalSettings.FocusFollowMouse();
+        _ScrollToZoom = globalSettings.ScrollToZoom();
+        _ScrollToChangeOpacity = globalSettings.ScrollToChangeOpacity();
+        _GraphicsAPI = globalSettings.GraphicsAPI();
+        _DisablePartialInvalidation = globalSettings.DisablePartialInvalidation();
+        _SoftwareRendering = globalSettings.SoftwareRendering();
+        _TextMeasurement = globalSettings.TextMeasurement();
+        _AmbiguousWidth = globalSettings.AmbiguousWidth();
+        _DefaultInputScope = globalSettings.DefaultInputScope();
+        _UseBackgroundImageForWindow = globalSettings.UseBackgroundImageForWindow();
+        _TrimBlockSelection = globalSettings.TrimBlockSelection();
+        _DetectURLs = globalSettings.DetectURLs();
+        _EnableUnfocusedAcrylic = globalSettings.EnableUnfocusedAcrylic();
     }
 
     // Method Description:
