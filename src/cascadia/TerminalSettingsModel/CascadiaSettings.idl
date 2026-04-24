@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import "GlobalAppSettings.idl";
+import "WindowSettings.idl";
 import "Profile.idl";
 import "TerminalWarnings.idl";
 import "DefaultTerminal.idl";
@@ -37,6 +38,9 @@ namespace Microsoft.Terminal.Settings.Model
         String Hash { get; };
 
         GlobalAppSettings GlobalSettings { get; };
+
+        WindowSettings WindowSettingsDefaults();
+        WindowSettings WindowSettings(String windowName);
 
         Profile ProfileDefaults { get; };
 

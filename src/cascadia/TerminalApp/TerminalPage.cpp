@@ -268,12 +268,17 @@ namespace winrt::TerminalApp::implementation
     void TerminalPage::SetSettings(CascadiaSettings settings, bool needRefreshUI)
     {
         assert(Dispatcher().HasThreadAccess());
-        if (_settings == nullptr)
+
+        // We need to set _settings before calling _currentWindowSettings(),
+        // because _currentWindowSettings() uses _settings to look up the
+        // WindowSettings for the current window.
+        _settings = settings;
+
+        if (_terminalSettingsCache == nullptr)
         {
             // Create this only on the first time we load the settings.
             _terminalSettingsCache = std::make_shared<TerminalSettingsCache>(settings);
         }
-        _settings = settings;
 
         // Make sure to call SetCommands before _RefreshUIForSettingsReload.
         // SetCommands will make sure the KeyChordText of Commands is updated, which needs
@@ -291,6 +296,11 @@ namespace winrt::TerminalApp::implementation
         // Upon settings update we reload the system settings for scrolling as well.
         // TODO: consider reloading this value periodically.
         _systemRowsToScroll = _ReadSystemRowsToScroll();
+    }
+
+    winrt::Microsoft::Terminal::Settings::Model::WindowSettings TerminalPage::_currentWindowSettings() const
+    {
+        return _settings.WindowSettings(_WindowProperties.WindowName());
     }
 
     bool TerminalPage::IsRunningElevated() const noexcept

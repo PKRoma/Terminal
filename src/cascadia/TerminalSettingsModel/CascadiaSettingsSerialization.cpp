@@ -1413,6 +1413,7 @@ CascadiaSettings::CascadiaSettings(SettingsLoader&& loader) :
     // but we're going to set these fields in our constructor later on anyways.
     _globals{},
     _baseLayerProfile{},
+    _windowSettings{},
     _allProfiles{},
     _activeProfiles{},
     _warnings{}
@@ -1477,6 +1478,11 @@ CascadiaSettings::CascadiaSettings(SettingsLoader&& loader) :
     _activeProfiles = winrt::single_threaded_observable_vector(std::move(activeProfiles));
     _warnings = winrt::single_threaded_vector(std::move(warnings));
     _themesChangeLog = std::move(loader.userSettings.themesChangeLog);
+
+    // Initialize the WindowSettings to delegate to the GlobalAppSettings.
+    // In the future, per-window-name settings will be separate objects.
+    _windowSettings = winrt::make_self<implementation::WindowSettings>();
+    _windowSettings->Initialize(_globals);
 
     _resolveDefaultProfile();
     _resolveNewTabMenuProfiles();
