@@ -5673,27 +5673,6 @@ namespace winrt::TerminalApp::implementation
             _workspaceFlyout.Items().Append(item);
         }
 
-        // --- "Save workspace" ---
-        {
-            MenuFlyoutItem item{};
-            item.Text(winrt::hstring{ L"Save workspace" });
-
-            auto iconElement = UI::IconPathConverter::IconWUX(L"\uE74E"); // Save glyph
-            Automation::AutomationProperties::SetAccessibilityView(iconElement, Automation::Peers::AccessibilityView::Raw);
-            item.Icon(iconElement);
-
-            // Only enable if the window has a name.
-            item.IsEnabled(!_WindowProperties.WindowName().empty());
-
-            item.Click([weakThis{ get_weak() }](auto&&, auto&&) {
-                if (auto page{ weakThis.get() })
-                {
-                    page->_actionDispatch->DoAction(ActionAndArgs{ ShortcutAction::SaveWorkspace, nullptr });
-                }
-            });
-            _workspaceFlyout.Items().Append(item);
-        }
-
         // --- Gather open window info first so we can filter workspaces ---
         // Ask the host (via AppHost → WindowEmperor) for all live windows.
         const auto windowListReq{ winrt::make<WindowListRequest>() };

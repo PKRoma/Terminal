@@ -1675,47 +1675,4 @@ namespace winrt::TerminalApp::implementation
         }
     }
 
-    void TerminalPage::_HandleSaveWorkspace(const IInspectable& /*sender*/,
-                                            const ActionEventArgs& args)
-    {
-        if (args)
-        {
-            if (const auto& realArgs = args.ActionArgs().try_as<SaveWorkspaceArgs>())
-            {
-                // If a name is supplied, use it; otherwise fall back to the
-                // current window name.
-                auto name = realArgs.Name();
-                if (name.empty())
-                {
-                    name = _WindowProperties.WindowName();
-                }
-
-                if (!name.empty())
-                {
-                    if (const auto layout = GetWindowLayout())
-                    {
-                        ApplicationState::SharedInstance().SaveWorkspace(name, layout);
-                    }
-                }
-                args.Handled(true);
-            }
-        }
-    }
-
-    void TerminalPage::_HandleDeleteWorkspace(const IInspectable& /*sender*/,
-                                              const ActionEventArgs& args)
-    {
-        if (args)
-        {
-            if (const auto& realArgs = args.ActionArgs().try_as<DeleteWorkspaceArgs>())
-            {
-                const auto name = realArgs.Name();
-                if (!name.empty())
-                {
-                    ApplicationState::SharedInstance().RemoveWorkspace(name);
-                }
-                args.Handled(true);
-            }
-        }
-    }
 }

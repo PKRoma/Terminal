@@ -43,8 +43,6 @@
 #include "NextTabArgs.g.h"
 #include "RenameWindowArgs.g.h"
 #include "OpenWorkspaceArgs.g.h"
-#include "SaveWorkspaceArgs.g.h"
-#include "DeleteWorkspaceArgs.g.h"
 #include "SearchForTextArgs.g.h"
 #include "GlobalSummonArgs.g.h"
 #include "FocusPaneArgs.g.h"
@@ -251,14 +249,6 @@ protected:                                                                  \
 
 ////////////////////////////////////////////////////////////////////////////////
 #define OPEN_WORKSPACE_ARGS(X) \
-    X(winrt::hstring, Name, "name", false, ArgTypeHint::None, L"")
-
-////////////////////////////////////////////////////////////////////////////////
-#define SAVE_WORKSPACE_ARGS(X) \
-    X(winrt::hstring, Name, "name", false, ArgTypeHint::None, L"")
-
-////////////////////////////////////////////////////////////////////////////////
-#define DELETE_WORKSPACE_ARGS(X) \
     X(winrt::hstring, Name, "name", false, ArgTypeHint::None, L"")
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -957,10 +947,6 @@ namespace winrt::Microsoft::Terminal::Settings::Model::implementation
 
     ACTION_ARGS_STRUCT(OpenWorkspaceArgs, OPEN_WORKSPACE_ARGS);
 
-    ACTION_ARGS_STRUCT(SaveWorkspaceArgs, SAVE_WORKSPACE_ARGS);
-
-    ACTION_ARGS_STRUCT(DeleteWorkspaceArgs, DELETE_WORKSPACE_ARGS);
-
     ACTION_ARGS_STRUCT(SearchForTextArgs, SEARCH_FOR_TEXT_ARGS);
 
     struct GlobalSummonArgs : public GlobalSummonArgsT<GlobalSummonArgs>
@@ -1081,8 +1067,6 @@ namespace winrt::Microsoft::Terminal::Settings::Model::factory_implementation
     BASIC_FACTORY(SetColorSchemeArgs);
     BASIC_FACTORY(RenameWindowArgs);
     BASIC_FACTORY(OpenWorkspaceArgs);
-    BASIC_FACTORY(SaveWorkspaceArgs);
-    BASIC_FACTORY(DeleteWorkspaceArgs);
     BASIC_FACTORY(ExecuteCommandlineArgs);
     BASIC_FACTORY(CloseOtherTabsArgs);
     BASIC_FACTORY(CloseTabsAfterArgs);
