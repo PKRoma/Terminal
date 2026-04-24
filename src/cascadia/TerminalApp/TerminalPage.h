@@ -10,8 +10,10 @@
 #include "AppKeyBindings.h"
 #include "AppCommandlineArgs.h"
 #include "RenameWindowRequestedArgs.g.h"
+#include "SummonWindowByIdRequestedArgs.g.h"
 #include "RequestMoveContentArgs.g.h"
 #include "LaunchPositionRequest.g.h"
+#include "WindowListRequest.g.h"
 #include "Toast.h"
 
 #include "WindowsPackageManagerFactory.h"
@@ -63,6 +65,15 @@ namespace winrt::TerminalApp::implementation
             _ProposedName{ name } {};
     };
 
+    struct SummonWindowByIdRequestedArgs : SummonWindowByIdRequestedArgsT<SummonWindowByIdRequestedArgs>
+    {
+        WINRT_PROPERTY(uint64_t, WindowId);
+
+    public:
+        SummonWindowByIdRequestedArgs(uint64_t id) :
+            _WindowId{ id } {};
+    };
+
     struct RequestMoveContentArgs : RequestMoveContentArgsT<RequestMoveContentArgs>
     {
         WINRT_PROPERTY(winrt::hstring, Window);
@@ -82,6 +93,17 @@ namespace winrt::TerminalApp::implementation
         LaunchPositionRequest() = default;
 
         til::property<winrt::Microsoft::Terminal::Settings::Model::LaunchPosition> Position;
+    };
+
+    struct WindowListRequest : WindowListRequestT<WindowListRequest>
+    {
+        WindowListRequest() :
+            _WindowEntries{ winrt::single_threaded_vector<winrt::hstring>() } {}
+
+        winrt::Windows::Foundation::Collections::IVector<winrt::hstring> WindowEntries() const { return _WindowEntries; }
+
+    private:
+        winrt::Windows::Foundation::Collections::IVector<winrt::hstring> _WindowEntries;
     };
 
     struct WinGetSearchParams
@@ -122,6 +144,7 @@ namespace winrt::TerminalApp::implementation
 
         safe_void_coroutine RequestQuit();
         safe_void_coroutine CloseWindow();
+        winrt::Microsoft::Terminal::Settings::Model::WindowLayout GetWindowLayout();
         void PersistState();
         std::vector<IPaneContent> Panes() const;
 
@@ -192,6 +215,7 @@ namespace winrt::TerminalApp::implementation
         til::typed_event<IInspectable, IInspectable> IdentifyWindowsRequested;
         til::typed_event<IInspectable, winrt::TerminalApp::RenameWindowRequestedArgs> RenameWindowRequested;
         til::typed_event<IInspectable, IInspectable> SummonWindowRequested;
+        til::typed_event<IInspectable, winrt::TerminalApp::SummonWindowByIdRequestedArgs> SummonWindowByIdRequested;
         til::typed_event<IInspectable, winrt::Microsoft::Terminal::Control::WindowSizeChangedEventArgs> WindowSizeChanged;
 
         til::typed_event<IInspectable, IInspectable> OpenSystemMenu;
@@ -203,6 +227,7 @@ namespace winrt::TerminalApp::implementation
         til::typed_event<Windows::Foundation::IInspectable, winrt::TerminalApp::RequestReceiveContentArgs> RequestReceiveContent;
 
         til::typed_event<IInspectable, winrt::TerminalApp::LaunchPositionRequest> RequestLaunchPosition;
+        til::typed_event<IInspectable, winrt::TerminalApp::WindowListRequest> RequestWindowList;
 
         WINRT_OBSERVABLE_PROPERTY(winrt::Windows::UI::Xaml::Media::Brush, TitlebarBrush, PropertyChanged.raise, nullptr);
         WINRT_OBSERVABLE_PROPERTY(winrt::Windows::UI::Xaml::Media::Brush, FrameBrush, PropertyChanged.raise, nullptr);
@@ -225,6 +250,7 @@ namespace winrt::TerminalApp::implementation
         TerminalApp::TabRowControl _tabRow{ nullptr };
         Windows::UI::Xaml::Controls::Grid _tabContent{ nullptr };
         Microsoft::UI::Xaml::Controls::SplitButton _newTabButton{ nullptr };
+        Windows::UI::Xaml::Controls::MenuFlyout _workspaceFlyout{ nullptr };
         winrt::TerminalApp::ColorPickupFlyout _tabColorPicker{ nullptr };
 
         Microsoft::Terminal::Settings::Model::CascadiaSettings _settings{ nullptr };
@@ -324,6 +350,7 @@ namespace winrt::TerminalApp::implementation
         void _restartPaneConnection(const TerminalApp::TerminalPaneContent&, const winrt::Windows::Foundation::IInspectable&);
 
         safe_void_coroutine _OpenNewWindow(const Microsoft::Terminal::Settings::Model::INewContentArgs newContentArgs);
+        safe_void_coroutine _OpenWorkspaceWindow(const winrt::hstring name);
 
         void _OpenNewTerminalViaDropdown(const Microsoft::Terminal::Settings::Model::NewTerminalArgs newTerminalArgs);
 
@@ -563,6 +590,7 @@ namespace winrt::TerminalApp::implementation
 
         void _PopulateContextMenu(const Microsoft::Terminal::Control::TermControl& control, const Microsoft::UI::Xaml::Controls::CommandBarFlyout& sender, const bool withSelection);
         void _PopulateQuickFixMenu(const Microsoft::Terminal::Control::TermControl& control, const Windows::UI::Xaml::Controls::MenuFlyout& sender);
+        void _PopulateWorkspaceFlyout();
         winrt::Windows::UI::Xaml::Controls::MenuFlyout _CreateRunAsAdminFlyout(int profileIndex);
 
         winrt::Microsoft::Terminal::Control::TermControl _senderOrActiveControl(const winrt::Windows::Foundation::IInspectable& sender);

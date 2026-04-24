@@ -678,6 +678,25 @@ void WindowEmperor::_dispatchCommandline(winrt::TerminalApp::CommandlineArgs arg
     {
         winrt::TerminalApp::WindowRequestedArgs request{ windowId, std::move(args) };
         request.WindowName(std::move(windowName));
+
+        // If we're opening a named window that doesn't exist yet, check
+        // if there's a persisted workspace with that name to restore.
+        const auto& reqName = request.WindowName();
+        if (!reqName.empty())
+        {
+            const auto state = ApplicationState::SharedInstance();
+            if (const auto workspaces = state.AllPersistedWorkspaces())
+            {
+                if (workspaces.HasKey(reqName))
+                {
+                    const auto layout = workspaces.Lookup(reqName);
+                    request.PersistedLayout(layout);
+                    // Remove the workspace entry now that we're restoring it.
+                    state.RemoveWorkspace(reqName);
+                }
+            }
+        }
+
         CreateNewWindow(std::move(request));
     }
 }
@@ -943,6 +962,22 @@ LRESULT WindowEmperor::_messageHandler(HWND window, UINT const message, WPARAM c
                         // anyway (since we threw and exited this message handler) so this at least gives back our
                         // deterministic window count management.
                         const auto strong = *it;
+
+                        // Before destroying a named window, persist its full
+                        // tab/buffer state as a workspace so it can be restored later.
+                        try
+                        {
+                            const auto windowName = strong->Logic().WindowProperties().WindowName();
+                            if (!windowName.empty())
+                            {
+                                if (const auto layout = strong->Logic().GetWindowLayout())
+                                {
+                                    ApplicationState::SharedInstance().SaveWorkspace(windowName, layout);
+                                }
+                            }
+                        }
+                        CATCH_LOG();
+
                         _windows.erase(it);
                         try
                         {
@@ -970,6 +1005,19 @@ LRESULT WindowEmperor::_messageHandler(HWND window, UINT const message, WPARAM c
                 host->Logic().IdentifyWindow();
             }
             return 0;
+        case WM_GET_WINDOW_LIST:
+        {
+            auto* result = reinterpret_cast<std::vector<WindowListEntry>*>(lParam);
+            if (result)
+            {
+                for (const auto& host : _windows)
+                {
+                    const auto props = host->Logic().WindowProperties();
+                    result->emplace_back(WindowListEntry{ props.WindowId(), std::wstring{ props.WindowName() } });
+                }
+            }
+            return 0;
+        }
         case WM_NOTIFY_FROM_NOTIFICATION_AREA:
             switch (LOWORD(lParam))
             {
