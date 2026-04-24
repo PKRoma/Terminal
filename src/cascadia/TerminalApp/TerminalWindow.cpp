@@ -1388,7 +1388,15 @@ namespace winrt::TerminalApp::implementation
     {
         if (_WindowName != value)
         {
+            // If this window had a persisted workspace under the old name,
+            // rename that entry too so we don't leave a stale copy behind
+            // (GH: renaming a named window with persisted state).
+            const auto oldName = _WindowName;
             _WindowName = value;
+            if (!oldName.empty() && !value.empty())
+            {
+                ApplicationState::SharedInstance().RenameWorkspace(oldName, value);
+            }
             // If we get initialized with a window name, this will be called
             // before XAML is stood up, and constructing a
             // PropertyChangedEventArgs will throw.

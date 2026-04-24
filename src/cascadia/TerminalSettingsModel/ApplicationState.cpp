@@ -385,6 +385,41 @@ namespace winrt::Microsoft::Terminal::Settings::Model::implementation
         return removed;
     }
 
+    // Method Description:
+    // - Rename a persisted workspace entry from oldName to newName. If there
+    //   was no entry for oldName, this is a no-op. If an entry for newName
+    //   already exists, it will be overwritten with the layout from oldName.
+    // Return Value:
+    // - true if an entry was renamed, false otherwise.
+    bool ApplicationState::RenameWorkspace(const hstring& oldName, const hstring& newName)
+    {
+        if (oldName == newName || oldName.empty() || newName.empty())
+        {
+            return false;
+        }
+
+        bool renamed{ false };
+        {
+            const auto state = _state.lock();
+            if (state->PersistedWorkspaces && *state->PersistedWorkspaces)
+            {
+                auto map = *state->PersistedWorkspaces;
+                if (map.HasKey(oldName))
+                {
+                    const auto layout = map.Lookup(oldName);
+                    map.Insert(newName, layout);
+                    map.Remove(oldName);
+                    renamed = true;
+                }
+            }
+        }
+        if (renamed)
+        {
+            _throttler();
+        }
+        return renamed;
+    }
+
     Windows::Foundation::Collections::IMapView<hstring, Model::WindowLayout> ApplicationState::AllPersistedWorkspaces()
     {
         const auto state = _state.lock_shared();

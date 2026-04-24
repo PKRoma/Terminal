@@ -77,6 +77,7 @@ namespace winrt::Microsoft::Terminal::Settings::Model::implementation
 
         void SaveWorkspace(const hstring& name, const Model::WindowLayout& layout);
         bool RemoveWorkspace(const hstring& name);
+        bool RenameWorkspace(const hstring& oldName, const hstring& newName);
         Windows::Foundation::Collections::IMapView<hstring, Model::WindowLayout> AllPersistedWorkspaces();
 
         // State getters/setters
