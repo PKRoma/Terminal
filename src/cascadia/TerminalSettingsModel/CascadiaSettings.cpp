@@ -792,7 +792,7 @@ Model::Profile CascadiaSettings::GetProfileForArgs(const Model::NewTerminalArgs&
     // Case 2 above could be the result of a "nt" or "sp" invocation that doesn't specify anything.
     // TODO GH#10952: Detect the profile based on the commandline (add matching support)
     return (!newTerminalArgs || newTerminalArgs.Commandline().empty()) ?
-               FindProfile(GlobalSettings().DefaultProfile()) :
+               FindProfile(_globals->DefaultProfile()) :
                ProfileDefaults();
 }
 

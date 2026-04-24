@@ -1317,7 +1317,7 @@ void CascadiaSettings::_researchOnLoad()
         // ----------------------------- RE: Themes ----------------------------
         const auto numThemes = GlobalSettings().Themes().Size();
         const auto themeInUse = GlobalSettings().CurrentTheme().Name();
-        const auto changedTheme = GlobalSettings().HasTheme();
+        const auto changedTheme = _globals->HasTheme();
 
         // system: 0
         // light: 1
@@ -1723,7 +1723,7 @@ void CascadiaSettings::_resolveDefaultProfile() const
     }
 
     // Use the first profile as the new default.
-    GlobalSettings().DefaultProfile(_allProfiles.GetAt(0).Guid());
+    _globals->DefaultProfile(_allProfiles.GetAt(0).Guid());
 }
 
 // Method Description:
