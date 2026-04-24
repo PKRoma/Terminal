@@ -286,3 +286,11 @@ profiles.json
 
 # MSBuildCache
 /MSBuildCacheLogs/
+
+# ignore all squad files
+.squad/
+.github/workflows/squad*
+.copilot
+.github/agents/squad*
+.github/workflows/sync-squad-labels.yml
+
