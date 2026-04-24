@@ -279,7 +279,7 @@ namespace winrt::Microsoft::Terminal::Settings::Model::implementation
 #undef MTSM_APPLICATION_STATE_GEN
 
         // Manually handled because IMap<K,V> has a comma that breaks the X-macro.
-        if (WI_IsFlagSet(parseSource, FileSource::Shared))
+        if (WI_IsFlagSet(parseSource, FileSource::Local))
             state->PersistedWorkspaces = JsonUtils::GetValueForKey<std::optional<Windows::Foundation::Collections::IMap<hstring, Model::WindowLayout>>>(root, PersistedWorkspacesKey);
     }
 
@@ -305,7 +305,7 @@ namespace winrt::Microsoft::Terminal::Settings::Model::implementation
 #undef MTSM_APPLICATION_STATE_GEN
 
             // Manually handled because IMap<K,V> has a comma that breaks the X-macro.
-            if (WI_IsFlagSet(parseSource, FileSource::Shared))
+            if (WI_IsFlagSet(parseSource, FileSource::Local))
                 JsonUtils::SetValueForKey(root, PersistedWorkspacesKey, state->PersistedWorkspaces);
         }
         return root;
