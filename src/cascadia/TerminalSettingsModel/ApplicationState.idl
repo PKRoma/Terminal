@@ -39,6 +39,7 @@ namespace Microsoft.Terminal.Settings.Model
         void SaveWorkspace(String name, WindowLayout layout);
         Boolean RemoveWorkspace(String name);
         Boolean RenameWorkspace(String oldName, String newName);
+        WindowLayout TakeWorkspace(String name);
         Windows.Foundation.Collections.IMapView<String, WindowLayout> AllPersistedWorkspaces();
 
         String SettingsHash;

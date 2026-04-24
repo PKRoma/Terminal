@@ -679,21 +679,15 @@ void WindowEmperor::_dispatchCommandline(winrt::TerminalApp::CommandlineArgs arg
         winrt::TerminalApp::WindowRequestedArgs request{ windowId, std::move(args) };
         request.WindowName(std::move(windowName));
 
-        // If we're opening a named window that doesn't exist yet, check
-        // if there's a persisted workspace with that name to restore.
+        // If we're opening a named window that doesn't exist yet, atomically
+        // claim any persisted workspace with that name so we restore it here
+        // and no subsequent window can pick up the same entry.
         const auto& reqName = request.WindowName();
         if (!reqName.empty())
         {
-            const auto state = ApplicationState::SharedInstance();
-            if (const auto workspaces = state.AllPersistedWorkspaces())
+            if (const auto layout = ApplicationState::SharedInstance().TakeWorkspace(reqName))
             {
-                if (workspaces.HasKey(reqName))
-                {
-                    const auto layout = workspaces.Lookup(reqName);
-                    request.PersistedLayout(layout);
-                    // Remove the workspace entry now that we're restoring it.
-                    state.RemoveWorkspace(reqName);
-                }
+                request.PersistedLayout(layout);
             }
         }
 

@@ -420,6 +420,34 @@ namespace winrt::Microsoft::Terminal::Settings::Model::implementation
         return renamed;
     }
 
+    // Method Description:
+    // - Atomically remove and return a persisted workspace entry. This is the
+    //   intended API for the startup path that restores a named workspace,
+    //   because it guarantees only one caller can claim a given workspace.
+    // Return Value:
+    // - The layout that was stored under `name`, or nullptr if there was none.
+    Model::WindowLayout ApplicationState::TakeWorkspace(const hstring& name)
+    {
+        Model::WindowLayout result{ nullptr };
+        {
+            const auto state = _state.lock();
+            if (state->PersistedWorkspaces && *state->PersistedWorkspaces)
+            {
+                auto map = *state->PersistedWorkspaces;
+                if (map.HasKey(name))
+                {
+                    result = map.Lookup(name);
+                    map.Remove(name);
+                }
+            }
+        }
+        if (result)
+        {
+            _throttler();
+        }
+        return result;
+    }
+
     Windows::Foundation::Collections::IMapView<hstring, Model::WindowLayout> ApplicationState::AllPersistedWorkspaces()
     {
         const auto state = _state.lock_shared();

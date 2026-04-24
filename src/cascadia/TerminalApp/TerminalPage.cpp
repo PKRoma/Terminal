@@ -2329,12 +2329,20 @@ namespace winrt::TerminalApp::implementation
 
     void TerminalPage::PersistState()
     {
+        // There are two persistence mechanisms in play here:
+        //   * PersistedWindowLayouts (vector) — consumed on next startup to
+        //     re-open a matching set of windows. Cleared after restore.
+        //   * PersistedWorkspaces (name-keyed map) — the full tab/buffer
+        //     state of a named window, claimed by name on demand via
+        //     ApplicationState::TakeWorkspace.
+        //
+        // For named windows we save the full layout into the workspace map
+        // and drop a lightweight `openWorkspace` stub into the generic vector,
+        // so the generic restore path re-opens the named window which in
+        // turn claims its own workspace. Unnamed windows don't have a stable
+        // key, so their full layout is stored directly in the vector.
         if (const auto layout = GetWindowLayout())
         {
-            // For named windows, save the full state into the workspace collection
-            // and emit a lightweight openWorkspace action in the generic layout.
-            // This way, restoring generic layouts re-opens workspaces by name
-            // rather than duplicating their full tab state.
             const auto& windowName = _WindowProperties.WindowName();
             if (!windowName.empty())
             {
