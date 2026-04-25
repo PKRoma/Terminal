@@ -25,9 +25,11 @@ FTCS
 gantt
 gfm
 ghe
+github
 godbolt
 gpt
 hstrings
+https
 hyperlinking
 hyperlinks
 ILM
@@ -51,6 +53,7 @@ notwrapped
 NTMTo
 openai
 overlined
+passthrough
 perlw
 postmodern
 Powerline
@@ -73,6 +76,7 @@ rubyw
 runtimes
 servicebus
 slnt
+ssh
 stakeholders
 subpage
 subpages
@@ -80,10 +84,11 @@ sustainability
 sxn
 Tencent
 toolset
-Uids
+ubuntu
 UEFI
-UIDs
 uiatextrange
+Uids
+UIDs
 und
 vsdevcmd
 westus
