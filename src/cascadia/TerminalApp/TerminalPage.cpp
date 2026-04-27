@@ -25,6 +25,7 @@
 #include "TerminalSettingsCache.h"
 
 #include "LaunchPositionRequest.g.cpp"
+#include "WindowListEntry.g.cpp"
 #include "WindowListRequest.g.cpp"
 #include "RenameWindowRequestedArgs.g.cpp"
 #include "RequestMoveContentArgs.g.cpp"
@@ -5677,7 +5678,7 @@ namespace winrt::TerminalApp::implementation
         // Ask the host (via AppHost → WindowEmperor) for all live windows.
         const auto windowListReq{ winrt::make<WindowListRequest>() };
         RequestWindowList.raise(*this, windowListReq);
-        const auto windowEntries = windowListReq.WindowEntries();
+        const auto windowEntries = windowListReq.Entries();
 
         // Collect the names of all currently-open windows so we can hide
         // workspaces that are already live from the saved-workspaces list.
@@ -5686,15 +5687,10 @@ namespace winrt::TerminalApp::implementation
         {
             for (const auto& entry : windowEntries)
             {
-                const std::wstring_view entryView{ entry };
-                const auto tabPos = entryView.find(L'\t');
-                if (tabPos != std::wstring_view::npos)
+                const auto& name = entry.Name();
+                if (!name.empty())
                 {
-                    const auto namePart = entryView.substr(tabPos + 1);
-                    if (!namePart.empty())
-                    {
-                        openWindowNames.emplace(namePart);
-                    }
+                    openWindowNames.emplace(name);
                 }
             }
         }
@@ -5749,35 +5745,18 @@ namespace winrt::TerminalApp::implementation
 
             for (const auto& entry : windowEntries)
             {
-                // Each entry is formatted as "id\tname"
-                const std::wstring_view entryView{ entry };
-                const auto tabPos = entryView.find(L'\t');
-                if (tabPos == std::wstring_view::npos)
-                {
-                    continue;
-                }
-
-                uint64_t id = 0;
-                const auto idPart = entryView.substr(0, tabPos);
-                for (const auto ch : idPart)
-                {
-                    if (ch >= L'0' && ch <= L'9')
-                    {
-                        id = id * 10 + (ch - L'0');
-                    }
-                }
-
-                const auto namePart = entryView.substr(tabPos + 1);
+                const auto id = entry.Id();
+                const auto& name = entry.Name();
 
                 // Build display text like "#1: MyWindow" or "#2: <unnamed>"
                 winrt::hstring displayText;
-                if (namePart.empty())
+                if (name.empty())
                 {
                     displayText = winrt::hstring{ fmt::format(FMT_COMPILE(L"#{} (unnamed)"), id) };
                 }
                 else
                 {
-                    displayText = winrt::hstring{ fmt::format(FMT_COMPILE(L"#{}: {}"), id, namePart) };
+                    displayText = winrt::hstring{ fmt::format(FMT_COMPILE(L"#{}: {}"), id, name) };
                 }
 
                 MenuFlyoutItem item{};

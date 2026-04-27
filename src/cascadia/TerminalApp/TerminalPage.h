@@ -13,6 +13,7 @@
 #include "SummonWindowByIdRequestedArgs.g.h"
 #include "RequestMoveContentArgs.g.h"
 #include "LaunchPositionRequest.g.h"
+#include "WindowListEntry.g.h"
 #include "WindowListRequest.g.h"
 #include "Toast.h"
 
@@ -95,15 +96,23 @@ namespace winrt::TerminalApp::implementation
         til::property<winrt::Microsoft::Terminal::Settings::Model::LaunchPosition> Position;
     };
 
+    struct WindowListEntry : WindowListEntryT<WindowListEntry>
+    {
+        WindowListEntry() = default;
+
+        til::property<uint64_t> Id;
+        til::property<winrt::hstring> Name;
+    };
+
     struct WindowListRequest : WindowListRequestT<WindowListRequest>
     {
         WindowListRequest() :
-            _WindowEntries{ winrt::single_threaded_vector<winrt::hstring>() } {}
+            _Entries{ winrt::single_threaded_vector<winrt::TerminalApp::WindowListEntry>() } {}
 
-        winrt::Windows::Foundation::Collections::IVector<winrt::hstring> WindowEntries() const { return _WindowEntries; }
+        winrt::Windows::Foundation::Collections::IVector<winrt::TerminalApp::WindowListEntry> Entries() const { return _Entries; }
 
     private:
-        winrt::Windows::Foundation::Collections::IVector<winrt::hstring> _WindowEntries;
+        winrt::Windows::Foundation::Collections::IVector<winrt::TerminalApp::WindowListEntry> _Entries;
     };
 
     struct WinGetSearchParams
@@ -615,4 +624,5 @@ namespace winrt::TerminalApp::implementation
 namespace winrt::TerminalApp::factory_implementation
 {
     BASIC_FACTORY(TerminalPage);
+    BASIC_FACTORY(WindowListEntry);
 }

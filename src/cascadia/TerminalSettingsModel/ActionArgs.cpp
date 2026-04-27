@@ -796,14 +796,13 @@ namespace winrt::Microsoft::Terminal::Settings::Model::implementation
         return RS_switchable_(L"ResetWindowNameCommandKey");
     }
 
-    winrt::hstring OpenWorkspaceArgs::GenerateName(const winrt::WARC::ResourceContext& /*context*/) const
+    winrt::hstring OpenWorkspaceArgs::GenerateName(const winrt::WARC::ResourceContext& context) const
     {
-        // "Open workspace \"{_Name}\""
         if (!Name().empty())
         {
-            return winrt::hstring{ fmt::format(L"Open workspace \"{}\"", std::wstring_view{ Name() }) };
+            return winrt::hstring{ RS_switchable_fmt(L"OpenWorkspaceCommandKey", Name()) };
         }
-        return winrt::hstring{ L"Open workspace" };
+        return RS_switchable_(L"OpenWorkspaceDefaultCommandKey");
     }
 
     winrt::hstring SearchForTextArgs::GenerateName(const winrt::WARC::ResourceContext& context) const
