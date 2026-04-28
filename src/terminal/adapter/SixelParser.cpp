@@ -659,10 +659,26 @@ void SixelParser::_initImageBuffer()
 void SixelParser::_resizeImageBuffer(const til::CoordType requiredHeight)
 {
     const auto requiredSize = (_imageCursor.y + requiredHeight) * _imageMaxWidth;
-    if (static_cast<size_t>(requiredSize) > _imageBuffer.size())
+    const auto requiredSizeU = static_cast<size_t>(requiredSize);
+    auto oom = requiredSize < 0;
+
+    if (!oom || requiredSizeU > _imageBuffer.size())
     {
         static constexpr auto transparentPixel = IndexedPixel{ .transparent = true };
-        _imageBuffer.resize(requiredSize, transparentPixel);
+        try
+        {
+            _imageBuffer.resize(requiredSizeU, transparentPixel);
+        }
+        catch (...)
+        {
+            LOG_CAUGHT_EXCEPTION();
+            oom = true;
+        }
+    }
+
+    if (oom)
+    {
+        _imageBuffer = std::vector<IndexedPixel>{};
     }
 }
 
@@ -690,6 +706,14 @@ void SixelParser::_fillImageBackground()
 
 void SixelParser::_fillImageBackground(const int backgroundHeight)
 {
+    // TODO: Ideally we should do bounds checks on all buffer access here.
+    // For now this functions as a viable workaround for GH#20149,
+    // because on allocation failure we clear out the vector.
+    if (_imageBuffer.empty())
+    {
+        return;
+    }
+
     static constexpr auto backgroundPixel = IndexedPixel{};
     const auto backgroundWidth = std::min(_backgroundSize.width, _availablePixelWidth);
     const auto backgroundOffset = _imageCursor.y * _imageMaxWidth;
@@ -736,6 +760,14 @@ void SixelParser::_decreaseFilledBackgroundHeight(const int decreasedHeight) noe
 
 void SixelParser::_writeToImageBuffer(int sixelValue, int repeatCount)
 {
+    // TODO: Ideally we should do bounds checks on all buffer access here.
+    // For now this functions as a viable workaround for GH#20149,
+    // because on allocation failure we clear out the vector.
+    if (_imageBuffer.empty())
+    {
+        return;
+    }
+
     // On terminals that support the raster attributes command (which sets the
     // background size), the background is only drawn when the first sixel value
     // is received. So if we haven't filled it yet, we need to do so now.
@@ -931,6 +963,7 @@ void SixelParser::_maybeFlushImageBuffer(const bool endOfSequence)
                 }
                 else
                 {
+                    // TODO: Here and above in the other advance() call, we should do bounds checks. See GH#20149.
                     std::advance(srcIterator, _imageMaxWidth * _cellSize.height);
                 }
                 rowOffset++;
