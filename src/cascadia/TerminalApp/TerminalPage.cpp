@@ -25,6 +25,8 @@
 #include "TerminalSettingsCache.h"
 
 #include "LaunchPositionRequest.g.cpp"
+#include "WindowListEntry.g.cpp"
+#include "WindowListRequest.g.cpp"
 #include "RenameWindowRequestedArgs.g.cpp"
 #include "RequestMoveContentArgs.g.cpp"
 #include "TerminalPage.g.cpp"
@@ -334,6 +336,20 @@ namespace winrt::TerminalApp::implementation
 
         auto tabRowImpl = winrt::get_self<implementation::TabRowControl>(_tabRow);
         _newTabButton = tabRowImpl->NewTabButton();
+        _workspaceFlyout = tabRowImpl->WorkspaceFlyout();
+
+        // Set the initial workspace name from the window name.
+        // Use raw WindowName() so unnamed windows show no text.
+        _tabRow.WorkspaceName(_WindowProperties.WindowName());
+
+        // Rebuild the workspace flyout each time it opens so it always
+        // reflects the latest set of persisted workspaces.
+        _workspaceFlyout.Opening([weakThis{ get_weak() }](auto&&, auto&&) {
+            if (auto page{ weakThis.get() })
+            {
+                page->_PopulateWorkspaceFlyout();
+            }
+        });
 
         if (_settings.GlobalSettings().ShowTabsInTitlebar())
         {
@@ -442,6 +458,12 @@ namespace winrt::TerminalApp::implementation
         // them.
 
         _tabRow.ShowElevationShield(IsRunningElevated() && _settings.GlobalSettings().ShowAdminShield());
+
+        // Apply the ShowWindowsButton theme setting.
+        if (const auto theme = _settings.GlobalSettings().CurrentTheme())
+        {
+            _tabRow.ShowWindowsButton(theme.Window() ? theme.Window().ShowWindowsButton() : true);
+        }
 
         _adjustProcessPriorityThrottled = std::make_shared<ThrottledFunc<>>(
             DispatcherQueue::GetForCurrentThread(),
@@ -2232,14 +2254,14 @@ namespace winrt::TerminalApp::implementation
         }
     }
 
-    void TerminalPage::PersistState()
+    WindowLayout TerminalPage::GetWindowLayout()
     {
         // This method may be called for a window even if it hasn't had a tab yet or lost all of them.
         // We shouldn't persist such windows.
         const auto tabCount = _tabs.Size();
         if (_startupState != StartupState::Initialized || tabCount == 0)
         {
-            return;
+            return nullptr;
         }
 
         std::vector<ActionAndArgs> actions;
@@ -2254,7 +2276,7 @@ namespace winrt::TerminalApp::implementation
         // Avoid persisting a window with zero tabs, because `BuildStartupActions` happened to return an empty vector.
         if (actions.empty())
         {
-            return;
+            return nullptr;
         }
 
         // if the focused tab was not the last tab, restore that
@@ -2303,7 +2325,49 @@ namespace winrt::TerminalApp::implementation
         RequestLaunchPosition.raise(*this, launchPosRequest);
         layout.InitialPosition(launchPosRequest.Position());
 
-        ApplicationState::SharedInstance().AppendPersistedWindowLayout(layout);
+        return layout;
+    }
+
+    void TerminalPage::PersistState()
+    {
+        // There are two persistence mechanisms in play here:
+        //   * PersistedWindowLayouts (vector) — consumed on next startup to
+        //     re-open a matching set of windows. Cleared after restore.
+        //   * PersistedWorkspaces (name-keyed map) — the full tab/buffer
+        //     state of a named window, claimed by name on demand via
+        //     ApplicationState::TakeWorkspace.
+        //
+        // For named windows we save the full layout into the workspace map
+        // and drop a lightweight `openWorkspace` stub into the generic vector,
+        // so the generic restore path re-opens the named window which in
+        // turn claims its own workspace. Unnamed windows don't have a stable
+        // key, so their full layout is stored directly in the vector.
+        if (const auto layout = GetWindowLayout())
+        {
+            const auto& windowName = _WindowProperties.WindowName();
+            if (!windowName.empty())
+            {
+                // Persist the full layout into the workspace collection.
+                ApplicationState::SharedInstance().SaveWorkspace(windowName, layout);
+
+                // Build a minimal layout with just an openWorkspace action
+                // so the generic restore path re-opens this workspace by name.
+                std::vector<ActionAndArgs> actions;
+                ActionAndArgs action;
+                action.Action(ShortcutAction::OpenWorkspace);
+                OpenWorkspaceArgs args{ windowName };
+                action.Args(args);
+                actions.emplace_back(std::move(action));
+
+                WindowLayout stub;
+                stub.TabLayout(winrt::single_threaded_vector<ActionAndArgs>(std::move(actions)));
+                ApplicationState::SharedInstance().AppendPersistedWindowLayout(stub);
+            }
+            else
+            {
+                ApplicationState::SharedInstance().AppendPersistedWindowLayout(layout);
+            }
+        }
     }
 
     // Method Description:
@@ -3933,6 +3997,12 @@ namespace winrt::TerminalApp::implementation
         WUX::Media::Animation::Timeline::AllowDependentAnimations(!_settings.GlobalSettings().DisableAnimations());
 
         _tabRow.ShowElevationShield(IsRunningElevated() && _settings.GlobalSettings().ShowAdminShield());
+
+        // Apply the ShowWindowsButton theme setting.
+        if (const auto theme = _settings.GlobalSettings().CurrentTheme())
+        {
+            _tabRow.ShowWindowsButton(theme.Window() ? theme.Window().ShowWindowsButton() : true);
+        }
 
         Media::SolidColorBrush transparent{ Windows::UI::Colors::Transparent() };
         _tabView.Background(transparent);
@@ -5574,6 +5644,156 @@ namespace winrt::TerminalApp::implementation
         }
     }
 
+    // Rebuild the workspace flyout contents. Called every time the flyout opens
+    // so it reflects the current set of persisted workspaces.
+    void TerminalPage::_PopulateWorkspaceFlyout()
+    {
+        if (!_workspaceFlyout)
+        {
+            return;
+        }
+
+        _workspaceFlyout.Items().Clear();
+
+        // --- "Name / Rename this window" ---
+        {
+            MenuFlyoutItem item{};
+            item.Text(_WindowProperties.WindowName().empty() ? RS_(L"NameThisWindowMenuItem") : RS_(L"RenameThisWindowMenuItem"));
+
+            auto iconElement = UI::IconPathConverter::IconWUX(L"\uE8AC"); // Rename glyph
+            Automation::AutomationProperties::SetAccessibilityView(iconElement, Automation::Peers::AccessibilityView::Raw);
+            item.Icon(iconElement);
+
+            item.Click([weakThis{ get_weak() }](auto&&, auto&&) {
+                if (auto page{ weakThis.get() })
+                {
+                    // Re-use the existing openWindowRenamer action.
+                    page->_actionDispatch->DoAction(ActionAndArgs{ ShortcutAction::OpenWindowRenamer, nullptr });
+                }
+            });
+            _workspaceFlyout.Items().Append(item);
+        }
+
+        // --- Gather open window info first so we can filter workspaces ---
+        // Ask the host (via AppHost → WindowEmperor) for all live windows.
+        const auto windowListReq{ winrt::make<WindowListRequest>() };
+        RequestWindowList.raise(*this, windowListReq);
+        const auto windowEntries = windowListReq.Entries();
+
+        // Collect the names of all currently-open windows so we can hide
+        // workspaces that are already live from the saved-workspaces list.
+        std::set<winrt::hstring> openWindowNames;
+        if (windowEntries)
+        {
+            for (const auto& entry : windowEntries)
+            {
+                const auto& name = entry.Name();
+                if (!name.empty())
+                {
+                    openWindowNames.emplace(name);
+                }
+            }
+        }
+
+        // --- Saved workspaces section (only those not currently open) ---
+        const auto workspaces = ApplicationState::SharedInstance().AllPersistedWorkspaces();
+        if (workspaces && workspaces.Size() > 0)
+        {
+            bool addedSeparator = false;
+
+            for (const auto& pair : workspaces)
+            {
+                const auto name = pair.Key();
+
+                // Skip workspaces that correspond to a currently-open window.
+                if (openWindowNames.count(name))
+                {
+                    continue;
+                }
+
+                if (!addedSeparator)
+                {
+                    _workspaceFlyout.Items().Append(MenuFlyoutSeparator{});
+                    addedSeparator = true;
+                }
+
+                MenuFlyoutItem item{};
+                item.Text(name);
+
+                auto iconElement = UI::IconPathConverter::IconWUX(L"\uE8F1"); // SwitchApps glyph
+                Automation::AutomationProperties::SetAccessibilityView(iconElement, Automation::Peers::AccessibilityView::Raw);
+                item.Icon(iconElement);
+
+                item.Click([weakThis{ get_weak() }, name](auto&&, auto&&) {
+                    if (auto page{ weakThis.get() })
+                    {
+                        page->_OpenWorkspaceWindow(name);
+                    }
+                });
+
+                _workspaceFlyout.Items().Append(item);
+            }
+        }
+
+        // --- Open windows section ---
+
+        if (windowEntries && windowEntries.Size() > 0)
+        {
+            _workspaceFlyout.Items().Append(MenuFlyoutSeparator{});
+
+            const auto thisWindowId = _WindowProperties.WindowId();
+
+            for (const auto& entry : windowEntries)
+            {
+                const auto id = entry.Id();
+                const auto& name = entry.Name();
+
+                // Build display text like "#1: MyWindow" or "#2: <unnamed>"
+                winrt::hstring displayText;
+                if (name.empty())
+                {
+                    displayText = winrt::hstring{ RS_fmt(L"WindowListUnnamedEntry", id) };
+                }
+                else
+                {
+                    displayText = winrt::hstring{ fmt::format(FMT_COMPILE(L"#{}: {}"), id, name) };
+                }
+
+                MenuFlyoutItem item{};
+                item.Text(displayText);
+
+                // Use a different glyph for the current window
+                if (id == thisWindowId)
+                {
+                    auto iconElement = UI::IconPathConverter::IconWUX(L"\uE73E"); // CheckMark glyph
+                    Automation::AutomationProperties::SetAccessibilityView(iconElement, Automation::Peers::AccessibilityView::Raw);
+                    item.Icon(iconElement);
+                    item.IsEnabled(false); // Can't summon yourself
+                }
+                else
+                {
+                    auto iconElement = UI::IconPathConverter::IconWUX(L"\uE737"); // ChromeRestore glyph
+                    Automation::AutomationProperties::SetAccessibilityView(iconElement, Automation::Peers::AccessibilityView::Raw);
+                    item.Icon(iconElement);
+
+                    // Click handler: summon the target window by ID.
+                    // We raise SummonWindowByIdRequested which is handled by
+                    // AppHost to directly summon the window without creating
+                    // a new tab (unlike _OpenWorkspaceWindow which launches
+                    // `wt -w <name>` and creates a tab).
+                    item.Click([weakThis{ get_weak() }, id](auto&&, auto&&) {
+                        if (auto page{ weakThis.get() })
+                        {
+                            page->SummonWindowByIdRequested.raise(*page, winrt::make<SummonWindowByIdRequestedArgs>(id));
+                        }
+                    });
+                }
+
+                _workspaceFlyout.Items().Append(item);
+            }
+        }
+    }
+
     // Handler for our WindowProperties's PropertyChanged event. We'll use this
     // to pop the "Identify Window" toast when the user renames our window.
     void TerminalPage::_windowPropertyChanged(const IInspectable& /*sender*/, const WUX::Data::PropertyChangedEventArgs& args)
@@ -5582,6 +5802,10 @@ namespace winrt::TerminalApp::implementation
         {
             return;
         }
+
+        // Keep the workspace dropdown label in sync with the window name.
+        // Use raw WindowName() so clearing the name hides the text.
+        _tabRow.WorkspaceName(_WindowProperties.WindowName());
 
         // DON'T display the confirmation if this is the name we were
         // given on startup!
