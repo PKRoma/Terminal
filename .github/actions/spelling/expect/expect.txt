@@ -1,8 +1,8 @@
 aaaaabbb
+ABANDONFONT
 abbcc
 abcc
 abgr
-ABANDONFONT
 ABORTIFHUNG
 ACCESSTOKEN
 acidev
@@ -1157,6 +1157,7 @@ onecoreuuid
 ONECOREWINDOWS
 onehalf
 oneseq
+oom
 openbash
 opencode
 opencon
