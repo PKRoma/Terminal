@@ -174,7 +174,6 @@ struct CsBridgeTerminalSettings : winrt::implements<CsBridgeTerminalSettings, IC
     HARDCODED_PROPERTY(bool, DetectURLs, true);
     HARDCODED_PROPERTY(winrt::Windows::Foundation::IReference<winrt::Microsoft::Terminal::Core::Color>, TabColor, nullptr);
     HARDCODED_PROPERTY(winrt::Windows::Foundation::IReference<winrt::Microsoft::Terminal::Core::Color>, StartingTabColor, nullptr);
-    HARDCODED_PROPERTY(winrt::hstring, ProfileName);
     HARDCODED_PROPERTY(bool, UseAcrylic, false);
     HARDCODED_PROPERTY(float, Opacity, 1.0);
     HARDCODED_PROPERTY(winrt::hstring, Padding, DEFAULT_PADDING);
@@ -186,7 +185,6 @@ struct CsBridgeTerminalSettings : winrt::implements<CsBridgeTerminalSettings, IC
     HARDCODED_PROPERTY(winrt::Windows::UI::Xaml::Media::Stretch, BackgroundImageStretchMode, winrt::Windows::UI::Xaml::Media::Stretch::UniformToFill);
     HARDCODED_PROPERTY(winrt::Windows::UI::Xaml::HorizontalAlignment, BackgroundImageHorizontalAlignment, winrt::Windows::UI::Xaml::HorizontalAlignment::Center);
     HARDCODED_PROPERTY(winrt::Windows::UI::Xaml::VerticalAlignment, BackgroundImageVerticalAlignment, winrt::Windows::UI::Xaml::VerticalAlignment::Center);
-    HARDCODED_PROPERTY(winrt::Microsoft::Terminal::Control::IKeyBindings, KeyBindings, nullptr);
     HARDCODED_PROPERTY(winrt::hstring, Commandline);
     HARDCODED_PROPERTY(winrt::hstring, StartingDirectory);
     HARDCODED_PROPERTY(winrt::hstring, StartingTitle);
