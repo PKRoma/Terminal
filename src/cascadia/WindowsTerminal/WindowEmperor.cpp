@@ -1029,10 +1029,10 @@ LRESULT WindowEmperor::_messageHandler(HWND window, UINT const message, WPARAM c
                 const auto handoff = deserializeHandoffPayload(static_cast<const uint8_t*>(cds->lpData), static_cast<const uint8_t*>(cds->lpData) + cds->cbData);
                 const auto argv = commandlineToArgArray(handoff.args.c_str());
                 // When a toast notification is clicked, Windows launches a new
-                // wt.exe with "__fromToast". That instance hands off here via
+                // wt.exe with "--from-toast". That instance hands off here via
                 // WM_COPYDATA. We already handle activation in-process via the
                 // toast's Activated event, so just ignore this handoff.
-                if (argv.size() != 2 || argv[1] != L"__fromToast")
+                if (argv.size() != 2 || argv[1] != L"--from-toast")
                 {
                     _dispatchCommandlineCommon(argv, handoff.cwd, handoff.env, handoff.show);
                 }

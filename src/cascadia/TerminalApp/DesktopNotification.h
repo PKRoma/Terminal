@@ -29,10 +29,9 @@ namespace winrt::TerminalApp::implementation
         static void SendNotification(const DesktopNotificationArgs& args, std::function<void()> activatedFunc);
 
     private:
-        static std::atomic<int64_t> _lastNotificationTime;
+        static std::atomic<uint64_t> _lastNotificationTime;
 
-        // Minimum interval between notifications, in 100ns ticks (FILETIME units).
-        // 5 seconds = 5 * 10,000,000
-        static constexpr int64_t MinNotificationIntervalTicks = 50'000'000LL;
+        // Minimum interval between notifications, in milliseconds (GetTickCount64 units).
+        static constexpr uint64_t MinNotificationIntervalMs = 5'000;
     };
 }

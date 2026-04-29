@@ -11,7 +11,7 @@ using namespace winrt::Windows::Data::Xml::Dom;
 
 namespace winrt::TerminalApp::implementation
 {
-    std::atomic<int64_t> DesktopNotification::_lastNotificationTime{ 0 };
+    std::atomic<uint64_t> DesktopNotification::_lastNotificationTime{ 0 };
 
     // Method Description:
     // - Rate-limits toast notifications so we don't spam the user.
@@ -19,12 +19,12 @@ namespace winrt::TerminalApp::implementation
     // - Returns true if a notification is allowed, false if too recent.
     bool DesktopNotification::ShouldSendNotification()
     {
-        FILETIME ft{};
-        GetSystemTimeAsFileTime(&ft);
-        const auto now = (static_cast<int64_t>(ft.dwHighDateTime) << 32) | ft.dwLowDateTime;
+        const auto now = GetTickCount64();
         auto last = _lastNotificationTime.load(std::memory_order_relaxed);
 
-        if (now - last < MinNotificationIntervalTicks)
+        // Subtraction wraps cleanly modulo 2^64, so the delta is correct even
+        // across the (~584 million year) GetTickCount64 rollover.
+        if (now - last < MinNotificationIntervalMs)
         {
             return false;
         }
@@ -53,7 +53,7 @@ namespace winrt::TerminalApp::implementation
 
             // Build the toast XML. We use a simple template with a title and body text.
             //
-            // <toast launch="__fromToast">
+            // <toast launch="--from-toast">
             //   <visual>
             //     <binding template="ToastGeneric">
             //       <text>Title</text>
@@ -74,9 +74,9 @@ namespace winrt::TerminalApp::implementation
             // When a toast is clicked, Windows launches a new instance of the app
             // with the "launch" attribute as command-line arguments. We handle
             // toast activation in-process via the Activated event below, so the
-            // new instance should do nothing. "__fromToast" is recognized by
+            // new instance should do nothing. "--from-toast" is recognized by
             // AppCommandlineArgs::ParseArgs as a no-op sentinel.
-            toastElement.SetAttribute(L"launch", L"__fromToast");
+            toastElement.SetAttribute(L"launch", L"--from-toast");
 
             toastElement.SetAttribute(L"scenario", L"default");
 
