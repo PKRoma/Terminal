@@ -31,16 +31,6 @@ namespace winrt::TerminalApp::implementation
         til::property<winrt::hstring> Body;
     };
 
-    struct NotificationEventArgs : public NotificationEventArgsT<NotificationEventArgs>
-    {
-    public:
-        NotificationEventArgs(const winrt::hstring& title = {}, const winrt::hstring& body = {}) :
-            Title(title), Body(body) {}
-
-        til::property<winrt::hstring> Title;
-        til::property<winrt::hstring> Body;
-    };
-
     struct TerminalPaneContent : TerminalPaneContentT<TerminalPaneContent>, BasicPaneEvents
     {
         TerminalPaneContent(const winrt::Microsoft::Terminal::Settings::Model::Profile& profile,
