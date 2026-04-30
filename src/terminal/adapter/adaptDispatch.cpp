@@ -3893,7 +3893,7 @@ void AdaptDispatch::DoUrxvtAction(const std::wstring_view string)
         return;
     }
 
-    til::split_iterator split { string, L';' };
+    til::split_iterator split{ string, L';' };
     const auto action = split.next();
     if (action == L"notify")
     {
@@ -3901,7 +3901,7 @@ void AdaptDispatch::DoUrxvtAction(const std::wstring_view string)
         // parts[2] because the body itself may contain semicolons.
         const auto title = split.next();
         const auto body = split.remaining();
-        _api.ShowNotification(title, body); 
+        _api.ShowNotification(title, body);
     }
     else
     {
