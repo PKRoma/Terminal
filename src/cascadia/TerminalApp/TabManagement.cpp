@@ -812,7 +812,11 @@ namespace winrt::TerminalApp::implementation
                     // so use the tab dialog text instead.
                     const auto kind = activeTab->GetLeafPaneCount() == 1 ? ConfirmCloseDialogKind::Tab : ConfirmCloseDialogKind::Pane;
                     auto warningResult = co_await _ShowConfirmCloseDialog(kind);
-                    if (!weak.get() || warningResult != ContentDialogResult::Primary)
+
+                    // Hold a strong reference to `this` for the rest of the
+                    // method; we may be the last holder after `co_await`.
+                    auto strong = weak.get();
+                    if (!strong || warningResult != ContentDialogResult::Primary)
                     {
                         co_return;
                     }
@@ -842,7 +846,11 @@ namespace winrt::TerminalApp::implementation
         {
             const auto weak = get_weak();
             auto warningResult = co_await _ShowConfirmCloseDialog(ConfirmCloseDialogKind::MultiplePanes);
-            if (!weak.get() || warningResult != ContentDialogResult::Primary)
+
+            // Hold a strong reference to `this` after the co_await; we may
+            // be the last holder if the page was being torn down.
+            auto strong = weak.get();
+            if (!strong || warningResult != ContentDialogResult::Primary)
             {
                 co_return;
             }
@@ -914,7 +922,11 @@ namespace winrt::TerminalApp::implementation
         if (_settings.GlobalSettings().ConfirmOnClose() != ConfirmOnClose::Never)
         {
             auto warningResult = co_await _ShowConfirmCloseDialog(ConfirmCloseDialogKind::MultipleTabs);
-            if (!weak.get() || warningResult != ContentDialogResult::Primary)
+
+            // Hold a strong reference to `this` after the co_await so that
+            // the for-loop below can safely dispatch on us.
+            auto strong = weak.get();
+            if (!strong || warningResult != ContentDialogResult::Primary)
             {
                 co_return;
             }

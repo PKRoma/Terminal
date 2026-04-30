@@ -894,33 +894,38 @@ namespace winrt::TerminalApp::implementation
     {
         // Load the dialog (triggers x:Load) and configure its strings.
         const auto dialog = FindName(L"ConfirmCloseDialog").as<ContentDialog>();
+
+        winrt::hstring title;
+        winrt::hstring primary;
         switch (kind)
         {
         case ConfirmCloseDialogKind::CloseAll:
-            dialog.Title(winrt::box_value(RS_(L"ConfirmCloseDialog_CloseAllTitle")));
-            dialog.PrimaryButtonText(RS_(L"ConfirmCloseDialog_CloseAllPrimary"));
+            title = RS_(L"ConfirmCloseDialog_CloseAllTitle");
+            primary = RS_(L"ConfirmCloseDialog_CloseAllPrimary");
             break;
         case ConfirmCloseDialogKind::Window:
-            dialog.Title(winrt::box_value(RS_(L"ConfirmCloseDialog_WindowTitle")));
-            dialog.PrimaryButtonText(RS_(L"ConfirmCloseDialog_WindowPrimary"));
+            title = RS_(L"ConfirmCloseDialog_WindowTitle");
+            primary = RS_(L"ConfirmCloseDialog_WindowPrimary");
             break;
         case ConfirmCloseDialogKind::Tab:
-            dialog.Title(winrt::box_value(RS_(L"ConfirmCloseDialog_TabTitle")));
-            dialog.PrimaryButtonText(RS_(L"ConfirmCloseDialog_TabPrimary"));
+            title = RS_(L"ConfirmCloseDialog_TabTitle");
+            primary = RS_(L"ConfirmCloseDialog_TabPrimary");
             break;
         case ConfirmCloseDialogKind::MultiplePanes:
-            dialog.Title(winrt::box_value(RS_(L"ConfirmCloseDialog_MultiplePanesTitle")));
-            dialog.PrimaryButtonText(RS_(L"ConfirmCloseDialog_MultiplePanesPrimary"));
+            title = RS_(L"ConfirmCloseDialog_MultiplePanesTitle");
+            primary = RS_(L"ConfirmCloseDialog_MultiplePanesPrimary");
             break;
         case ConfirmCloseDialogKind::MultipleTabs:
-            dialog.Title(winrt::box_value(RS_(L"ConfirmCloseDialog_MultipleTabsTitle")));
-            dialog.PrimaryButtonText(RS_(L"ConfirmCloseDialog_MultipleTabsPrimary"));
+            title = RS_(L"ConfirmCloseDialog_MultipleTabsTitle");
+            primary = RS_(L"ConfirmCloseDialog_MultipleTabsPrimary");
             break;
         case ConfirmCloseDialogKind::Pane:
-            dialog.Title(winrt::box_value(RS_(L"ConfirmCloseDialog_PaneTitle")));
-            dialog.PrimaryButtonText(RS_(L"ConfirmCloseDialog_PanePrimary"));
+            title = RS_(L"ConfirmCloseDialog_PaneTitle");
+            primary = RS_(L"ConfirmCloseDialog_PanePrimary");
             break;
         }
+        dialog.Title(winrt::box_value(title));
+        dialog.PrimaryButtonText(primary);
         dialog.CloseButtonText(RS_(L"ConfirmCloseDialog_Cancel"));
 
         // BODGY: After a ContentDialog is dismissed, FindName() can no longer
@@ -931,13 +936,23 @@ namespace winrt::TerminalApp::implementation
         auto result = ContentDialogResult::None;
         if (auto presenter{ _dialogPresenter.get() })
         {
+            const auto weak = get_weak();
             result = co_await presenter.ShowDialog(dialog);
-        }
 
-        if (result == ContentDialogResult::Primary && checkbox.IsChecked().Value())
-        {
-            _settings.GlobalSettings().ConfirmOnClose(ConfirmOnClose::Never);
-            _settings.WriteSettingsToDisk();
+            // ShowDialog blocks until the dialog is dismissed, so it is
+            // possible for `this` to be torn down while we wait. Re-acquire
+            // a strong reference before touching any of our state.
+            const auto strong = weak.get();
+            if (!strong)
+            {
+                co_return ContentDialogResult::None;
+            }
+
+            if (result == ContentDialogResult::Primary && checkbox.IsChecked().Value())
+            {
+                _settings.GlobalSettings().ConfirmOnClose(ConfirmOnClose::Never);
+                _settings.WriteSettingsToDisk();
+            }
         }
 
         co_return result;
@@ -2360,18 +2375,8 @@ namespace winrt::TerminalApp::implementation
             return true;
         case ConfirmOnClose::Automatic:
         {
-            // Warn if there's more than one tab.
-            if (_HasMultipleTabs())
-            {
-                return true;
-            }
-
-            // Warn if the one tab has more than one pane.
-            if (_GetTabImpl(_tabs.GetAt(0))->GetLeafPaneCount() > 1)
-            {
-                return true;
-            }
-            return false;
+            // Warn if there's more than one tab, or the one tab has more than one pane.
+            return _HasMultipleTabs() || _GetTabImpl(_tabs.GetAt(0))->GetLeafPaneCount() > 1;
         }
         case ConfirmOnClose::Never:
         default:
@@ -2419,7 +2424,10 @@ namespace winrt::TerminalApp::implementation
 
             const auto weak = get_weak();
             auto warningResult = co_await _ShowConfirmCloseDialog(ConfirmCloseDialogKind::Window);
-            if (!weak.get())
+            // Hold a strong reference to `this` after the co_await; we may
+            // be the last holder if the window was already being torn down.
+            auto strong = weak.get();
+            if (!strong)
             {
                 co_return;
             }
