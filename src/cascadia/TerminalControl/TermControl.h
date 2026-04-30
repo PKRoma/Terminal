@@ -126,6 +126,7 @@ namespace winrt::Microsoft::Terminal::Control::implementation
         winrt::Windows::Foundation::Size GetFontSize() const;
 
         void WriteInputString(const winrt::hstring& wstr, WriteInputStringType type);
+        void WriteInputStringWithoutBroadcast(const winrt::hstring& wstr, WriteInputStringType type);
         void ClearBuffer(Control::ClearBufferType clearType);
 
         void ToggleShaderEffects();
@@ -427,8 +428,6 @@ namespace winrt::Microsoft::Terminal::Control::implementation
 
         winrt::Windows::Foundation::Point _toPosInDips(const Core::Point terminalCellPos);
         void _throttledUpdateScrollbar(const ScrollBarUpdate& update);
-
-        void _pasteTextWithBroadcast(const winrt::hstring& text);
 
         void _contextMenuHandler(IInspectable sender, Control::ContextMenuRequestedEventArgs args);
         void _showContextMenuAt(const winrt::Windows::Foundation::Point& controlRelativePos);

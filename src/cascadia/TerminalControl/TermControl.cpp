@@ -914,17 +914,23 @@ namespace winrt::Microsoft::Terminal::Control::implementation
     // - <none>
     void TermControl::WriteInputString(const winrt::hstring& wstr, WriteInputStringType type)
     {
-        // Dismiss any previewed input.
-        PreviewInput(hstring{});
+        WriteInputStringWithoutBroadcast(wstr, type);
 
         // only broadcast if there's an actual listener. Saves the overhead of some object creation.
         if (StringSent)
         {
             StringSent.raise(*this, winrt::make<StringSentEventArgs>(wstr, static_cast<uint32_t>(type)));
         }
+    }
+
+    void TermControl::WriteInputStringWithoutBroadcast(const winrt::hstring& wstr, WriteInputStringType type)
+    {
+        // Dismiss any previewed input.
+        PreviewInput(hstring{});
 
         _core.WriteInputString(wstr, type);
     }
+
     void TermControl::ClearBuffer(Control::ClearBufferType clearType)
     {
         _core.ClearBuffer(clearType);
@@ -3097,7 +3103,7 @@ namespace winrt::Microsoft::Terminal::Control::implementation
                 auto link{ co_await e.DataView().GetApplicationLinkAsync() };
                 if (const auto strong = weak.get())
                 {
-                    _pasteTextWithBroadcast(link.AbsoluteUri());
+                    WriteInputString(link.AbsoluteUri(), WriteInputStringType::Clipboard);
                 }
             }
             CATCH_LOG();
@@ -3109,7 +3115,7 @@ namespace winrt::Microsoft::Terminal::Control::implementation
                 auto link{ co_await e.DataView().GetWebLinkAsync() };
                 if (const auto strong = weak.get())
                 {
-                    _pasteTextWithBroadcast(link.AbsoluteUri());
+                    WriteInputString(link.AbsoluteUri(), WriteInputStringType::Clipboard);
                 }
             }
             CATCH_LOG();
@@ -3121,7 +3127,7 @@ namespace winrt::Microsoft::Terminal::Control::implementation
                 auto text{ co_await e.DataView().GetTextAsync() };
                 if (const auto strong = weak.get())
                 {
-                    _pasteTextWithBroadcast(text);
+                    WriteInputString(text, WriteInputStringType::Clipboard);
                 }
             }
             CATCH_LOG();
@@ -3219,25 +3225,9 @@ namespace winrt::Microsoft::Terminal::Control::implementation
                     }
                 }
 
-                _pasteTextWithBroadcast(winrt::hstring{ allPathsString });
+                WriteInputString(winrt::hstring{ allPathsString }, WriteInputStringType::Clipboard);
             }
         }
-    }
-
-    // Method Description:
-    // - Paste this text, and raise a StringSent, to potentially broadcast this
-    //   text to other controls in the app. For certain interactions, like
-    //   drag/dropping a file, we want to act like we "pasted" the text (even if
-    //   the text didn't come from the clipboard). This lets those interactions
-    //   broadcast as well.
-    void TermControl::_pasteTextWithBroadcast(const winrt::hstring& text)
-    {
-        // only broadcast if there's an actual listener. Saves the overhead of some object creation.
-        if (StringSent)
-        {
-            StringSent.raise(*this, winrt::make<StringSentEventArgs>(text, static_cast<uint32_t>(WriteInputStringType::Raw)));
-        }
-        _core.WriteInputString(text, WriteInputStringType::Raw);
     }
 
     // Method Description:

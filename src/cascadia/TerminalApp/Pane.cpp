@@ -3052,7 +3052,7 @@ void Pane::BroadcastString(const winrt::Microsoft::Terminal::Control::TermContro
         {
             if (termControl != sourceControl && !termControl.ReadOnly())
             {
-                termControl.WriteInputString(text, type);
+                termControl.WriteInputStringWithoutBroadcast(text, type);
             }
         }
     });
