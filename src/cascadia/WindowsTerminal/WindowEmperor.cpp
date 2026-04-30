@@ -347,7 +347,7 @@ void WindowEmperor::_setupAumid(const std::wstring& aumid)
         LR"(%APPDATA%\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar\*.lnk)");
 
     WIN32_FIND_DATAW findData{};
-    const wil::unique_hfind findHandle{ FindFirstFileW(taskbarGlob.c_str(), &findData) };
+    const wil::unique_hfind findHandle{ FindFirstFileExW(taskbarGlob.c_str(), FindExInfoBasic, &findData, FindExSearchNameMatch, nullptr, FIND_FIRST_EX_LARGE_FETCH) };
     if (findHandle)
     {
         const auto lastSlash = taskbarGlob.rfind(L'\\');
@@ -375,7 +375,7 @@ void WindowEmperor::_setupAumid(const std::wstring& aumid)
                 continue;
             }
 
-            if (_wcsicmp(targetPath, ourExePath.c_str()) != 0)
+            if (til::compare_ordinal_insensitive(targetPath, ourExePath) != 0)
             {
                 continue;
             }

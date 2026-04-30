@@ -1882,7 +1882,6 @@ WCIA
 WCIW
 wcs
 WCSHELPER
-wcsicmp
 wcsrev
 wcswidth
 wddm
