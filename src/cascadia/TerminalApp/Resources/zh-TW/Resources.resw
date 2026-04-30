@@ -880,12 +880,6 @@
   <data name="CmdAppendCommandLineDesc" xml:space="preserve">
     <value>如果設定，命令會附加到設定檔的預設命令，而不是取代命令。</value>
   </data>
-  <data name="RestartConnectionText" xml:space="preserve">
-    <value>重新啟動連線</value>
-  </data>
-  <data name="RestartConnectionToolTip" xml:space="preserve">
-    <value>重新啟動使用中的窗格連線</value>
-  </data>
   <data name="SnippetPaneTitle.Text" xml:space="preserve">
     <value>片斷</value>
     <comment>Header for a page that includes small "snippets" of text for the user to enter</comment>

@@ -701,9 +701,6 @@
     <value>Переключить ввод трансляции для всех областей</value>
     <comment>When enabled, input will go to all panes in this tab simultaneously</comment>
   </data>
-  <data name="RestartConnectionKey" xml:space="preserve">
-    <value>Перезапустить подключение</value>
-  </data>
   <data name="OpenScratchpadKey" xml:space="preserve">
     <value>Открыть временную память</value>
   </data>

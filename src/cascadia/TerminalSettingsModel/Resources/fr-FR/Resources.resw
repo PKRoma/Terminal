@@ -701,9 +701,6 @@
     <value>Activer/désactiver l’entrée de diffusion dans tous les volets</value>
     <comment>When enabled, input will go to all panes in this tab simultaneously</comment>
   </data>
-  <data name="RestartConnectionKey" xml:space="preserve">
-    <value>Redémarrer la connexion</value>
-  </data>
   <data name="OpenScratchpadKey" xml:space="preserve">
     <value>Ouvrir le bloc-notes</value>
   </data>

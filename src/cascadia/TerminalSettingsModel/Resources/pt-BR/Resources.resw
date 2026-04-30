@@ -701,9 +701,6 @@
     <value>Alternar a entrada de difusão para todos os painéis</value>
     <comment>When enabled, input will go to all panes in this tab simultaneously</comment>
   </data>
-  <data name="RestartConnectionKey" xml:space="preserve">
-    <value>Reiniciar conexão</value>
-  </data>
   <data name="OpenScratchpadKey" xml:space="preserve">
     <value>Abrir o scratchpad</value>
   </data>

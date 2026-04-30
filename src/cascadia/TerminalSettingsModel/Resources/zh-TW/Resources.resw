@@ -701,9 +701,6 @@
     <value>將廣播輸入切換至所有窗格</value>
     <comment>When enabled, input will go to all panes in this tab simultaneously</comment>
   </data>
-  <data name="RestartConnectionKey" xml:space="preserve">
-    <value>重新啟動連線</value>
-  </data>
   <data name="OpenScratchpadKey" xml:space="preserve">
     <value>開啟聽寫面板</value>
   </data>

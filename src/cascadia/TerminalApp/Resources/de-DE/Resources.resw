@@ -883,12 +883,6 @@
   <data name="CmdAppendCommandLineDesc" xml:space="preserve">
     <value>Wenn diese Option festgelegt ist, wird der Befehl an den Standardbefehl des Profils angefügt, anstatt ihn zu ersetzen.</value>
   </data>
-  <data name="RestartConnectionText" xml:space="preserve">
-    <value>Verbindung neu starten</value>
-  </data>
-  <data name="RestartConnectionToolTip" xml:space="preserve">
-    <value>Verbindung mit aktivem Bereich neu starten</value>
-  </data>
   <data name="SnippetPaneTitle.Text" xml:space="preserve">
     <value>Schnipsel</value>
     <comment>Header for a page that includes small "snippets" of text for the user to enter</comment>

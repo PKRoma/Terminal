@@ -880,12 +880,6 @@
   <data name="CmdAppendCommandLineDesc" xml:space="preserve">
     <value>Se definido, o comando será acrescentado ao comando padrão do perfil em vez de substituí-lo.</value>
   </data>
-  <data name="RestartConnectionText" xml:space="preserve">
-    <value>Reiniciar conexão</value>
-  </data>
-  <data name="RestartConnectionToolTip" xml:space="preserve">
-    <value>Reiniciar a conexão do painel ativo</value>
-  </data>
   <data name="SnippetPaneTitle.Text" xml:space="preserve">
     <value>Trechos</value>
     <comment>Header for a page that includes small "snippets" of text for the user to enter</comment>

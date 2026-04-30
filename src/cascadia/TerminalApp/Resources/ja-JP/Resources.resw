@@ -881,12 +881,6 @@
   <data name="CmdAppendCommandLineDesc" xml:space="preserve">
     <value>設定されている場合、コマンドはプロファイルの既定のコマンドを置き換えるのではなく、追加されます。</value>
   </data>
-  <data name="RestartConnectionText" xml:space="preserve">
-    <value>接続の再起動</value>
-  </data>
-  <data name="RestartConnectionToolTip" xml:space="preserve">
-    <value>アクティブ ペイン接続を再起動します</value>
-  </data>
   <data name="SnippetPaneTitle.Text" xml:space="preserve">
     <value>抜粋</value>
     <comment>Header for a page that includes small "snippets" of text for the user to enter</comment>

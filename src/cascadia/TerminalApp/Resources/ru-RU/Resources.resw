@@ -880,12 +880,6 @@
   <data name="CmdAppendCommandLineDesc" xml:space="preserve">
     <value>Если этот параметр настроен, команда будет добавлена к стандартной команде профиля, а не заменит ее.</value>
   </data>
-  <data name="RestartConnectionText" xml:space="preserve">
-    <value>Перезапустить подключение</value>
-  </data>
-  <data name="RestartConnectionToolTip" xml:space="preserve">
-    <value>Перезапустить соединение с активной панелью.</value>
-  </data>
   <data name="SnippetPaneTitle.Text" xml:space="preserve">
     <value>Фрагменты</value>
     <comment>Header for a page that includes small "snippets" of text for the user to enter</comment>

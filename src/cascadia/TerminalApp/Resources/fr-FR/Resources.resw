@@ -880,12 +880,6 @@
   <data name="CmdAppendCommandLineDesc" xml:space="preserve">
     <value>Si elle est définie, la commande sera ajoutée à la commande par défaut du profil au lieu de la remplacer.</value>
   </data>
-  <data name="RestartConnectionText" xml:space="preserve">
-    <value>Redémarrer la connexion</value>
-  </data>
-  <data name="RestartConnectionToolTip" xml:space="preserve">
-    <value>Redémarrer la connexion du volet actif</value>
-  </data>
   <data name="SnippetPaneTitle.Text" xml:space="preserve">
     <value>Extraits</value>
     <comment>Header for a page that includes small "snippets" of text for the user to enter</comment>
