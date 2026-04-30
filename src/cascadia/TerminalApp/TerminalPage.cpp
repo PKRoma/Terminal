@@ -2958,7 +2958,7 @@ namespace winrt::TerminalApp::implementation
         // Used to determine whether to emit empty pastes and strip extra whitespace
         const auto anyHasBracketedPaste = control && !control.ReadOnly() && control.BracketedPasteEnabled();
         // Used to determine whether to warn on multi-line paste
-        // If none have bracketed paste, we can short-circuit.
+        // If none lack bracketed paste, we can skip the warning.
         const auto anyHasUnbracketedPaste = !anyHasBracketedPaste;
 
         // GetClipboardData might block for up to 30s for delay-rendered contents.
