@@ -3358,7 +3358,7 @@ namespace winrt::Microsoft::Terminal::Control::implementation
     // - Gets the internal taskbar state value
     // Return Value:
     // - The taskbar state of this control
-    const uint64_t TermControl::TaskbarState() const noexcept
+    const Control::TaskbarState TermControl::TaskbarState() const noexcept
     {
         return _core.TaskbarState();
     }

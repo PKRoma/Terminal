@@ -1253,7 +1253,7 @@ const std::optional<til::color> Terminal::GetTabColor() const
 // - Gets the internal taskbar state value
 // Return Value:
 // - The taskbar state
-const size_t Microsoft::Terminal::Core::Terminal::GetTaskbarState() const noexcept
+const Microsoft::Console::VirtualTerminal::DispatchTypes::TaskbarState Microsoft::Terminal::Core::Terminal::GetTaskbarState() const noexcept
 {
     return _taskbarState;
 }

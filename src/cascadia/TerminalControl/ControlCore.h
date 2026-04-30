@@ -161,7 +161,7 @@ namespace winrt::Microsoft::Terminal::Control::implementation
         void OpenCWD();
 
 #pragma region ICoreState
-        const size_t TaskbarState() const noexcept;
+        const Control::TaskbarState TaskbarState() const noexcept;
         const size_t TaskbarProgress() const noexcept;
 
         hstring Title();
@@ -424,6 +424,8 @@ namespace winrt::Microsoft::Terminal::Control::implementation
         uint16_t _lastHoveredId{ 0 };
         std::atomic<bool> _initializedTerminal{ false };
         std::atomic<bool> _restoring{ false };
+        std::atomic<bool> _autoDetectEnabled{ false };
+        std::atomic<bool> _commandActive{ false };
         bool _isReadOnly{ false };
         bool _closing{ false };
 

@@ -1302,11 +1302,10 @@ namespace winrt::TerminalApp::implementation
         const auto taskbarState = state.State();
         // The progress of the control changed, but not necessarily the progress of the tab.
         // Set the tab's progress ring to the active pane's progress
-        if (taskbarState > 0)
+        if (taskbarState != winrt::Microsoft::Terminal::Control::TaskbarState::Clear)
         {
-            if (taskbarState == 3)
+            if (taskbarState == winrt::Microsoft::Terminal::Control::TaskbarState::Indeterminate)
             {
-                // 3 is the indeterminate state, set the progress ring as such
                 _tabStatus.IsProgressRingIndeterminate(true);
             }
             else

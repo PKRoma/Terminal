@@ -162,7 +162,7 @@ void Terminal::SetTaskbarProgress(const ::Microsoft::Console::VirtualTerminal::D
 {
     _assertLocked();
 
-    _taskbarState = static_cast<size_t>(state);
+    _taskbarState = state;
 
     switch (state)
     {

@@ -86,7 +86,7 @@ namespace winrt::Microsoft::Terminal::Control::implementation
         void ColorSelection(Control::SelectionColor fg, Control::SelectionColor bg, Core::MatchMode matchMode);
 
 #pragma region ICoreState
-        const uint64_t TaskbarState() const noexcept;
+        const Control::TaskbarState TaskbarState() const noexcept;
         const uint64_t TaskbarProgress() const noexcept;
 
         hstring Title();

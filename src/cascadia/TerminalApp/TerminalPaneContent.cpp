@@ -36,7 +36,6 @@ namespace winrt::TerminalApp::implementation
         _controlEvents._ConnectionStateChanged = _control.ConnectionStateChanged(winrt::auto_revoke, { this, &TerminalPaneContent::_controlConnectionStateChangedHandler });
         _controlEvents._WarningBell = _control.WarningBell(winrt::auto_revoke, { get_weak(), &TerminalPaneContent::_controlWarningBellHandler });
         _controlEvents._PromptStarted = _control.PromptStarted(winrt::auto_revoke, { get_weak(), &TerminalPaneContent::_controlPromptStartedHandler });
-        _controlEvents._OutputStarted = _control.OutputStarted(winrt::auto_revoke, { get_weak(), &TerminalPaneContent::_controlOutputStartedHandler });
         _controlEvents._CloseTerminalRequested = _control.CloseTerminalRequested(winrt::auto_revoke, { get_weak(), &TerminalPaneContent::_closeTerminalRequestedHandler });
         _controlEvents._RestartTerminalRequested = _control.RestartTerminalRequested(winrt::auto_revoke, { get_weak(), &TerminalPaneContent::_restartTerminalRequestedHandler });
 
@@ -178,28 +177,14 @@ namespace winrt::TerminalApp::implementation
         TaskbarProgressChanged.raise(*this, nullptr);
     }
 
-    uint64_t TerminalPaneContent::TaskbarState()
+    winrt::Microsoft::Terminal::Control::TaskbarState TerminalPaneContent::TaskbarState()
     {
-        const auto vtState = _control.TaskbarState();
-        if (vtState != 0)
-        {
-            return vtState;
-        }
-        if (_autoDetectActive)
-        {
-            return 3; // Indeterminate
-        }
-        return 0;
+        return _control.TaskbarState();
     }
 
     uint64_t TerminalPaneContent::TaskbarProgress()
     {
-        const auto vtState = _control.TaskbarState();
-        if (vtState != 0)
-        {
-            return _control.TaskbarProgress();
-        }
-        return 0;
+        return _control.TaskbarProgress();
     }
     void TerminalPaneContent::_controlReadOnlyChanged(const IInspectable&, const IInspectable&)
     {
@@ -340,31 +325,10 @@ namespace winrt::TerminalApp::implementation
         if (_profile)
         {
             const auto notifyStyle = _profile.NotifyOnNextPrompt();
-            if (static_cast<int>(notifyStyle) != 0)
+            if (notifyStyle != OutputNotificationStyle::None)
             {
                 NotificationRequested.raise(*this,
                                             *winrt::make_self<TerminalApp::implementation::NotificationEventArgs>(notifyStyle, true));
-            }
-
-            const auto autoDetect = _profile.AutoDetectRunningCommand();
-            if (autoDetect != AutoDetectRunningCommand::Disabled && _autoDetectActive)
-            {
-                _autoDetectActive = false;
-                TaskbarProgressChanged.raise(*this, nullptr);
-            }
-        }
-    }
-
-    void TerminalPaneContent::_controlOutputStartedHandler(const winrt::Windows::Foundation::IInspectable& /*sender*/,
-                                                           const winrt::Windows::Foundation::IInspectable& /*eventArgs*/)
-    {
-        if (_profile)
-        {
-            const auto autoDetect = _profile.AutoDetectRunningCommand();
-            if (autoDetect != AutoDetectRunningCommand::Disabled && !_autoDetectActive)
-            {
-                _autoDetectActive = true;
-                TaskbarProgressChanged.raise(*this, nullptr);
             }
         }
     }
@@ -375,7 +339,7 @@ namespace winrt::TerminalApp::implementation
         if (_profile)
         {
             const auto notifyStyle = _profile.NotifyOnInactiveOutput();
-            if (static_cast<int>(notifyStyle) != 0)
+            if (notifyStyle != OutputNotificationStyle::None)
             {
                 NotificationRequested.raise(*this,
                                             *winrt::make_self<TerminalApp::implementation::NotificationEventArgs>(notifyStyle, true));

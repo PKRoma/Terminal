@@ -919,6 +919,17 @@ namespace winrt::Microsoft::Terminal::Control::implementation
         _hasUnfocusedAppearance = static_cast<bool>(newAppearance);
         _unfocusedAppearance = _hasUnfocusedAppearance ? newAppearance : settings;
 
+        // Cache the auto-detect setting in an atomic so the off-thread output/prompt
+        // callbacks can read it without synchronizing with _settings. If the effective
+        // taskbar state changes (because a command is currently active and the setting
+        // toggled), notify listeners.
+        const auto nowEnabled = _settings.AutoDetectRunningCommand() != AutoDetectRunningCommand::Disabled;
+        const auto wasEnabled = _autoDetectEnabled.exchange(nowEnabled, std::memory_order_relaxed);
+        if (wasEnabled != nowEnabled && _commandActive.load(std::memory_order_relaxed))
+        {
+            TaskbarProgressChanged.raise(*this, nullptr);
+        }
+
         const auto lock = _terminal->LockForWriting();
 
         _builtinGlyphs = _settings.EnableBuiltinGlyphs();
@@ -1553,10 +1564,17 @@ namespace winrt::Microsoft::Terminal::Control::implementation
     // - Gets the internal taskbar state value
     // Return Value:
     // - The taskbar state of this control
-    const size_t ControlCore::TaskbarState() const noexcept
+    const Control::TaskbarState ControlCore::TaskbarState() const noexcept
     {
         const auto lock = _terminal->LockForReading();
-        return _terminal->GetTaskbarState();
+        const auto vtState = static_cast<Control::TaskbarState>(_terminal->GetTaskbarState());
+        if (vtState == Control::TaskbarState::Clear &&
+            _autoDetectEnabled.load(std::memory_order_relaxed) &&
+            _commandActive.load(std::memory_order_relaxed))
+        {
+            return Control::TaskbarState::Indeterminate;
+        }
+        return vtState;
     }
 
     // Method Description:
@@ -1615,6 +1633,11 @@ namespace winrt::Microsoft::Terminal::Control::implementation
         {
             return;
         }
+        if (_commandActive.exchange(false, std::memory_order_relaxed) &&
+            _autoDetectEnabled.load(std::memory_order_relaxed))
+        {
+            TaskbarProgressChanged.raise(*this, nullptr);
+        }
         PromptStarted.raise(*this, nullptr);
     }
 
@@ -1623,6 +1646,11 @@ namespace winrt::Microsoft::Terminal::Control::implementation
         if (_restoring)
         {
             return;
+        }
+        if (!_commandActive.exchange(true, std::memory_order_relaxed) &&
+            _autoDetectEnabled.load(std::memory_order_relaxed))
+        {
+            TaskbarProgressChanged.raise(*this, nullptr);
         }
         OutputStarted.raise(*this, nullptr);
     }

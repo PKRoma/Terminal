@@ -32,6 +32,7 @@ namespace Microsoft.Terminal.Control
     [flags]
     enum OutputNotificationStyle
     {
+        None = 0,
         Taskbar = 0x1,
         Audible = 0x2,
         Tab = 0x4,
@@ -44,6 +45,19 @@ namespace Microsoft.Terminal.Control
         Disabled,
         Automatic,
         Progress
+    };
+
+    // Mirrors Microsoft::Console::VirtualTerminal::DispatchTypes::TaskbarState
+    // (which is shared with conhost and lives outside the WinRT projection).
+    // Values must remain numerically identical so the conversion at the
+    // ControlCore boundary is a 1:1 cast.
+    enum TaskbarState
+    {
+        Clear = 0,
+        Set = 1,
+        Error = 2,
+        Indeterminate = 3,
+        Paused = 4,
     };
 
     // Class Description:

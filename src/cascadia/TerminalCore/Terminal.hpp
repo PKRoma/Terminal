@@ -245,7 +245,7 @@ public:
 
     const std::optional<til::color> GetTabColor() const;
 
-    const size_t GetTaskbarState() const noexcept;
+    const ::Microsoft::Console::VirtualTerminal::DispatchTypes::TaskbarState GetTaskbarState() const noexcept;
     const size_t GetTaskbarProgress() const noexcept;
 
     void ColorSelection(const TextAttribute& attr, winrt::Microsoft::Terminal::Core::MatchMode matchMode);
@@ -367,6 +367,9 @@ private:
 
     til::enumset<Mode> _systemMode{ Mode::AutoWrap };
 
+    ::Microsoft::Console::VirtualTerminal::DispatchTypes::TaskbarState _taskbarState{ ::Microsoft::Console::VirtualTerminal::DispatchTypes::TaskbarState::Clear };
+    size_t _taskbarProgress = 0;
+
     bool _focused = false;
     bool _snapOnInput = true;
     bool _altGrAliasing = true;
@@ -374,9 +377,6 @@ private:
     bool _trimBlockSelection = true;
     bool _autoMarkPrompts = false;
     bool _rainbowSuggestions = false;
-
-    size_t _taskbarState = 0;
-    size_t _taskbarProgress = 0;
 
     size_t _hyperlinkPatternId = 0;
 

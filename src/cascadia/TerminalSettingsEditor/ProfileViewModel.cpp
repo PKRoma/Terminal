@@ -663,43 +663,30 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         {
             return RS_(L"Profile_OutputNotificationStyleAll/Content");
         }
-        else if (style == static_cast<Ons>(0))
+        else if (style == Ons::None)
         {
             return RS_(L"Profile_OutputNotificationStyleNone/Content");
         }
 
-        std::vector<hstring> resultList;
-        resultList.reserve(4);
-        if (WI_IsFlagSet(style, Ons::Taskbar))
-        {
-            resultList.emplace_back(RS_(L"Profile_OutputNotificationStyleTaskbar/Content"));
-        }
-        if (WI_IsFlagSet(style, Ons::Audible))
-        {
-            resultList.emplace_back(RS_(L"Profile_OutputNotificationStyleAudible/Content"));
-        }
-        if (WI_IsFlagSet(style, Ons::Tab))
-        {
-            resultList.emplace_back(RS_(L"Profile_OutputNotificationStyleTab/Content"));
-        }
-        if (WI_IsFlagSet(style, Ons::Notification))
-        {
-            resultList.emplace_back(RS_(L"Profile_OutputNotificationStyleNotification/Content"));
-        }
+        std::wstring result;
+        const auto appendIfFlagSet = [&](Ons flag, std::wstring_view resource) {
+            // WI_IsFlagSet requires a compile-time constant flag; `flag` is a runtime parameter here.
+            if ((WI_EnumValue(style) & WI_EnumValue(flag)) != 0)
+            {
+                if (!result.empty())
+                {
+                    result.append(L", ");
+                }
+                result.append(resource);
+            }
+        };
 
-        hstring result{};
-        for (auto&& entry : resultList)
-        {
-            if (result.empty())
-            {
-                result = entry;
-            }
-            else
-            {
-                result = result + L", " + entry;
-            }
-        }
-        return result;
+        appendIfFlagSet(Ons::Taskbar, RS_(L"Profile_OutputNotificationStyleTaskbar/Content"));
+        appendIfFlagSet(Ons::Audible, RS_(L"Profile_OutputNotificationStyleAudible/Content"));
+        appendIfFlagSet(Ons::Tab, RS_(L"Profile_OutputNotificationStyleTab/Content"));
+        appendIfFlagSet(Ons::Notification, RS_(L"Profile_OutputNotificationStyleNotification/Content"));
+
+        return hstring{ result };
     }
 
     bool ProfileViewModel::IsNotifyOnInactiveOutputFlagSet(const uint32_t flag)
@@ -745,43 +732,30 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         {
             return RS_(L"Profile_OutputNotificationStyleAll/Content");
         }
-        else if (style == static_cast<Ons>(0))
+        else if (style == Ons::None)
         {
             return RS_(L"Profile_OutputNotificationStyleNone/Content");
         }
 
-        std::vector<hstring> resultList;
-        resultList.reserve(4);
-        if (WI_IsFlagSet(style, Ons::Taskbar))
-        {
-            resultList.emplace_back(RS_(L"Profile_OutputNotificationStyleTaskbar/Content"));
-        }
-        if (WI_IsFlagSet(style, Ons::Audible))
-        {
-            resultList.emplace_back(RS_(L"Profile_OutputNotificationStyleAudible/Content"));
-        }
-        if (WI_IsFlagSet(style, Ons::Tab))
-        {
-            resultList.emplace_back(RS_(L"Profile_OutputNotificationStyleTab/Content"));
-        }
-        if (WI_IsFlagSet(style, Ons::Notification))
-        {
-            resultList.emplace_back(RS_(L"Profile_OutputNotificationStyleNotification/Content"));
-        }
+        std::wstring result;
+        const auto appendIfFlagSet = [&](Ons flag, std::wstring_view resource) {
+            // WI_IsFlagSet requires a compile-time constant flag; `flag` is a runtime parameter here.
+            if ((WI_EnumValue(style) & WI_EnumValue(flag)) != 0)
+            {
+                if (!result.empty())
+                {
+                    result.append(L", ");
+                }
+                result.append(resource);
+            }
+        };
 
-        hstring result{};
-        for (auto&& entry : resultList)
-        {
-            if (result.empty())
-            {
-                result = entry;
-            }
-            else
-            {
-                result = result + L", " + entry;
-            }
-        }
-        return result;
+        appendIfFlagSet(Ons::Taskbar, RS_(L"Profile_OutputNotificationStyleTaskbar/Content"));
+        appendIfFlagSet(Ons::Audible, RS_(L"Profile_OutputNotificationStyleAudible/Content"));
+        appendIfFlagSet(Ons::Tab, RS_(L"Profile_OutputNotificationStyleTab/Content"));
+        appendIfFlagSet(Ons::Notification, RS_(L"Profile_OutputNotificationStyleNotification/Content"));
+
+        return hstring{ result };
     }
 
     bool ProfileViewModel::IsNotifyOnNextPromptFlagSet(const uint32_t flag)
