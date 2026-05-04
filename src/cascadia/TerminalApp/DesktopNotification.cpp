@@ -4,8 +4,6 @@
 #include "pch.h"
 #include "DesktopNotification.h"
 
-#include <WtExeUtils.h>
-
 using namespace winrt::Windows::UI::Notifications;
 using namespace winrt::Windows::Data::Xml::Dom;
 
@@ -91,32 +89,25 @@ namespace winrt::TerminalApp::implementation
             // When the user activates (clicks) the toast, fire the callback.
             if (activatedFunc)
             {
-                toast.Activated([activatedFunc](const auto& /*sender*/, const auto& /*eventArgs*/) {
+                toast.Activated([activatedFunc = std::move(activatedFunc)](const auto& /*sender*/, const auto& /*eventArgs*/) {
                     activatedFunc();
                 });
             }
 
-            // For packaged apps, CreateToastNotifier() uses the package identity automatically.
-            // For unpackaged apps, we must pass the explicit AUMID that was registered
-            // at startup via SetCurrentProcessExplicitAppUserModelID.
-            winrt::Windows::UI::Notifications::ToastNotifier notifier{ nullptr };
-            if (IsPackaged())
+            // Get the AUMID for the current process. For packaged apps this is
+            // the AUMID set by the package manifest (PackageFamilyName!AppId).
+            // For unpackaged apps this is the AUMID registered at startup via
+            // SetCurrentProcessExplicitAppUserModelID in WindowEmperor.
+            // Calling CreateToastNotifier with the app's own AUMID is permitted
+            // in both cases, so we can use a single code path.
+            wil::unique_cotaskmem_string aumid;
+            if (FAILED(GetCurrentProcessExplicitAppUserModelID(&aumid)))
             {
-                notifier = ToastNotificationManager::CreateToastNotifier();
+                return;
             }
-            else
-            {
-                // Retrieve the AUMID that was set by WindowEmperor at startup.
-                wil::unique_cotaskmem_string aumid;
-                if (SUCCEEDED(GetCurrentProcessExplicitAppUserModelID(&aumid)))
-                {
-                    notifier = ToastNotificationManager::CreateToastNotifier(aumid.get());
-                }
-            }
-            if (notifier)
-            {
-                notifier.Show(toast);
-            }
+
+            const auto notifier = ToastNotificationManager::CreateToastNotifier(aumid.get());
+            notifier.Show(toast);
         }
         catch (...)
         {
