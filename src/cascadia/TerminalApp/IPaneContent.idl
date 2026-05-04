@@ -23,12 +23,6 @@ namespace TerminalApp
         String Body { get; };
     };
 
-    runtimeclass NotificationEventArgs
-    {
-        String Title { get; };
-        String Body { get; };
-    };
-
     interface IPaneContent
     {
         Windows.UI.Xaml.FrameworkElement GetRoot();
