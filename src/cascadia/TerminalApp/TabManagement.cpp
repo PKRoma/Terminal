@@ -407,7 +407,9 @@ namespace winrt::TerminalApp::implementation
     // - Removes the tab (both TerminalControl and XAML) after prompting for approval
     // Arguments:
     // - tab: the tab to remove
-    winrt::Windows::Foundation::IAsyncAction TerminalPage::_HandleCloseTabRequested(winrt::TerminalApp::Tab tab)
+    // - skipConfirmClose: if true, skip the confirmOnClose check. Used when
+    //   an aggregate confirmation has already been shown (i.e. close other tabs)
+    winrt::Windows::Foundation::IAsyncAction TerminalPage::_HandleCloseTabRequested(winrt::TerminalApp::Tab tab, bool skipConfirmClose)
     {
         winrt::com_ptr<TerminalPage> strong;
 
@@ -423,6 +425,24 @@ namespace winrt::TerminalApp::implementation
             if (!strong || warningResult != ContentDialogResult::Primary)
             {
                 co_return;
+            }
+        }
+
+        // Skip the per-tab confirmOnClose check when the caller has already
+        // shown an aggregate confirmation dialog (e.g. _RemoveTabs).
+        if (!skipConfirmClose)
+        {
+            const auto tabImpl = _GetTabImpl(tab);
+            if (tabImpl && _ShouldWarnOnCloseTab(tabImpl))
+            {
+                const auto weak = get_weak();
+
+                auto warningResult = co_await _ShowConfirmCloseDialog(ConfirmCloseDialogKind::Tab);
+                strong = weak.get();
+                if (!strong || warningResult != ContentDialogResult::Primary)
+                {
+                    co_return;
+                }
             }
         }
 
@@ -795,6 +815,26 @@ namespace winrt::TerminalApp::implementation
             if (const auto pane{ activeTab->GetActivePane() })
             {
                 const auto weak = get_weak();
+
+                // Check if we should warn before closing a single pane
+                // (only triggers on Always — Automatic doesn't warn for single pane)
+                const auto setting = _settings.GlobalSettings().ConfirmOnClose();
+                if (setting == ConfirmOnClose::Always)
+                {
+                    // If this is the last pane, closing it closes the tab,
+                    // so use the tab dialog text instead.
+                    const auto kind = activeTab->GetLeafPaneCount() == 1 ? ConfirmCloseDialogKind::Tab : ConfirmCloseDialogKind::Pane;
+                    auto warningResult = co_await _ShowConfirmCloseDialog(kind);
+
+                    // Hold a strong reference to `this` for the rest of the
+                    // method; we may be the last holder after `co_await`.
+                    auto strong = weak.get();
+                    if (!strong || warningResult != ContentDialogResult::Primary)
+                    {
+                        co_return;
+                    }
+                }
+
                 if (co_await _PaneConfirmCloseReadOnly(pane))
                 {
                     if (const auto strong = weak.get())
@@ -808,10 +848,37 @@ namespace winrt::TerminalApp::implementation
 
     // Method Description:
     // - Close all panes with the given IDs sequentially.
+    // - Shows a single aggregate confirmation dialog upfront if the confirmOnClose setting warrants it.
     // Arguments:
-    // - weakTab: weak reference to the tab that the pane belongs to.
+    // - weakTab: weak reference to the tab that the panes belong to.
     // - paneIds: collection of the IDs of the panes that are marked for removal.
-    void TerminalPage::_ClosePanes(weak_ref<Tab> weakTab, std::vector<uint32_t> paneIds)
+    safe_void_coroutine TerminalPage::_ClosePanes(weak_ref<Tab> weakTab, std::vector<uint32_t> paneIds)
+    {
+        // Show a single aggregate confirmation for closing multiple panes.
+        if (_settings.GlobalSettings().ConfirmOnClose() != ConfirmOnClose::Never)
+        {
+            const auto weak = get_weak();
+            auto warningResult = co_await _ShowConfirmCloseDialog(ConfirmCloseDialogKind::MultiplePanes);
+
+            // Hold a strong reference to `this` after the co_await; we may
+            // be the last holder if the page was being torn down.
+            auto strong = weak.get();
+            if (!strong || warningResult != ContentDialogResult::Primary)
+            {
+                co_return;
+            }
+        }
+        _CloseRemainingPanes(weakTab, std::move(paneIds));
+    }
+
+    // Method Description:
+    // - Recursively closes panes by ID, chaining each close via the
+    //   ClosedByParent callback. Called after confirmation has already
+    //   been handled by _ClosePanes.
+    // Arguments:
+    // - weakTab: weak reference to the tab that the panes belong to
+    // - paneIds: remaining pane IDs to close
+    void TerminalPage::_CloseRemainingPanes(weak_ref<Tab> weakTab, std::vector<uint32_t> paneIds)
     {
         if (auto strongTab{ weakTab.get() })
         {
@@ -826,10 +893,9 @@ namespace winrt::TerminalApp::implementation
                     pane->ClosedByParent([ids{ std::move(paneIds) }, weakThis{ get_weak() }, weakTab]() {
                         if (auto strongThis{ weakThis.get() })
                         {
-                            strongThis->_ClosePanes(weakTab, std::move(ids));
+                            strongThis->_CloseRemainingPanes(weakTab, std::move(ids));
                         }
                     });
-
                     // Close the pane which will eventually trigger the closed by parent event
                     _HandleClosePaneRequested(pane);
                     break;
@@ -854,18 +920,37 @@ namespace winrt::TerminalApp::implementation
 
     // Method Description:
     // - Closes provided tabs one by one
+    // - Shows a single aggregate confirmation dialog upfront if the confirmOnClose setting warrants it.
     // Arguments:
     // - tabs - tabs to remove
     safe_void_coroutine TerminalPage::_RemoveTabs(const std::vector<winrt::TerminalApp::Tab> tabs)
     {
+        if (tabs.empty())
+        {
+            co_return;
+        }
+
+        // Show a single aggregate confirmation instead of per-tab dialogs.
         const auto weak = get_weak();
+        if (_settings.GlobalSettings().ConfirmOnClose() != ConfirmOnClose::Never)
+        {
+            auto warningResult = co_await _ShowConfirmCloseDialog(ConfirmCloseDialogKind::MultipleTabs);
+
+            // Hold a strong reference to `this` after the co_await so that
+            // the for-loop below can safely dispatch on us.
+            auto strong = weak.get();
+            if (!strong || warningResult != ContentDialogResult::Primary)
+            {
+                co_return;
+            }
+        }
 
         for (auto& tab : tabs)
         {
             winrt::Windows::Foundation::IAsyncAction action{ nullptr };
             if (const auto strong = weak.get())
             {
-                action = _HandleCloseTabRequested(tab);
+                action = _HandleCloseTabRequested(tab, /*skipConfirmClose*/ true);
             }
 
             if (!action)
