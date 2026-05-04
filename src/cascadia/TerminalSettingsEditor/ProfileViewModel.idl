@@ -51,12 +51,12 @@ namespace Microsoft.Terminal.Settings.Editor
         void SetBellStyleTaskbar(Windows.Foundation.IReference<Boolean> on);
         void SetBellStyleNotification(Windows.Foundation.IReference<Boolean> on);
 
-        String NotifyOnInactiveOutputPreview { get; };
-        Boolean IsNotifyOnInactiveOutputFlagSet(UInt32 flag);
-        void SetNotifyOnInactiveOutputTaskbar(Windows.Foundation.IReference<Boolean> on);
-        void SetNotifyOnInactiveOutputAudible(Windows.Foundation.IReference<Boolean> on);
-        void SetNotifyOnInactiveOutputTab(Windows.Foundation.IReference<Boolean> on);
-        void SetNotifyOnInactiveOutputNotification(Windows.Foundation.IReference<Boolean> on);
+        String NotifyOnActivityPreview { get; };
+        Boolean IsNotifyOnActivityFlagSet(UInt32 flag);
+        void SetNotifyOnActivityTaskbar(Windows.Foundation.IReference<Boolean> on);
+        void SetNotifyOnActivityAudible(Windows.Foundation.IReference<Boolean> on);
+        void SetNotifyOnActivityTab(Windows.Foundation.IReference<Boolean> on);
+        void SetNotifyOnActivityNotification(Windows.Foundation.IReference<Boolean> on);
 
         String NotifyOnNextPromptPreview { get; };
         Boolean IsNotifyOnNextPromptFlagSet(UInt32 flag);
@@ -159,7 +159,7 @@ namespace Microsoft.Terminal.Settings.Editor
         OBSERVABLE_PROJECTED_PROFILE_SETTING(Microsoft.Terminal.Control.PathTranslationStyle, PathTranslationStyle);
         OBSERVABLE_PROJECTED_PROFILE_SETTING(String, DragDropDelimiter);
         OBSERVABLE_PROJECTED_PROFILE_SETTING(Boolean, AllowVtClipboardWrite);
-        OBSERVABLE_PROJECTED_PROFILE_SETTING(Microsoft.Terminal.Control.OutputNotificationStyle, NotifyOnInactiveOutput);
+        OBSERVABLE_PROJECTED_PROFILE_SETTING(Microsoft.Terminal.Control.OutputNotificationStyle, NotifyOnActivity);
         OBSERVABLE_PROJECTED_PROFILE_SETTING(Microsoft.Terminal.Control.OutputNotificationStyle, NotifyOnNextPrompt);
         OBSERVABLE_PROJECTED_PROFILE_SETTING(Microsoft.Terminal.Control.AutoDetectRunningCommand, AutoDetectRunningCommand);
     }

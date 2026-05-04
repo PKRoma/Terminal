@@ -109,7 +109,7 @@ namespace Microsoft.Terminal.Control
         PathTranslationStyle PathTranslationStyle { get; };
         String DragDropDelimiter { get; };
 
-        OutputNotificationStyle NotifyOnInactiveOutput { get; };
+        OutputNotificationStyle NotifyOnActivity { get; };
         OutputNotificationStyle NotifyOnNextPrompt { get; };
         AutoDetectRunningCommand AutoDetectRunningCommand { get; };
 

@@ -107,9 +107,9 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
             {
                 _NotifyChanges(L"CurrentPathTranslationStyle");
             }
-            else if (viewModelProperty == L"NotifyOnInactiveOutput")
+            else if (viewModelProperty == L"NotifyOnActivity")
             {
-                _NotifyChanges(L"IsNotifyOnInactiveOutputFlagSet", L"NotifyOnInactiveOutputPreview");
+                _NotifyChanges(L"IsNotifyOnActivityFlagSet", L"NotifyOnActivityPreview");
             }
             else if (viewModelProperty == L"NotifyOnNextPrompt")
             {
@@ -584,6 +584,7 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         return iconPath.empty() || iconPath == IconPicker::HideIconValue;
     }
 
+#pragma region BellStyle
     hstring ProfileViewModel::BellStylePreview() const
     {
         const auto bellStyle = BellStyle();
@@ -663,13 +664,13 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         WI_UpdateFlag(currentStyle, Model::BellStyle::Notification, winrt::unbox_value<bool>(on));
         BellStyle(currentStyle);
     }
+#pragma endregion
 
-    // ===================== NotifyOnInactiveOutput =====================
-
-    hstring ProfileViewModel::NotifyOnInactiveOutputPreview() const
+#pragma region NotifyOnActivity
+    hstring ProfileViewModel::NotifyOnActivityPreview() const
     {
         using Ons = Control::OutputNotificationStyle;
-        const auto style = NotifyOnInactiveOutput();
+        const auto style = NotifyOnActivity();
         if (WI_AreAllFlagsSet(style, Ons::Taskbar | Ons::Audible | Ons::Tab | Ons::Notification))
         {
             return RS_(L"Profile_OutputNotificationStyleAll/Content");
@@ -700,41 +701,41 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         return hstring{ result };
     }
 
-    bool ProfileViewModel::IsNotifyOnInactiveOutputFlagSet(const uint32_t flag)
+    bool ProfileViewModel::IsNotifyOnActivityFlagSet(const uint32_t flag)
     {
-        return (WI_EnumValue(NotifyOnInactiveOutput()) & flag) == flag;
+        return (WI_EnumValue(NotifyOnActivity()) & flag) == flag;
     }
 
-    void ProfileViewModel::SetNotifyOnInactiveOutputTaskbar(winrt::Windows::Foundation::IReference<bool> on)
+    void ProfileViewModel::SetNotifyOnActivityTaskbar(winrt::Windows::Foundation::IReference<bool> on)
     {
-        auto currentStyle = NotifyOnInactiveOutput();
+        auto currentStyle = NotifyOnActivity();
         WI_UpdateFlag(currentStyle, Control::OutputNotificationStyle::Taskbar, winrt::unbox_value<bool>(on));
-        NotifyOnInactiveOutput(currentStyle);
+        NotifyOnActivity(currentStyle);
     }
 
-    void ProfileViewModel::SetNotifyOnInactiveOutputAudible(winrt::Windows::Foundation::IReference<bool> on)
+    void ProfileViewModel::SetNotifyOnActivityAudible(winrt::Windows::Foundation::IReference<bool> on)
     {
-        auto currentStyle = NotifyOnInactiveOutput();
+        auto currentStyle = NotifyOnActivity();
         WI_UpdateFlag(currentStyle, Control::OutputNotificationStyle::Audible, winrt::unbox_value<bool>(on));
-        NotifyOnInactiveOutput(currentStyle);
+        NotifyOnActivity(currentStyle);
     }
 
-    void ProfileViewModel::SetNotifyOnInactiveOutputTab(winrt::Windows::Foundation::IReference<bool> on)
+    void ProfileViewModel::SetNotifyOnActivityTab(winrt::Windows::Foundation::IReference<bool> on)
     {
-        auto currentStyle = NotifyOnInactiveOutput();
+        auto currentStyle = NotifyOnActivity();
         WI_UpdateFlag(currentStyle, Control::OutputNotificationStyle::Tab, winrt::unbox_value<bool>(on));
-        NotifyOnInactiveOutput(currentStyle);
+        NotifyOnActivity(currentStyle);
     }
 
-    void ProfileViewModel::SetNotifyOnInactiveOutputNotification(winrt::Windows::Foundation::IReference<bool> on)
+    void ProfileViewModel::SetNotifyOnActivityNotification(winrt::Windows::Foundation::IReference<bool> on)
     {
-        auto currentStyle = NotifyOnInactiveOutput();
+        auto currentStyle = NotifyOnActivity();
         WI_UpdateFlag(currentStyle, Control::OutputNotificationStyle::Notification, winrt::unbox_value<bool>(on));
-        NotifyOnInactiveOutput(currentStyle);
+        NotifyOnActivity(currentStyle);
     }
+#pragma endregion
 
-    // ===================== NotifyOnNextPrompt =====================
-
+#pragma region NotifyOnNextPrompt
     hstring ProfileViewModel::NotifyOnNextPromptPreview() const
     {
         using Ons = Control::OutputNotificationStyle;
@@ -801,6 +802,9 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         WI_UpdateFlag(currentStyle, Control::OutputNotificationStyle::Notification, winrt::unbox_value<bool>(on));
         NotifyOnNextPrompt(currentStyle);
     }
+#pragma endregion
+
+#pragma region BellSound
 
     // Method Description:
     // - Construct _CurrentBellSounds by importing the _inherited_ value from the model
@@ -939,6 +943,7 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
             _NotifyChanges(L"CurrentBellSounds");
         }
     }
+#pragma endregion
 
     void ProfileViewModel::DeleteProfile()
     {

@@ -354,7 +354,7 @@ namespace winrt::Microsoft::Terminal::Settings
         _AllowVtClipboardWrite = profile.AllowVtClipboardWrite();
         _PathTranslationStyle = profile.PathTranslationStyle();
         _DragDropDelimiter = profile.DragDropDelimiter();
-        _NotifyOnInactiveOutput = profile.NotifyOnInactiveOutput();
+        _NotifyOnActivity = profile.NotifyOnActivity();
         _NotifyOnNextPrompt = profile.NotifyOnNextPrompt();
         _AutoDetectRunningCommand = profile.AutoDetectRunningCommand();
     }

@@ -48,13 +48,13 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         void SetBellStyleTaskbar(winrt::Windows::Foundation::IReference<bool> on);
         void SetBellStyleNotification(winrt::Windows::Foundation::IReference<bool> on);
 
-        // notify on inactive output bits
-        hstring NotifyOnInactiveOutputPreview() const;
-        bool IsNotifyOnInactiveOutputFlagSet(const uint32_t flag);
-        void SetNotifyOnInactiveOutputTaskbar(winrt::Windows::Foundation::IReference<bool> on);
-        void SetNotifyOnInactiveOutputAudible(winrt::Windows::Foundation::IReference<bool> on);
-        void SetNotifyOnInactiveOutputTab(winrt::Windows::Foundation::IReference<bool> on);
-        void SetNotifyOnInactiveOutputNotification(winrt::Windows::Foundation::IReference<bool> on);
+        // notify on activity bits
+        hstring NotifyOnActivityPreview() const;
+        bool IsNotifyOnActivityFlagSet(const uint32_t flag);
+        void SetNotifyOnActivityTaskbar(winrt::Windows::Foundation::IReference<bool> on);
+        void SetNotifyOnActivityAudible(winrt::Windows::Foundation::IReference<bool> on);
+        void SetNotifyOnActivityTab(winrt::Windows::Foundation::IReference<bool> on);
+        void SetNotifyOnActivityNotification(winrt::Windows::Foundation::IReference<bool> on);
 
         // notify on next prompt bits
         hstring NotifyOnNextPromptPreview() const;
@@ -163,7 +163,7 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         OBSERVABLE_PROJECTED_SETTING(_profile, RainbowSuggestions);
         OBSERVABLE_PROJECTED_SETTING(_profile, PathTranslationStyle);
         OBSERVABLE_PROJECTED_SETTING(_profile, DragDropDelimiter);
-        OBSERVABLE_PROJECTED_SETTING(_profile, NotifyOnInactiveOutput);
+        OBSERVABLE_PROJECTED_SETTING(_profile, NotifyOnActivity);
         OBSERVABLE_PROJECTED_SETTING(_profile, NotifyOnNextPrompt);
         OBSERVABLE_PROJECTED_SETTING(_profile, AutoDetectRunningCommand);
 

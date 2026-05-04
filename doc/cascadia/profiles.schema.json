@@ -2862,7 +2862,7 @@
           "description": "Sets the sound played when the application emits a BEL. When set to an array, the terminal will pick one of those sounds at random.",
           "$ref": "#/$defs/BellSound"
         },
-        "notifyOnInactiveOutput": {
+        "notifyOnActivity": {
           "oneOf": [
             {
               "type": "boolean"

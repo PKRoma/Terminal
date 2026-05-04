@@ -340,7 +340,7 @@ namespace winrt::TerminalApp::implementation
     {
         if (_profile)
         {
-            const auto notifyStyle = _profile.NotifyOnInactiveOutput();
+            const auto notifyStyle = _profile.NotifyOnActivity();
             if (notifyStyle != OutputNotificationStyle::None)
             {
                 NotificationRequested.raise(*this,

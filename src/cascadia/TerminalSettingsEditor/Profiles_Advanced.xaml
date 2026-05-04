@@ -198,23 +198,23 @@
                 </StackPanel>
             </local:SettingContainer>
 
-            <!--  Notify On Inactive Output  -->
-            <local:SettingContainer x:Name="NotifyOnInactiveOutput"
-                                    x:Uid="Profile_NotifyOnInactiveOutput"
-                                    ClearSettingValue="{x:Bind Profile.ClearNotifyOnInactiveOutput}"
-                                    CurrentValue="{x:Bind Profile.NotifyOnInactiveOutputPreview, Mode=OneWay}"
-                                    HasSettingValue="{x:Bind Profile.HasNotifyOnInactiveOutput, Mode=OneWay}"
-                                    SettingOverrideSource="{x:Bind Profile.NotifyOnInactiveOutputOverrideSource, Mode=OneWay}"
+            <!--  Notify On Activity  -->
+            <local:SettingContainer x:Name="NotifyOnActivity"
+                                    x:Uid="Profile_NotifyOnActivity"
+                                    ClearSettingValue="{x:Bind Profile.ClearNotifyOnActivity}"
+                                    CurrentValue="{x:Bind Profile.NotifyOnActivityPreview, Mode=OneWay}"
+                                    HasSettingValue="{x:Bind Profile.HasNotifyOnActivity, Mode=OneWay}"
+                                    SettingOverrideSource="{x:Bind Profile.NotifyOnActivityOverrideSource, Mode=OneWay}"
                                     Style="{StaticResource ExpanderSettingContainerStyle}">
                 <StackPanel>
                     <CheckBox x:Uid="Profile_OutputNotificationStyleTaskbar"
-                              IsChecked="{x:Bind Profile.IsNotifyOnInactiveOutputFlagSet(1), BindBack=Profile.SetNotifyOnInactiveOutputTaskbar, Mode=TwoWay}" />
+                              IsChecked="{x:Bind Profile.IsNotifyOnActivityFlagSet(1), BindBack=Profile.SetNotifyOnActivityTaskbar, Mode=TwoWay}" />
                     <CheckBox x:Uid="Profile_OutputNotificationStyleAudible"
-                              IsChecked="{x:Bind Profile.IsNotifyOnInactiveOutputFlagSet(2), BindBack=Profile.SetNotifyOnInactiveOutputAudible, Mode=TwoWay}" />
+                              IsChecked="{x:Bind Profile.IsNotifyOnActivityFlagSet(2), BindBack=Profile.SetNotifyOnActivityAudible, Mode=TwoWay}" />
                     <CheckBox x:Uid="Profile_OutputNotificationStyleTab"
-                              IsChecked="{x:Bind Profile.IsNotifyOnInactiveOutputFlagSet(4), BindBack=Profile.SetNotifyOnInactiveOutputTab, Mode=TwoWay}" />
+                              IsChecked="{x:Bind Profile.IsNotifyOnActivityFlagSet(4), BindBack=Profile.SetNotifyOnActivityTab, Mode=TwoWay}" />
                     <CheckBox x:Uid="Profile_OutputNotificationStyleNotification"
-                              IsChecked="{x:Bind Profile.IsNotifyOnInactiveOutputFlagSet(8), BindBack=Profile.SetNotifyOnInactiveOutputNotification, Mode=TwoWay}" />
+                              IsChecked="{x:Bind Profile.IsNotifyOnActivityFlagSet(8), BindBack=Profile.SetNotifyOnActivityNotification, Mode=TwoWay}" />
                 </StackPanel>
             </local:SettingContainer>
 
