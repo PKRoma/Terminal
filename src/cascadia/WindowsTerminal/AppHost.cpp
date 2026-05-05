@@ -432,10 +432,10 @@ void AppHost::_HandleRequestWindowList(const winrt::Windows::Foundation::IInspec
     auto windowEntries = args.Entries();
     for (const auto& entry : entries)
     {
-        winrt::TerminalApp::WindowListEntry wle;
-        wle.Id(entry.Id);
-        wle.Name(winrt::hstring{ entry.Name });
-        windowEntries.Append(wle);
+        winrt::TerminalApp::WindowListEntry w;
+        w.Id(entry.Id);
+        w.Name(winrt::hstring{ entry.Name });
+        windowEntries.Append(w);
     }
 }
 
