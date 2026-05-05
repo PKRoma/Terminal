@@ -16,7 +16,7 @@ Abstract:
 #include "WindowLayout.g.h"
 
 #include <inc/cppwinrt_utils.h>
-#include <JsonUtils.h>
+#include "JsonUtils.h"
 
 namespace winrt::Microsoft::Terminal::Settings::Model::implementation
 {
