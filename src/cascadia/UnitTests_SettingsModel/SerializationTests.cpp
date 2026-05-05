@@ -131,7 +131,7 @@ namespace SettingsModelUnitTests
 
                 "trimPaste": true,
 
-                "warning.confirmCloseAllTabs" : true,
+                "warning.confirmOnClose": "automatic",
                 "warning.inputService" : true,
                 "warning.largePaste" : true,
                 "warning.multiLinePaste" : "automatic",
