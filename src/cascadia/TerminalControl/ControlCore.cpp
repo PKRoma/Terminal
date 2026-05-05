@@ -1620,19 +1620,11 @@ namespace winrt::Microsoft::Terminal::Control::implementation
         // Since this can only ever be triggered by output from the connection,
         // then the Terminal already has the write lock when calling this
         // callback.
-        if (_restoring)
-        {
-            return;
-        }
         WarningBell.raise(*this, nullptr);
     }
 
     void ControlCore::_terminalPromptStarted()
     {
-        if (_restoring)
-        {
-            return;
-        }
         if (_commandActive.exchange(false, std::memory_order_relaxed) &&
             _autoDetectCommandActivity.load(std::memory_order_relaxed))
         {
@@ -1643,10 +1635,6 @@ namespace winrt::Microsoft::Terminal::Control::implementation
 
     void ControlCore::_terminalOutputStarted()
     {
-        if (_restoring)
-        {
-            return;
-        }
         if (!_commandActive.exchange(true, std::memory_order_relaxed) &&
             _autoDetectCommandActivity.load(std::memory_order_relaxed))
         {
@@ -1712,10 +1700,6 @@ namespace winrt::Microsoft::Terminal::Control::implementation
 
     void ControlCore::_terminalTaskbarProgressChanged()
     {
-        if (_restoring)
-        {
-            return;
-        }
         TaskbarProgressChanged.raise(*this, nullptr);
     }
 
@@ -1733,10 +1717,6 @@ namespace winrt::Microsoft::Terminal::Control::implementation
     // - duration - How long the note should be sustained (in microseconds).
     void ControlCore::_terminalPlayMidiNote(const int noteNumber, const int velocity, const std::chrono::microseconds duration)
     {
-        if (_restoring)
-        {
-            return;
-        }
         // The UI thread might try to acquire the console lock from time to time.
         // --> Unlock it, so the UI doesn't hang while we're busy.
         const auto suspension = _terminal->SuspendLock();
@@ -1909,10 +1889,8 @@ namespace winrt::Microsoft::Terminal::Control::implementation
         _terminal->SerializeMainBuffer(handle);
     }
 
-    void ControlCore::RestoreFromPath(const wchar_t* path)
+    void ControlCore::RestoreFromPath(const wchar_t* path) const
     {
-        _restoring = true;
-        const auto restoreComplete = wil::scope_exit([&] { _restoring = false; });
         wil::unique_handle file{ CreateFileW(path, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, nullptr) };
 
         // This block of code exists temporarily to fix buffer dumps that were

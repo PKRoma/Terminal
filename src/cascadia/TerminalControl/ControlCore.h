@@ -154,7 +154,7 @@ namespace winrt::Microsoft::Terminal::Control::implementation
 
         void Close();
         void PersistTo(HANDLE handle) const;
-        void RestoreFromPath(const wchar_t* path);
+        void RestoreFromPath(const wchar_t* path) const;
 
         void ClearQuickFix();
 
@@ -423,7 +423,6 @@ namespace winrt::Microsoft::Terminal::Control::implementation
         std::optional<til::point> _lastHoveredCell;
         uint16_t _lastHoveredId{ 0 };
         std::atomic<bool> _initializedTerminal{ false };
-        std::atomic<bool> _restoring{ false };
         std::atomic<bool> _autoDetectCommandActivity{ false };
         std::atomic<bool> _commandActive{ false };
         bool _isReadOnly{ false };
