@@ -2925,14 +2925,9 @@
           "description": "Controls how you are notified when a new shell prompt is detected. Requires shell integration."
         },
         "autoDetectRunningCommand": {
-          "default": "disabled",
+          "default": false,
           "description": "Automatically detect when a command is running and show a progress indicator in the tab and taskbar.",
-          "enum": [
-            "disabled",
-            "automatic",
-            "progress"
-          ],
-          "type": "string"
+          "type": "boolean"
         },
         "closeOnExit": {
           "default": "automatic",

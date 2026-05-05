@@ -173,7 +173,6 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         GETSET_BINDABLE_ENUM_SETTING(CloseOnExitMode, Microsoft::Terminal::Settings::Model::CloseOnExitMode, CloseOnExit);
         GETSET_BINDABLE_ENUM_SETTING(ScrollState, Microsoft::Terminal::Control::ScrollbarState, ScrollState);
         GETSET_BINDABLE_ENUM_SETTING(PathTranslationStyle, Microsoft::Terminal::Control::PathTranslationStyle, PathTranslationStyle);
-        GETSET_BINDABLE_ENUM_SETTING(AutoDetectRunningCommand, Microsoft::Terminal::Control::AutoDetectRunningCommand, AutoDetectRunningCommand);
 
     private:
         Model::Profile _profile;

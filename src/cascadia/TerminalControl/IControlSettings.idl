@@ -40,13 +40,6 @@ namespace Microsoft.Terminal.Control
         All = 0xffffffff
     };
 
-    enum AutoDetectRunningCommand
-    {
-        Disabled,
-        Automatic,
-        Progress
-    };
-
     // Mirrors Microsoft::Console::VirtualTerminal::DispatchTypes::TaskbarState
     // (which is shared with conhost and lives outside the WinRT projection).
     // Values must remain numerically identical so the conversion at the
@@ -111,7 +104,7 @@ namespace Microsoft.Terminal.Control
 
         OutputNotificationStyle NotifyOnActivity { get; };
         OutputNotificationStyle NotifyOnNextPrompt { get; };
-        AutoDetectRunningCommand AutoDetectRunningCommand { get; };
+        Boolean AutoDetectRunningCommand { get; };
 
         // NOTE! When adding something here, make sure to update ControlProperties.h too!
     };

@@ -170,15 +170,6 @@ JSON_FLAG_MAPPER(::winrt::Microsoft::Terminal::Control::OutputNotificationStyle)
     }
 };
 
-JSON_ENUM_MAPPER(::winrt::Microsoft::Terminal::Control::AutoDetectRunningCommand)
-{
-    JSON_MAPPINGS(3) = {
-        pair_type{ "disabled", ValueType::Disabled },
-        pair_type{ "automatic", ValueType::Automatic },
-        pair_type{ "progress", ValueType::Progress },
-    };
-};
-
 JSON_ENUM_MAPPER(::winrt::Microsoft::Terminal::Settings::Model::ConvergedAlignment)
 {
     // reduce repetition

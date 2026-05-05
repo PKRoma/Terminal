@@ -244,10 +244,8 @@
                                     ClearSettingValue="{x:Bind Profile.ClearAutoDetectRunningCommand}"
                                     HasSettingValue="{x:Bind Profile.HasAutoDetectRunningCommand, Mode=OneWay}"
                                     SettingOverrideSource="{x:Bind Profile.AutoDetectRunningCommandOverrideSource, Mode=OneWay}">
-                <ComboBox ItemTemplate="{StaticResource EnumComboBoxTemplate}"
-                          ItemsSource="{x:Bind Profile.AutoDetectRunningCommandList, Mode=OneWay}"
-                          SelectedItem="{x:Bind Profile.CurrentAutoDetectRunningCommand, Mode=TwoWay}"
-                          Style="{StaticResource ComboBoxSettingStyle}" />
+                <ToggleSwitch IsOn="{x:Bind Profile.AutoDetectRunningCommand, Mode=TwoWay}"
+                              Style="{StaticResource ToggleSwitchInExpanderStyle}" />
             </local:SettingContainer>
 
             <!--  RightClickContextMenu  -->

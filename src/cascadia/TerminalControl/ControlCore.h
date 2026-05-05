@@ -424,7 +424,7 @@ namespace winrt::Microsoft::Terminal::Control::implementation
         uint16_t _lastHoveredId{ 0 };
         std::atomic<bool> _initializedTerminal{ false };
         std::atomic<bool> _restoring{ false };
-        std::atomic<bool> _autoDetectEnabled{ false };
+        std::atomic<bool> _autoDetectCommandActivity{ false };
         std::atomic<bool> _commandActive{ false };
         bool _isReadOnly{ false };
         bool _closing{ false };

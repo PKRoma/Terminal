@@ -112,7 +112,7 @@ Author(s):
     X(Microsoft::Terminal::Control::PathTranslationStyle, PathTranslationStyle, "pathTranslationStyle", Microsoft::Terminal::Control::PathTranslationStyle::None)  \
     X(Microsoft::Terminal::Control::OutputNotificationStyle, NotifyOnActivity, "notifyOnActivity", Microsoft::Terminal::Control::OutputNotificationStyle{ 0 })     \
     X(Microsoft::Terminal::Control::OutputNotificationStyle, NotifyOnNextPrompt, "notifyOnNextPrompt", Microsoft::Terminal::Control::OutputNotificationStyle{ 0 }) \
-    X(Microsoft::Terminal::Control::AutoDetectRunningCommand, AutoDetectRunningCommand, "autoDetectRunningCommand", Microsoft::Terminal::Control::AutoDetectRunningCommand::Disabled)
+    X(bool, AutoDetectRunningCommand, "autoDetectRunningCommand", false)
 
 // Intentionally omitted Profile settings:
 // * Name

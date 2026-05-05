@@ -923,8 +923,8 @@ namespace winrt::Microsoft::Terminal::Control::implementation
         // callbacks can read it without synchronizing with _settings. If the effective
         // taskbar state changes (because a command is currently active and the setting
         // toggled), notify listeners.
-        const auto nowEnabled = _settings.AutoDetectRunningCommand() != AutoDetectRunningCommand::Disabled;
-        const auto wasEnabled = _autoDetectEnabled.exchange(nowEnabled, std::memory_order_relaxed);
+        const auto nowEnabled = _settings.AutoDetectRunningCommand();
+        const auto wasEnabled = _autoDetectCommandActivity.exchange(nowEnabled, std::memory_order_relaxed);
         if (wasEnabled != nowEnabled && _commandActive.load(std::memory_order_relaxed))
         {
             TaskbarProgressChanged.raise(*this, nullptr);
@@ -1569,7 +1569,7 @@ namespace winrt::Microsoft::Terminal::Control::implementation
         const auto lock = _terminal->LockForReading();
         const auto vtState = static_cast<Control::TaskbarState>(_terminal->GetTaskbarState());
         if (vtState == Control::TaskbarState::Clear &&
-            _autoDetectEnabled.load(std::memory_order_relaxed) &&
+            _autoDetectCommandActivity.load(std::memory_order_relaxed) &&
             _commandActive.load(std::memory_order_relaxed))
         {
             return Control::TaskbarState::Indeterminate;
@@ -1634,7 +1634,7 @@ namespace winrt::Microsoft::Terminal::Control::implementation
             return;
         }
         if (_commandActive.exchange(false, std::memory_order_relaxed) &&
-            _autoDetectEnabled.load(std::memory_order_relaxed))
+            _autoDetectCommandActivity.load(std::memory_order_relaxed))
         {
             TaskbarProgressChanged.raise(*this, nullptr);
         }
@@ -1648,7 +1648,7 @@ namespace winrt::Microsoft::Terminal::Control::implementation
             return;
         }
         if (!_commandActive.exchange(true, std::memory_order_relaxed) &&
-            _autoDetectEnabled.load(std::memory_order_relaxed))
+            _autoDetectCommandActivity.load(std::memory_order_relaxed))
         {
             TaskbarProgressChanged.raise(*this, nullptr);
         }

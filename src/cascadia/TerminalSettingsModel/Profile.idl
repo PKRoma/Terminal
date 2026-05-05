@@ -98,6 +98,6 @@ namespace Microsoft.Terminal.Settings.Model
         INHERITABLE_PROFILE_SETTING(String, DragDropDelimiter);
         INHERITABLE_PROFILE_SETTING(Microsoft.Terminal.Control.OutputNotificationStyle, NotifyOnActivity);
         INHERITABLE_PROFILE_SETTING(Microsoft.Terminal.Control.OutputNotificationStyle, NotifyOnNextPrompt);
-        INHERITABLE_PROFILE_SETTING(Microsoft.Terminal.Control.AutoDetectRunningCommand, AutoDetectRunningCommand);
+        INHERITABLE_PROFILE_SETTING(Boolean, AutoDetectRunningCommand);
     }
 }
