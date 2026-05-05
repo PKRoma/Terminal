@@ -57,7 +57,7 @@
     X(bool, RainbowSuggestions)                                                                                   \
     X(bool, AllowVtChecksumReport)                                                                                \
     X(bool, AllowVtClipboardWrite, true)                                                                          \
-    X(bool, AllowOscNotifications, true)
+    X(bool, AllowOscNotifications, false)
 
 // --------------------------- Control Settings ---------------------------
 //  All of these settings are defined in IControlSettings.

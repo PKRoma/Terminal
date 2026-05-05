@@ -2788,7 +2788,7 @@
           "type": "boolean"
         },
         "compatibility.allowOSC777": {
-          "default": true,
+          "default": false,
           "description": "When set to true, applications can send OSC 777 escape sequences to trigger desktop toast notifications with a custom title and body.",
           "type": "boolean"
         },
