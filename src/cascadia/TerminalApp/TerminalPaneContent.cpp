@@ -330,7 +330,7 @@ namespace winrt::TerminalApp::implementation
             if (notifyStyle != OutputNotificationStyle::None)
             {
                 NotificationRequested.raise(*this,
-                                            *winrt::make_self<TerminalApp::implementation::NotificationEventArgs>(notifyStyle, true));
+                                            *winrt::make_self<TerminalApp::implementation::NotificationEventArgs>(notifyStyle, false));
             }
         }
     }
@@ -348,7 +348,7 @@ namespace winrt::TerminalApp::implementation
             if (notifyStyle != OutputNotificationStyle::None)
             {
                 NotificationRequested.raise(*this,
-                                            *winrt::make_self<TerminalApp::implementation::NotificationEventArgs>(notifyStyle, true));
+                                            *winrt::make_self<TerminalApp::implementation::NotificationEventArgs>(notifyStyle, false));
             }
         }
     }

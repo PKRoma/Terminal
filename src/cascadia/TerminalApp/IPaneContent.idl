@@ -22,7 +22,7 @@ namespace TerminalApp
         String Title { get; };
         String Body { get; };
         Microsoft.Terminal.Control.OutputNotificationStyle Style { get; };
-        Boolean OnlyWhenInactive { get; };
+        Boolean AlwaysNotify { get; };
     };
 
     interface IPaneContent

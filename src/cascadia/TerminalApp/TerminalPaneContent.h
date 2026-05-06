@@ -24,11 +24,11 @@ namespace winrt::TerminalApp::implementation
     struct NotificationEventArgs : public NotificationEventArgsT<NotificationEventArgs>
     {
     public:
-        NotificationEventArgs(winrt::Microsoft::Terminal::Control::OutputNotificationStyle style, bool onlyWhenInactive = false, const winrt::hstring& title = {}, const winrt::hstring& body = {}) :
-            Style(style), OnlyWhenInactive(onlyWhenInactive), Title(title), Body(body) {}
+        NotificationEventArgs(winrt::Microsoft::Terminal::Control::OutputNotificationStyle style, bool alwaysNotify = true, const winrt::hstring& title = {}, const winrt::hstring& body = {}) :
+            Style(style), AlwaysNotify(alwaysNotify), Title(title), Body(body) {}
 
         til::property<winrt::Microsoft::Terminal::Control::OutputNotificationStyle> Style;
-        til::property<bool> OnlyWhenInactive;
+        til::property<bool> AlwaysNotify;
         til::property<winrt::hstring> Title;
         til::property<winrt::hstring> Body;
     };
