@@ -743,6 +743,18 @@
     <value>unnamed window</value>
     <comment>text used to identify when a window hasn't been assigned a name by the user</comment>
   </data>
+  <data name="NameThisWindowMenuItem" xml:space="preserve">
+    <value>Name this window…</value>
+    <comment>Menu item text shown when the current window has no name assigned</comment>
+  </data>
+  <data name="RenameThisWindowMenuItem" xml:space="preserve">
+    <value>Rename this window…</value>
+    <comment>Menu item text shown when the current window already has a name</comment>
+  </data>
+  <data name="WindowListUnnamedEntry" xml:space="preserve">
+    <value>#{0} (unnamed)</value>
+    <comment>{0} is the window ID number. Shown in the workspace flyout for windows that have no name assigned.</comment>
+  </data>
   <data name="WindowRenamer.Subtitle" xml:space="preserve">
     <value>Enter a new name:</value>
   </data>
