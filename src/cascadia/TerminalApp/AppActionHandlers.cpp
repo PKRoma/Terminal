@@ -1079,6 +1079,7 @@ namespace winrt::TerminalApp::implementation
         // Fun!
         // WindowRenamerTextBox().Focus(FocusState::Programmatic);
         _renamerLayoutUpdatedRevoker.revoke();
+        _renamerLayoutCount = 0;
         _renamerLayoutUpdatedRevoker = WindowRenamerTextBox().LayoutUpdated(winrt::auto_revoke, [weakThis = get_weak()](auto&&, auto&&) {
             if (auto self{ weakThis.get() })
             {
