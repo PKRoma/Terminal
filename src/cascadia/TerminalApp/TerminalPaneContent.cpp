@@ -44,7 +44,7 @@ namespace winrt::TerminalApp::implementation
         _controlEvents._SetTaskbarProgress = _control.SetTaskbarProgress(winrt::auto_revoke, { get_weak(), &TerminalPaneContent::_controlSetTaskbarProgress });
         _controlEvents._ReadOnlyChanged = _control.ReadOnlyChanged(winrt::auto_revoke, { get_weak(), &TerminalPaneContent::_controlReadOnlyChanged });
         _controlEvents._FocusFollowMouseRequested = _control.FocusFollowMouseRequested(winrt::auto_revoke, { get_weak(), &TerminalPaneContent::_controlFocusFollowMouseRequested });
-        _controlEvents._OutputIdle = _control.OutputIdle(winrt::auto_revoke, { get_weak(), &TerminalPaneContent::_controlOutputIdleHandler });
+        _controlEvents._OutputBurstEnded = _control.OutputIdle(winrt::auto_revoke, { get_weak(), &TerminalPaneContent::_controlOutputBurstEndedHandler });
     }
     void TerminalPaneContent::_removeControlEvents()
     {
@@ -335,8 +335,12 @@ namespace winrt::TerminalApp::implementation
         }
     }
 
-    void TerminalPaneContent::_controlOutputIdleHandler(const winrt::Windows::Foundation::IInspectable& /*sender*/,
-                                                        const winrt::Windows::Foundation::IInspectable& /*eventArgs*/)
+    // The underlying TermControl::OutputIdle event is fired on the trailing
+    // edge of a 100ms-debounced output burst (see ControlCore::Initialize).
+    // When "notifyOnActivity" is enabled, we get one event per burst of
+    // output, which naturally coalesces a stream of output into a single notification.
+    void TerminalPaneContent::_controlOutputBurstEndedHandler(const winrt::Windows::Foundation::IInspectable& /*sender*/,
+                                                              const winrt::Windows::Foundation::IInspectable& /*eventArgs*/)
     {
         if (_profile)
         {
