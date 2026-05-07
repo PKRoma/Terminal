@@ -337,6 +337,7 @@ namespace winrt::TerminalApp::implementation
         auto tabRowImpl = winrt::get_self<implementation::TabRowControl>(_tabRow);
         _newTabButton = tabRowImpl->NewTabButton();
         _workspaceFlyout = tabRowImpl->WorkspaceFlyout();
+        _workspaceDropdown = tabRowImpl->WorkspaceDropdown();
 
         // Set the initial workspace name from the window name.
         // Use raw WindowName() so unnamed windows show no text.

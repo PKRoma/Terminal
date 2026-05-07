@@ -747,6 +747,9 @@
   <data name="OpenCWDCommandKey" xml:space="preserve">
     <value>Open current working directory</value>
   </data>
+  <data name="WorkspacesCommandKey" xml:space="preserve">
+    <value>Workspaces...</value>
+  </data>
   <data name="CloseTab" xml:space="preserve">
     <value>Close tab</value>
   </data>

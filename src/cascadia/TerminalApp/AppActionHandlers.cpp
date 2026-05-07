@@ -1676,4 +1676,14 @@ namespace winrt::TerminalApp::implementation
         }
     }
 
+    void TerminalPage::_HandleWorkspaces(const IInspectable& /*sender*/,
+                                         const ActionEventArgs& args)
+    {
+        if (_workspaceFlyout && _workspaceDropdown)
+        {
+            _workspaceFlyout.ShowAt(_workspaceDropdown);
+        }
+        args.Handled(true);
+    }
+
 }

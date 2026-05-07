@@ -272,6 +272,7 @@ namespace winrt::TerminalApp::implementation
         Windows::UI::Xaml::Controls::Grid _tabContent{ nullptr };
         Microsoft::UI::Xaml::Controls::SplitButton _newTabButton{ nullptr };
         Windows::UI::Xaml::Controls::MenuFlyout _workspaceFlyout{ nullptr };
+        Windows::UI::Xaml::Controls::Button _workspaceDropdown{ nullptr };
         winrt::TerminalApp::ColorPickupFlyout _tabColorPicker{ nullptr };
 
         Microsoft::Terminal::Settings::Model::CascadiaSettings _settings{ nullptr };
