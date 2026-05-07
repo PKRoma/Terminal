@@ -5755,6 +5755,7 @@ namespace winrt::TerminalApp::implementation
     }
 
     // Rebuild the workspace flyout contents. Called every time the flyout opens
+    // Rebuild the workspace flyout contents. Called every time the flyout opens
     // so it reflects the current set of persisted workspaces.
     void TerminalPage::_PopulateWorkspaceFlyout()
     {
@@ -5777,7 +5778,6 @@ namespace winrt::TerminalApp::implementation
             item.Click([weakThis{ get_weak() }](auto&&, auto&&) {
                 if (auto page{ weakThis.get() })
                 {
-                    // Re-use the existing openWindowRenamer action.
                     page->_actionDispatch->DoAction(ActionAndArgs{ ShortcutAction::OpenWindowRenamer, nullptr });
                 }
             });
@@ -5785,13 +5785,10 @@ namespace winrt::TerminalApp::implementation
         }
 
         // --- Gather open window info first so we can filter workspaces ---
-        // Ask the host (via AppHost → WindowEmperor) for all live windows.
         const auto windowListReq{ winrt::make<WindowListRequest>() };
         RequestWindowList.raise(*this, windowListReq);
         const auto windowEntries = windowListReq.Entries();
 
-        // Collect the names of all currently-open windows so we can hide
-        // workspaces that are already live from the saved-workspaces list.
         std::set<winrt::hstring> openWindowNames;
         if (windowEntries)
         {
@@ -5806,6 +5803,8 @@ namespace winrt::TerminalApp::implementation
         }
 
         // --- Saved workspaces section (only those not currently open) ---
+        // Collect workspace names that aren't currently open so we can show
+        // them both as top-level "open" items and inside the delete sub-menu.
         const auto workspaces = ApplicationState::SharedInstance().AllPersistedWorkspaces();
         if (workspaces && workspaces.Size() > 0)
         {
@@ -5841,12 +5840,63 @@ namespace winrt::TerminalApp::implementation
                     }
                 });
 
+                // Right-click to delete: attach a context flyout with a
+                // "Delete workspace?" item that opens a confirmation dialog.
+                {
+                    WUX::Controls::MenuFlyout deleteFlyout{};
+                    deleteFlyout.Placement(WUX::Controls::Primitives::FlyoutPlacementMode::BottomEdgeAlignedRight);
+
+                    WUX::Controls::MenuFlyoutItem deleteItem{};
+                    deleteItem.Text(RS_(L"DeleteWorkspaceMenuItem"));
+
+                    WUX::Controls::FontIcon trashIcon{};
+                    trashIcon.Glyph(L"\xE74D"); // Delete glyph
+                    trashIcon.FontFamily(Media::FontFamily{ L"Segoe Fluent Icons, Segoe MDL2 Assets" });
+                    deleteItem.Icon(trashIcon);
+
+                    deleteItem.Click([weakThis{ get_weak() }, name](auto&&, auto&&) -> safe_void_coroutine {
+                        auto page{ weakThis.get() };
+                        if (!page)
+                        {
+                            co_return;
+                        }
+
+                        // Build and show a confirmation ContentDialog.
+                        ContentDialog dialog{};
+                        dialog.Title(winrt::box_value(winrt::hstring{ RS_fmt(L"ConfirmDeleteWorkspaceTitle", name) }));
+                        dialog.PrimaryButtonText(RS_(L"ConfirmDeleteWorkspaceDelete"));
+                        dialog.CloseButtonText(RS_(L"ConfirmDeleteWorkspaceCancel"));
+                        dialog.DefaultButton(ContentDialogButton::Close);
+
+                        if (auto presenter{ page->_dialogPresenter.get() })
+                        {
+                            const auto result = co_await presenter.ShowDialog(dialog);
+                            // Re-check after co_await
+                            page = weakThis.get();
+                            if (!page)
+                            {
+                                co_return;
+                            }
+                            if (result == ContentDialogResult::Primary)
+                            {
+                                ApplicationState::SharedInstance().RemoveWorkspace(name);
+                                page->_PopulateWorkspaceFlyout();
+                            }
+                        }
+                    });
+
+                    deleteFlyout.Items().Append(deleteItem);
+                    WUX::Controls::Primitives::FlyoutBase::SetAttachedFlyout(item, deleteFlyout);
+                    item.ContextRequested([item](auto&&, auto&&) {
+                        WUX::Controls::Primitives::FlyoutBase::ShowAttachedFlyout(item);
+                    });
+                }
+
                 _workspaceFlyout.Items().Append(item);
             }
         }
 
         // --- Open windows section ---
-
         if (windowEntries && windowEntries.Size() > 0)
         {
             _workspaceFlyout.Items().Append(MenuFlyoutSeparator{});
@@ -5858,7 +5908,6 @@ namespace winrt::TerminalApp::implementation
                 const auto id = entry.Id();
                 const auto& name = entry.Name();
 
-                // Build display text like "#1: MyWindow" or "#2: <unnamed>"
                 winrt::hstring displayText;
                 if (name.empty())
                 {
@@ -5872,13 +5921,12 @@ namespace winrt::TerminalApp::implementation
                 MenuFlyoutItem item{};
                 item.Text(displayText);
 
-                // Use a different glyph for the current window
                 if (id == thisWindowId)
                 {
                     auto iconElement = UI::IconPathConverter::IconWUX(L"\uE73E"); // CheckMark glyph
                     Automation::AutomationProperties::SetAccessibilityView(iconElement, Automation::Peers::AccessibilityView::Raw);
                     item.Icon(iconElement);
-                    item.IsEnabled(false); // Can't summon yourself
+                    item.IsEnabled(false);
                 }
                 else
                 {
@@ -5886,11 +5934,6 @@ namespace winrt::TerminalApp::implementation
                     Automation::AutomationProperties::SetAccessibilityView(iconElement, Automation::Peers::AccessibilityView::Raw);
                     item.Icon(iconElement);
 
-                    // Click handler: summon the target window by ID.
-                    // We raise SummonWindowByIdRequested which is handled by
-                    // AppHost to directly summon the window without creating
-                    // a new tab (unlike _OpenWorkspaceWindow which launches
-                    // `wt -w <name>` and creates a tab).
                     item.Click([weakThis{ get_weak() }, id](auto&&, auto&&) {
                         if (auto page{ weakThis.get() })
                         {

@@ -755,6 +755,26 @@
     <value>#{0} (unnamed)</value>
     <comment>{0} is the window ID number. Shown in the workspace flyout for windows that have no name assigned.</comment>
   </data>
+  <data name="DeleteWorkspaceMenuItem" xml:space="preserve">
+    <value>Delete workspace?</value>
+    <comment>Menu item text shown in the right-click context menu on a saved workspace</comment>
+  </data>
+  <data name="OpenWorkspaceMenuItem" xml:space="preserve">
+    <value>Open workspace</value>
+    <comment>Menu item text for opening a saved workspace</comment>
+  </data>
+  <data name="ConfirmDeleteWorkspaceTitle" xml:space="preserve">
+    <value>Are you sure you want to delete the workspace "{0}"?</value>
+    <comment>{0} is the workspace name. Shown in a confirmation dialog when the user tries to delete a saved workspace.</comment>
+  </data>
+  <data name="ConfirmDeleteWorkspaceDelete" xml:space="preserve">
+    <value>Delete</value>
+    <comment>Primary button text on the delete workspace confirmation dialog</comment>
+  </data>
+  <data name="ConfirmDeleteWorkspaceCancel" xml:space="preserve">
+    <value>Cancel</value>
+    <comment>Cancel button text on the delete workspace confirmation dialog</comment>
+  </data>
   <data name="WindowRenamer.Subtitle" xml:space="preserve">
     <value>Enter a new name:</value>
   </data>

@@ -8,6 +8,8 @@
                   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                   xmlns:local="using:TerminalApp"
                   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                               xmlns:mtu="using:Microsoft.Terminal.UI"
+
                   xmlns:mux="using:Microsoft.UI.Xaml.Controls"
                   Background="{ThemeResource TabViewBackground}"
                   mc:Ignorable="d">
@@ -47,15 +49,15 @@
 
                 <!--  Workspace/windows button  -->
                 <Button x:Name="WorkspaceDropdown"
-                        Margin="4,4,0,4"
-                        Padding="8,2,4,2"
-                        VerticalAlignment="Center"
+                        Margin="4,0,0,4"
+                        Padding="8,0,0,0"
+                        VerticalAlignment="Stretch"
                         BorderThickness="0"
                         Background="Transparent"
                         Visibility="{x:Bind ShowWindowsButton, Mode=OneWay}">
                     <Button.Content>
                         <StackPanel Orientation="Horizontal"
-                                    Spacing="4">
+                                    Spacing="8">
                             <!--  EE40 is the "TaskViewSettings" glyph  -->
                             <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}"
                                       FontSize="12"
@@ -63,7 +65,8 @@
                             <TextBlock x:Name="WorkspaceNameText"
                                        VerticalAlignment="Center"
                                        FontSize="12"
-                                       Visibility="Collapsed"
+                                       Padding="0,0,8,0"
+                                    Visibility="{x:Bind mtu:Converters.StringNotEmptyToVisibility(WorkspaceName), Mode=OneWay}"
                                        Text="{x:Bind WorkspaceName, Mode=OneWay}" />
                         </StackPanel>
                     </Button.Content>

@@ -31,12 +31,6 @@ namespace winrt::TerminalApp::implementation
         {
             _WorkspaceName = value;
             PropertyChanged.raise(*this, WUX::Data::PropertyChangedEventArgs{ L"WorkspaceName" });
-
-            // Collapse the name text when empty so the button shows only the icon.
-            if (const auto textBlock = WorkspaceNameText())
-            {
-                textBlock.Visibility(value.empty() ? WUX::Visibility::Collapsed : WUX::Visibility::Visible);
-            }
         }
     }
 
