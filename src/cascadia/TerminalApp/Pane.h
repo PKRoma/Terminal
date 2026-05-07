@@ -93,6 +93,12 @@ public:
     winrt::Windows::UI::Xaml::Controls::Grid GetRootElement();
     winrt::TerminalApp::IPaneContent GetContent() const noexcept { return _IsLeaf() ? _content : nullptr; }
 
+    // GH#20187: True if this is a leaf pane whose content has already been
+    // torn down by Pane::Close() but which has not yet been removed from
+    // its parent (the close animation in _CloseChildRoutine is still
+    // running). Such a "corpse" pane is not safe to operate on.
+    bool IsClosed() const noexcept { return _IsLeaf() && _content == nullptr; }
+
     bool WasLastFocused() const noexcept;
     void UpdateVisuals();
     void ClearActive();

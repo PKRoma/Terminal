@@ -997,6 +997,17 @@ void Pane::_ContentLostFocusHandler(const winrt::Windows::Foundation::IInspectab
 // - <none>
 void Pane::Close()
 {
+    // GH#20187: Make Close() idempotent. The actual removal of this pane
+    // from the parent's tree is deferred until the close animation in
+    // _CloseChildRoutine completes (~200ms). Without this guard, a second
+    // close request that reaches this same pane during the animation
+    // window (e.g. auto-repeat or rapid double-press of the closePane
+    // keybinding) would re-raise Closed and kick off a redundant close
+    // animation on the parent.
+    if (!_content)
+    {
+        return;
+    }
     _setPaneContent(nullptr);
     // Fire our Closed event to tell our parent that we should be removed.
     Closed.raise(nullptr, nullptr);
