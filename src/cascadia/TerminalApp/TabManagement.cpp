@@ -781,16 +781,6 @@ namespace winrt::TerminalApp::implementation
     // - pane: the pane to close.
     void TerminalPage::_HandleClosePaneRequested(std::shared_ptr<Pane> pane)
     {
-        // GH#20187: Defensive guard. Callers should already filter out
-        // corpse panes (see _CloseFocusedPane), but in case a future
-        // caller passes a leaf pane whose content has already been torn
-        // down by a prior Pane::Close(), bail before we try to call
-        // GetTerminalArgsForPane on it.
-        if (pane->IsClosed())
-        {
-            return;
-        }
-
         // Build the list of actions to recreate the closed pane,
         // BuildStartupActions returns the "first" pane and the rest of
         // its actions are assuming that first pane has been created first.
@@ -824,13 +814,18 @@ namespace winrt::TerminalApp::implementation
 
             if (const auto pane{ activeTab->GetActivePane() })
             {
-                // GH#20187: When closePane is auto-repeated (or rapidly
-                // re-pressed), the second invocation can arrive while the
-                // parent's close animation is still running and
-                // Tab::_activePane still points at the already-closed
-                // leaf. Detect that "corpse" state here and bail before
-                // we try to call GetTerminalArgsForPane on a leaf whose
-                // content has been torn down.
+                // GH#20187: When the user closes a pane with a keyboard
+                // shortcut, focus moves off the closed pane while keys
+                // are still depressed. The corresponding KeyUp events
+                // arrive at TabRowControl, whose KeyUp is wired to
+                // TerminalPage::_KeyDownHandler (see TerminalPage.xaml).
+                // _KeyDownHandler can't tell it was invoked from KeyUp
+                // and dispatches the close action a second time. By
+                // then the parent's close animation in
+                // _CloseChildRoutine is still running, so
+                // Tab::_activePane still points at the now-closed leaf
+                // ("corpse"). Detect that here and bail before we
+                // dereference its null content in GetTerminalArgsForPane.
                 if (pane->IsClosed())
                 {
                     co_return;
