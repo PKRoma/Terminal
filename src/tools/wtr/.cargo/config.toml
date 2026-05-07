@@ -1,0 +1,12 @@
+# Cargo source replacement: route crates-io fetches through an Azure Artifact
+# Cargo feed (1ES compliance — disallow direct public crates.io access).
+#
+# Reusing the sudo team's `sudo_public_cargo` feed in microsoft/Dart for now.
+# TODO(wtr): replace with our own `microsoft/Dart` Cargo feed once provisioned.
+
+[registries]
+WindowsTerminalCargo = { index = "sparse+https://pkgs.dev.azure.com/microsoft/Dart/_packaging/sudo_public_cargo/Cargo/index/" }
+
+[source.crates-io]
+replace-with = "WindowsTerminalCargo"
+

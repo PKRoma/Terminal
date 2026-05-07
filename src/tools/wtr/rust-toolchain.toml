@@ -1,0 +1,4 @@
+# Pin the Rust toolchain channel for both local dev and 1ES CI.
+# Use the MSRustup `ms-prod-X.YY` channel for compliance.
+[toolchain]
+channel = "ms-prod-1.93"

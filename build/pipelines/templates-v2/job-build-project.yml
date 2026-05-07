@@ -21,6 +21,10 @@ parameters:
     displayName: "Build Everything (Overrides all other build options)"
     type: boolean
     default: false
+  - name: enableRustBuild
+    displayName: "Build src/tools/wtr (requires RustInstaller extension + microsoft/Dart Azure Artifact feeds)"
+    type: boolean
+    default: false
   - name: pgoBuildMode
     type: string
     default: None
@@ -175,6 +179,57 @@ jobs:
     displayName: Work around DD-1541167 (VCToolsVersion)
 
   - ${{ parameters.beforeBuildSteps }}
+
+  - ${{ if eq(parameters.enableRustBuild, true) }}:
+    # ────────────────────────────────────────────────────────────────────────
+    # Rust toolchain for src/tools/wtr (1ES-compliant pattern).
+    #
+    # Pipeline lives at: https://microsoft.visualstudio.com/Dart/
+    # Reference for this pattern: microsoft/sudo (.pipelines/OneBranch.Common.yml)
+    #
+    # Compliance notes (per 1ES Rust workflow guidance):
+    #   1. Toolchain comes from the org-level `RustTools` Azure Artifact NuGet
+    #      feed (already exists on `microsoft` ADO org; same feed used by
+    #      microsoft/sudo, microsoft/vscode, microsoft/edit, microsoft/qdk).
+    #   2. Crates resolve through a project-level Azure Artifact Cargo feed
+    #      named `Cargo` in microsoft/Dart (with crates.io upstream).
+    #   3. The Rust version uses the `ms-prod-X.YY` channel, pinned in
+    #      `src/tools/wtr/rust-toolchain.toml`.
+    #   4. Component Governance scanning of Cargo.lock is auto-injected by
+    #      1ES PT (no extra task needed here).
+    #
+    # Prerequisites — until in place, leave `enableRustBuild` parameter false:
+    #   - Azure Artifact Cargo feed `Cargo` exists in microsoft/Dart with
+    #     `crates.io` upstream. (Project-scope, terminal team can create it.)
+    #   - The CI account ("Project Collection Build Service (microsoft)") has
+    #     at least Collaborator permission on the `RustTools` feed.
+    # ────────────────────────────────────────────────────────────────────────
+    - task: RustInstaller@1
+      displayName: Install Rust toolchain (MSRustup)
+      inputs:
+        rustVersion: ms-prod-1.93
+        toolchainFeed: https://pkgs.dev.azure.com/microsoft/_packaging/RustTools/nuget/v3/index.json
+        # Reusing the sudo team's `sudo_public_cargo` feed in microsoft/Dart for now.
+        # TODO(wtr): replace with our own `microsoft/Dart` Cargo feed once provisioned.
+        cratesIoFeedOverride: sparse+https://pkgs.dev.azure.com/microsoft/Dart/_packaging/sudo_public_cargo/Cargo/index/
+        additionalTargets: 'x86_64-pc-windows-msvc aarch64-pc-windows-msvc'
+
+    # Separate fetch step: some 1ES pools disable network during the build
+    # phase. Fetching upfront keeps `cargo build --frozen` fully offline.
+    - script: cargo fetch --manifest-path src/tools/wtr/Cargo.toml --locked
+      displayName: Fetch crates (offline-friendly)
+
+    - pwsh: |-
+        $ErrorActionPreference = 'Stop'
+        $triple = switch ('$(BuildPlatform)') {
+          'x64'   { 'x86_64-pc-windows-msvc' }
+          'arm64' { 'aarch64-pc-windows-msvc' }
+          default { 'x86_64-pc-windows-msvc' }
+        }
+        $profileArg = if ('$(BuildConfiguration)' -eq 'Debug') { @() } else { @('--release') }
+        Write-Host "Building wtr for $triple ($('$(BuildConfiguration)'))"
+        cargo build --manifest-path src/tools/wtr/Cargo.toml --target $triple --frozen @profileArg
+      displayName: Build src/tools/wtr (Cargo)
 
   - task: VSBuild@1
     displayName: Build OpenConsole.slnx

@@ -24,6 +24,21 @@
     <EntryPointProjectUniqueName>..\WindowsTerminal\WindowsTerminal.vcxproj</EntryPointProjectUniqueName>
     <DebuggerType>NativeOnly</DebuggerType>
   </PropertyGroup>
+
+  <!-- Map MSBuild Platform to Rust target triple for wtr.exe inclusion. -->
+  <PropertyGroup>
+    <WtrRustTarget Condition="'$(Platform)'=='x64'">x86_64-pc-windows-msvc</WtrRustTarget>
+    <WtrRustTarget Condition="'$(Platform)'=='ARM64'">aarch64-pc-windows-msvc</WtrRustTarget>
+    <WtrRustProfile Condition="'$(Configuration)'=='Debug'">debug</WtrRustProfile>
+    <WtrRustProfile Condition="'$(Configuration)'!='Debug'">release</WtrRustProfile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="$(SolutionDir)src\tools\wtr\target\$(WtrRustTarget)\$(WtrRustProfile)\wtr.exe"
+             Condition="Exists('$(SolutionDir)src\tools\wtr\target\$(WtrRustTarget)\$(WtrRustProfile)\wtr.exe')">
+      <Link>wtr.exe</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
   <PropertyGroup Condition="!Exists('CascadiaPackage_TemporaryKey.pfx')">
     <AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
     <AppxBundle>Never</AppxBundle>
