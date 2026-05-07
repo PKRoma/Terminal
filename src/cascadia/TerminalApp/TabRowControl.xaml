@@ -8,8 +8,7 @@
                   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                   xmlns:local="using:TerminalApp"
                   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-                               xmlns:mtu="using:Microsoft.Terminal.UI"
-
+                  xmlns:mtu="using:Microsoft.Terminal.UI"
                   xmlns:mux="using:Microsoft.UI.Xaml.Controls"
                   Background="{ThemeResource TabViewBackground}"
                   mc:Ignorable="d">
@@ -52,8 +51,8 @@
                         Margin="4,0,0,4"
                         Padding="8,0,0,0"
                         VerticalAlignment="Stretch"
-                        BorderThickness="0"
                         Background="Transparent"
+                        BorderThickness="0"
                         Visibility="{x:Bind ShowWindowsButton, Mode=OneWay}">
                     <Button.Content>
                         <StackPanel Orientation="Horizontal"
@@ -63,11 +62,11 @@
                                       FontSize="12"
                                       Glyph="&#xEE40;" />
                             <TextBlock x:Name="WorkspaceNameText"
+                                       Padding="0,0,8,0"
                                        VerticalAlignment="Center"
                                        FontSize="12"
-                                       Padding="0,0,8,0"
-                                    Visibility="{x:Bind mtu:Converters.StringNotEmptyToVisibility(WorkspaceName), Mode=OneWay}"
-                                       Text="{x:Bind WorkspaceName, Mode=OneWay}" />
+                                       Text="{x:Bind WorkspaceName, Mode=OneWay}"
+                                       Visibility="{x:Bind mtu:Converters.StringNotEmptyToVisibility(WorkspaceName), Mode=OneWay}" />
                         </StackPanel>
                     </Button.Content>
                     <Button.Flyout>
