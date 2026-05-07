@@ -24,6 +24,7 @@
     <Midl Include="ActionsViewModel.idl" />
     <Midl Include="ColorSchemeViewModel.idl" />
     <Midl Include="ColorSchemesPageViewModel.idl" />
+    <Midl Include="ProfilesPageViewModel.idl" />
     <Midl Include="RenderingViewModel.idl" />
     <Midl Include="InteractionViewModel.idl" />
     <Midl Include="GlobalAppearanceViewModel.idl" />
@@ -57,5 +58,6 @@
     <Page Include="NullableColorPicker.xaml" />
     <Page Include="IconPicker.xaml" />
     <Page Include="NewTabMenu.xaml" />
+    <Page Include="Profiles.xaml" />
   </ItemGroup>
 </Project>
