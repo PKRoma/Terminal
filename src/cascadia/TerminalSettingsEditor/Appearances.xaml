@@ -68,13 +68,22 @@
     </UserControl.Resources>
 
     <StackPanel>
-        <StackPanel Style="{StaticResource PivotStackStyle}">
-            <!--  Grouping: Text  -->
-            <TextBlock x:Uid="Profile_TextHeader"
-                       Margin="0,0,0,4"
-                       Style="{StaticResource TextBlockSubHeaderStyle}" />
-            <!--  Color Scheme  -->
-            <!--  This currently only display the Dark color scheme, even if the user has a pair of schemes set.  -->
+        <!--  Section: Typography settings  -->
+        <muxc:Expander IsExpanded="True"
+                       AutomationProperties.Name="{Binding Text, ElementName=Appearance_Section_Typography_Title_AccTitle}"
+                       Style="{StaticResource SectionExpanderStyle}">
+            <muxc:Expander.Header>
+                <StackPanel>
+                    <TextBlock x:Name="Appearance_Section_Typography_Title_AccTitle"
+                                   x:Uid="Appearance_Section_Typography_Title"
+                               Style="{StaticResource SectionExpanderHeaderTextStyle}" />
+                    <TextBlock x:Uid="Appearance_Section_Typography_Help"
+                               Style="{StaticResource SectionExpanderHelpTextStyle}" />
+                </StackPanel>
+            </muxc:Expander.Header>
+            <StackPanel>
+                <!--  Color Scheme  -->
+                <!--  This currently only display the Dark color scheme, even if the user has a pair of schemes set.  -->
             <local:SettingContainer x:Name="ColorScheme"
                                     x:Uid="Profile_ColorScheme"
                                     ClearSettingValue="{x:Bind Appearance.ClearColorScheme}"
@@ -484,12 +493,35 @@
                           SelectedItem="{x:Bind CurrentAdjustIndistinguishableColors, Mode=TwoWay}"
                           Style="{StaticResource ComboBoxSettingStyle}" />
             </local:SettingContainer>
-        </StackPanel>
 
-        <!--  Grouping: Cursor  -->
-        <StackPanel Style="{StaticResource PivotStackStyle}">
-            <TextBlock x:Uid="Profile_CursorHeader"
-                       Style="{StaticResource TextBlockSubHeaderStyle}" />
+            <!--  Intense is bold, bright  -->
+            <local:SettingContainer x:Name="IntenseTextStyle"
+                                    x:Uid="Appearance_IntenseTextStyle"
+                                    ClearSettingValue="{x:Bind Appearance.ClearIntenseTextStyle}"
+                                    HasSettingValue="{x:Bind Appearance.HasIntenseTextStyle, Mode=OneWay}"
+                                    SettingOverrideSource="{x:Bind Appearance.IntenseTextStyleOverrideSource, Mode=OneWay}">
+                <ComboBox AutomationProperties.AccessibilityView="Content"
+                          ItemTemplate="{StaticResource EnumComboBoxTemplate}"
+                          ItemsSource="{x:Bind IntenseTextStyleList, Mode=OneWay}"
+                          SelectedItem="{x:Bind CurrentIntenseTextStyle, Mode=TwoWay}"
+                          Style="{StaticResource ComboBoxSettingStyle}" />
+            </local:SettingContainer>
+            </StackPanel>
+        </muxc:Expander>
+
+        <!--  Section: Cursor settings  -->
+        <muxc:Expander AutomationProperties.Name="{Binding Text, ElementName=Appearance_Section_Cursor_Title_AccTitle}"
+                       Style="{StaticResource SectionExpanderStyle}">
+            <muxc:Expander.Header>
+                <StackPanel>
+                    <TextBlock x:Name="Appearance_Section_Cursor_Title_AccTitle"
+                                   x:Uid="Appearance_Section_Cursor_Title"
+                               Style="{StaticResource SectionExpanderHeaderTextStyle}" />
+                    <TextBlock x:Uid="Appearance_Section_Cursor_Help"
+                               Style="{StaticResource SectionExpanderHelpTextStyle}" />
+                </StackPanel>
+            </muxc:Expander.Header>
+            <StackPanel>
 
             <!--  Cursor Shape  -->
             <local:SettingContainer x:Name="CursorShape"
@@ -542,12 +574,22 @@
                                            CurrentColor="{x:Bind Appearance.CursorColor, Mode=TwoWay}"
                                            NullColorPreview="{x:Bind Appearance.CurrentColorScheme.CursorColor.Color, Mode=OneWay}" />
             </local:SettingContainer>
-        </StackPanel>
+            </StackPanel>
+        </muxc:Expander>
 
-        <!--  Grouping: Background  -->
-        <StackPanel Style="{StaticResource PivotStackStyle}">
-            <TextBlock x:Uid="Profile_BackgroundHeader"
-                       Style="{StaticResource TextBlockSubHeaderStyle}" />
+        <!--  Section: Background image  -->
+        <muxc:Expander AutomationProperties.Name="{Binding Text, ElementName=Appearance_Section_BackgroundImage_Title_AccTitle}"
+                       Style="{StaticResource SectionExpanderStyle}">
+            <muxc:Expander.Header>
+                <StackPanel>
+                    <TextBlock x:Name="Appearance_Section_BackgroundImage_Title_AccTitle"
+                                   x:Uid="Appearance_Section_BackgroundImage_Title"
+                               Style="{StaticResource SectionExpanderHeaderTextStyle}" />
+                    <TextBlock x:Uid="Appearance_Section_BackgroundImage_Help"
+                               Style="{StaticResource SectionExpanderHelpTextStyle}" />
+                </StackPanel>
+            </muxc:Expander.Header>
+            <StackPanel>
 
             <!--  Background Image  -->
             <local:SettingContainer x:Name="BackgroundImageContainer"
@@ -800,26 +842,8 @@
                                Text="{x:Bind mtu:Converters.PercentageToPercentageString(Appearance.BackgroundImageOpacity), Mode=OneWay}" />
                 </Grid>
             </local:SettingContainer>
-        </StackPanel>
-
-        <!--  Grouping: Text Formatting  -->
-        <StackPanel Style="{StaticResource PivotStackStyle}">
-            <TextBlock x:Uid="Appearance_TextFormattingHeader"
-                       Style="{StaticResource TextBlockSubHeaderStyle}" />
-
-            <!--  Intense is bold, bright  -->
-            <local:SettingContainer x:Name="IntenseTextStyle"
-                                    x:Uid="Appearance_IntenseTextStyle"
-                                    ClearSettingValue="{x:Bind Appearance.ClearIntenseTextStyle}"
-                                    HasSettingValue="{x:Bind Appearance.HasIntenseTextStyle, Mode=OneWay}"
-                                    SettingOverrideSource="{x:Bind Appearance.IntenseTextStyleOverrideSource, Mode=OneWay}">
-                <ComboBox AutomationProperties.AccessibilityView="Content"
-                          ItemTemplate="{StaticResource EnumComboBoxTemplate}"
-                          ItemsSource="{x:Bind IntenseTextStyleList, Mode=OneWay}"
-                          SelectedItem="{x:Bind CurrentIntenseTextStyle, Mode=TwoWay}"
-                          Style="{StaticResource ComboBoxSettingStyle}" />
-            </local:SettingContainer>
-        </StackPanel>
+            </StackPanel>
+        </muxc:Expander>
 
     </StackPanel>
 </UserControl>

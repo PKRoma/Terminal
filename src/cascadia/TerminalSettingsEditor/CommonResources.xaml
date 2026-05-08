@@ -64,6 +64,7 @@
 
     <local:ColorToBrushConverter x:Key="ColorToBrushConverter" />
     <local:ColorToStringConverter x:Key="ColorToStringConverter" />
+    <local:EmptyStringToVisibilityConverter x:Key="EmptyStringToVisibilityConverter" />
 
     <Color x:Key="DeleteButtonColor">Firebrick</Color>
 
@@ -165,6 +166,29 @@
            TargetType="TextBlock">
         <Setter Property="MaxWidth" Value="{StaticResource StandardControlMaxWidth}" />
         <Setter Property="Margin" Value="0,32,0,4" />
+    </Style>
+
+    <Style x:Key="SectionExpanderStyle"
+           TargetType="muxc:Expander">
+        <Setter Property="MaxWidth" Value="{StaticResource StandardControlMaxWidth}" />
+        <Setter Property="Margin" Value="0,12,0,0" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    </Style>
+
+    <Style x:Key="SectionExpanderHeaderTextStyle"
+           BasedOn="{StaticResource BodyStrongTextBlockStyle}"
+           TargetType="TextBlock">
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="SectionExpanderHelpTextStyle"
+           BasedOn="{StaticResource CaptionTextBlockStyle}"
+           TargetType="TextBlock">
+        <Setter Property="LineHeight" Value="16" />
+        <Setter Property="Margin" Value="0,2,0,0" />
+        <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+        <Setter Property="TextWrapping" Value="WrapWholeWords" />
     </Style>
 
     <!--  Used for disclaimers  -->
@@ -1228,13 +1252,19 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <ContentPresenter x:Name="ContentPresenter"
-                                          Grid.Column="0"
-                                          HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                          VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
-                                          Content="{TemplateBinding Content}"
-                                          ContentTemplate="{TemplateBinding ContentTemplate}"
-                                          ContentTransitions="{TemplateBinding ContentTransitions}" />
+                        <StackPanel Grid.Column="0"
+                                    Padding="0,12,0,12"
+                                    VerticalAlignment="Center">
+                            <ContentPresenter x:Name="ContentPresenter"
+                                              HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                              Content="{TemplateBinding Content}"
+                                              ContentTemplate="{TemplateBinding ContentTemplate}"
+                                              ContentTransitions="{TemplateBinding ContentTransitions}" />
+                            <TextBlock Style="{StaticResource SettingsPageItemDescriptionStyle}"
+                                       Text="{Binding Tag, RelativeSource={RelativeSource Mode=TemplatedParent}}"
+                                       Visibility="{Binding Tag, RelativeSource={RelativeSource Mode=TemplatedParent}, Converter={StaticResource EmptyStringToVisibilityConverter}}" />
+                        </StackPanel>
                         <FontIcon Grid.Column="1"
                                   Margin="20,0,8,0"
                                   HorizontalAlignment="Right"

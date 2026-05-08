@@ -5,6 +5,7 @@
 #include "TerminalColorConverters.h"
 #include "ColorToBrushConverter.g.cpp"
 #include "ColorToStringConverter.g.cpp"
+#include "EmptyStringToVisibilityConverter.g.cpp"
 
 using namespace winrt::Microsoft::Terminal::Settings::Model;
 
@@ -29,6 +30,24 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
     }
 
     Windows::Foundation::IInspectable ColorToStringConverter::ConvertBack(Windows::Foundation::IInspectable const& /*value*/, Windows::UI::Xaml::Interop::TypeName const& /*targetType*/, Windows::Foundation::IInspectable const& /*parameter*/, hstring const& /*language*/)
+    {
+        throw hresult_not_implemented();
+    }
+
+    Windows::Foundation::IInspectable EmptyStringToVisibilityConverter::Convert(Windows::Foundation::IInspectable const& value, Windows::UI::Xaml::Interop::TypeName const& /*targetType*/, Windows::Foundation::IInspectable const& /*parameter*/, hstring const& /*language*/)
+    {
+        hstring text;
+        if (value)
+        {
+            if (const auto& str{ value.try_as<hstring>() })
+            {
+                text = *str;
+            }
+        }
+        return winrt::box_value(text.empty() ? Windows::UI::Xaml::Visibility::Collapsed : Windows::UI::Xaml::Visibility::Visible);
+    }
+
+    Windows::Foundation::IInspectable EmptyStringToVisibilityConverter::ConvertBack(Windows::Foundation::IInspectable const& /*value*/, Windows::UI::Xaml::Interop::TypeName const& /*targetType*/, Windows::Foundation::IInspectable const& /*parameter*/, hstring const& /*language*/)
     {
         throw hresult_not_implemented();
     }

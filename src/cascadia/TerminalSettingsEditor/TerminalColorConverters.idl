@@ -12,4 +12,9 @@ namespace Microsoft.Terminal.Settings.Editor
     {
         ColorToStringConverter();
     }
+
+    runtimeclass EmptyStringToVisibilityConverter : [default] Windows.UI.Xaml.Data.IValueConverter
+    {
+        EmptyStringToVisibilityConverter();
+    }
 }
