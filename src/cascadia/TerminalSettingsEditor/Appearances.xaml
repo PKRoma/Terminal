@@ -73,7 +73,7 @@
                        AutomationProperties.Name="{Binding Text, ElementName=Appearance_Section_Typography_Title_AccTitle}"
                        Style="{StaticResource SectionExpanderStyle}">
             <muxc:Expander.Header>
-                <StackPanel>
+                <StackPanel Style="{StaticResource SectionExpanderHeaderStackStyle}">
                     <TextBlock x:Name="Appearance_Section_Typography_Title_AccTitle"
                                    x:Uid="Appearance_Section_Typography_Title"
                                Style="{StaticResource SectionExpanderHeaderTextStyle}" />
@@ -513,7 +513,7 @@
         <muxc:Expander AutomationProperties.Name="{Binding Text, ElementName=Appearance_Section_Cursor_Title_AccTitle}"
                        Style="{StaticResource SectionExpanderStyle}">
             <muxc:Expander.Header>
-                <StackPanel>
+                <StackPanel Style="{StaticResource SectionExpanderHeaderStackStyle}">
                     <TextBlock x:Name="Appearance_Section_Cursor_Title_AccTitle"
                                    x:Uid="Appearance_Section_Cursor_Title"
                                Style="{StaticResource SectionExpanderHeaderTextStyle}" />
@@ -581,7 +581,7 @@
         <muxc:Expander AutomationProperties.Name="{Binding Text, ElementName=Appearance_Section_BackgroundImage_Title_AccTitle}"
                        Style="{StaticResource SectionExpanderStyle}">
             <muxc:Expander.Header>
-                <StackPanel>
+                <StackPanel Style="{StaticResource SectionExpanderHeaderStackStyle}">
                     <TextBlock x:Name="Appearance_Section_BackgroundImage_Title_AccTitle"
                                    x:Uid="Appearance_Section_BackgroundImage_Title"
                                Style="{StaticResource SectionExpanderHeaderTextStyle}" />

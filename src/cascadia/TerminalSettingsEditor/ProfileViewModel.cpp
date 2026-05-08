@@ -367,7 +367,7 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         {
             return RS_(L"Profile_DefaultsSectionHeader");
         }
-        return hstring{ fmt::format(fmt::runtime(std::wstring_view{ RS_(L"Profile_NameSectionHeaderFormat") }), Name()) };
+        return hstring{ RS_fmt(L"Profile_NameSectionHeaderFormat", Name()) };
     }
 
     hstring ProfileViewModel::AnswerbackMessagePreview() const

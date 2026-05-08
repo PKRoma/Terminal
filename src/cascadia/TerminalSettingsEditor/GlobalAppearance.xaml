@@ -32,7 +32,7 @@
                        AutomationProperties.Name="{Binding Text, ElementName=Globals_Section_VisualStyle_Title_AccTitle}"
                        Style="{StaticResource SectionExpanderStyle}">
             <muxc:Expander.Header>
-                <StackPanel>
+                <StackPanel Style="{StaticResource SectionExpanderHeaderStackStyle}">
                     <TextBlock x:Name="Globals_Section_VisualStyle_Title_AccTitle"
                                    x:Uid="Globals_Section_VisualStyle_Title"
                                Style="{StaticResource SectionExpanderHeaderTextStyle}" />
@@ -84,7 +84,7 @@
         <muxc:Expander AutomationProperties.Name="{Binding Text, ElementName=Globals_Section_TabsLayout_Title_AccTitle}"
                        Style="{StaticResource SectionExpanderStyle}">
             <muxc:Expander.Header>
-                <StackPanel>
+                <StackPanel Style="{StaticResource SectionExpanderHeaderStackStyle}">
                     <TextBlock x:Name="Globals_Section_TabsLayout_Title_AccTitle"
                                    x:Uid="Globals_Section_TabsLayout_Title"
                                Style="{StaticResource SectionExpanderHeaderTextStyle}" />
@@ -142,7 +142,7 @@
         <muxc:Expander AutomationProperties.Name="{Binding Text, ElementName=Globals_Section_WindowBehavior_Title_AccTitle}"
                        Style="{StaticResource SectionExpanderStyle}">
             <muxc:Expander.Header>
-                <StackPanel>
+                <StackPanel Style="{StaticResource SectionExpanderHeaderStackStyle}">
                     <TextBlock x:Name="Globals_Section_WindowBehavior_Title_AccTitle"
                                    x:Uid="Globals_Section_WindowBehavior_Title"
                                Style="{StaticResource SectionExpanderHeaderTextStyle}" />
@@ -171,7 +171,7 @@
         <muxc:Expander AutomationProperties.Name="{Binding Text, ElementName=Globals_Section_TitleBarIdentity_Title_AccTitle}"
                        Style="{StaticResource SectionExpanderStyle}">
             <muxc:Expander.Header>
-                <StackPanel>
+                <StackPanel Style="{StaticResource SectionExpanderHeaderStackStyle}">
                     <TextBlock x:Name="Globals_Section_TitleBarIdentity_Title_AccTitle"
                                    x:Uid="Globals_Section_TitleBarIdentity_Title"
                                Style="{StaticResource SectionExpanderHeaderTextStyle}" />
@@ -200,7 +200,7 @@
         <muxc:Expander AutomationProperties.Name="{Binding Text, ElementName=Globals_Section_SystemIntegration_Title_AccTitle}"
                        Style="{StaticResource SectionExpanderStyle}">
             <muxc:Expander.Header>
-                <StackPanel>
+                <StackPanel Style="{StaticResource SectionExpanderHeaderStackStyle}">
                     <TextBlock x:Name="Globals_Section_SystemIntegration_Title_AccTitle"
                                    x:Uid="Globals_Section_SystemIntegration_Title"
                                Style="{StaticResource SectionExpanderHeaderTextStyle}" />

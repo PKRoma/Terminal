@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 #include "pch.h"
-#include "TerminalColorConverters.h"
+#include "Converters.h"
 #include "ColorToBrushConverter.g.cpp"
 #include "ColorToStringConverter.g.cpp"
 #include "EmptyStringToVisibilityConverter.g.cpp"

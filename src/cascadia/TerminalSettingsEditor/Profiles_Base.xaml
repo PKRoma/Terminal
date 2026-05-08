@@ -39,7 +39,7 @@
                            AutomationProperties.Name="{x:Bind Profile.SectionHeaderText, Mode=OneWay}"
                            Style="{StaticResource SectionExpanderStyle}">
                 <muxc:Expander.Header>
-                    <StackPanel>
+                    <StackPanel Style="{StaticResource SectionExpanderHeaderStackStyle}">
                         <TextBlock Style="{StaticResource SectionExpanderHeaderTextStyle}"
                                    Text="{x:Bind Profile.SectionHeaderText, Mode=OneWay}" />
                     </StackPanel>
@@ -126,7 +126,7 @@
             <muxc:Expander AutomationProperties.Name="{Binding Text, ElementName=Profile_Section_VisualUI_Title_AccTitle}"
                        Style="{StaticResource SectionExpanderStyle}">
                 <muxc:Expander.Header>
-                    <StackPanel>
+                    <StackPanel Style="{StaticResource SectionExpanderHeaderStackStyle}">
                         <TextBlock x:Name="Profile_Section_VisualUI_Title_AccTitle"
                                    x:Uid="Profile_Section_VisualUI_Title"
                                    Style="{StaticResource SectionExpanderHeaderTextStyle}" />

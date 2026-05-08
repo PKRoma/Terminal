@@ -30,7 +30,7 @@
                        AutomationProperties.Name="{Binding Text, ElementName=Compatibility_Section_Compatibility_Title_AccTitle}"
                        Style="{StaticResource SectionExpanderStyle}">
             <muxc:Expander.Header>
-                <StackPanel>
+                <StackPanel Style="{StaticResource SectionExpanderHeaderStackStyle}">
                     <TextBlock x:Name="Compatibility_Section_Compatibility_Title_AccTitle"
                                    x:Uid="Compatibility_Section_Compatibility_Title"
                                Style="{StaticResource SectionExpanderHeaderTextStyle}" />
@@ -123,7 +123,7 @@
         <muxc:Expander AutomationProperties.Name="{Binding Text, ElementName=Compatibility_Section_Rendering_Title_AccTitle}"
                        Style="{StaticResource SectionExpanderStyle}">
             <muxc:Expander.Header>
-                <StackPanel>
+                <StackPanel Style="{StaticResource SectionExpanderHeaderStackStyle}">
                     <TextBlock x:Name="Compatibility_Section_Rendering_Title_AccTitle"
                                    x:Uid="Compatibility_Section_Rendering_Title"
                                Style="{StaticResource SectionExpanderHeaderTextStyle}" />

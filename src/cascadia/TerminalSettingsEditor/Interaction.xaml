@@ -31,7 +31,7 @@
                            AutomationProperties.Name="{Binding Text, ElementName=Interaction_Section_Clipboard_Title_AccTitle}"
                        Style="{StaticResource SectionExpanderStyle}">
                 <muxc:Expander.Header>
-                    <StackPanel>
+                    <StackPanel Style="{StaticResource SectionExpanderHeaderStackStyle}">
                         <TextBlock x:Name="Interaction_Section_Clipboard_Title_AccTitle"
                                    x:Uid="Interaction_Section_Clipboard_Title"
                                    Style="{StaticResource SectionExpanderHeaderTextStyle}" />
@@ -77,7 +77,7 @@
             <muxc:Expander AutomationProperties.Name="{Binding Text, ElementName=Interaction_Section_TextSelection_Title_AccTitle}"
                        Style="{StaticResource SectionExpanderStyle}">
                 <muxc:Expander.Header>
-                    <StackPanel>
+                    <StackPanel Style="{StaticResource SectionExpanderHeaderStackStyle}">
                         <TextBlock x:Name="Interaction_Section_TextSelection_Title_AccTitle"
                                    x:Uid="Interaction_Section_TextSelection_Title"
                                    Style="{StaticResource SectionExpanderHeaderTextStyle}" />
@@ -109,7 +109,7 @@
             <muxc:Expander AutomationProperties.Name="{Binding Text, ElementName=Interaction_Section_WindowLayout_Title_AccTitle}"
                        Style="{StaticResource SectionExpanderStyle}">
                 <muxc:Expander.Header>
-                    <StackPanel>
+                    <StackPanel Style="{StaticResource SectionExpanderHeaderStackStyle}">
                         <TextBlock x:Name="Interaction_Section_WindowLayout_Title_AccTitle"
                                    x:Uid="Interaction_Section_WindowLayout_Title"
                                    Style="{StaticResource SectionExpanderHeaderTextStyle}" />
@@ -148,7 +148,7 @@
             <muxc:Expander AutomationProperties.Name="{Binding Text, ElementName=Interaction_Section_MouseScrolling_Title_AccTitle}"
                        Style="{StaticResource SectionExpanderStyle}">
                 <muxc:Expander.Header>
-                    <StackPanel>
+                    <StackPanel Style="{StaticResource SectionExpanderHeaderStackStyle}">
                         <TextBlock x:Name="Interaction_Section_MouseScrolling_Title_AccTitle"
                                    x:Uid="Interaction_Section_MouseScrolling_Title"
                                    Style="{StaticResource SectionExpanderHeaderTextStyle}" />
@@ -177,7 +177,7 @@
             <muxc:Expander AutomationProperties.Name="{Binding Text, ElementName=Interaction_Section_UrlsExternal_Title_AccTitle}"
                        Style="{StaticResource SectionExpanderStyle}">
                 <muxc:Expander.Header>
-                    <StackPanel>
+                    <StackPanel Style="{StaticResource SectionExpanderHeaderStackStyle}">
                         <TextBlock x:Name="Interaction_Section_UrlsExternal_Title_AccTitle"
                                    x:Uid="Interaction_Section_UrlsExternal_Title"
                                    Style="{StaticResource SectionExpanderHeaderTextStyle}" />
@@ -209,7 +209,7 @@
             <muxc:Expander AutomationProperties.Name="{Binding Text, ElementName=Interaction_Section_Warnings_Title_AccTitle}"
                        Style="{StaticResource SectionExpanderStyle}">
                 <muxc:Expander.Header>
-                    <StackPanel>
+                    <StackPanel Style="{StaticResource SectionExpanderHeaderStackStyle}">
                         <TextBlock x:Name="Interaction_Section_Warnings_Title_AccTitle"
                                    x:Uid="Interaction_Section_Warnings_Title"
                                    Style="{StaticResource SectionExpanderHeaderTextStyle}" />
