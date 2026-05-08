@@ -119,10 +119,6 @@
       <DependentUpon>ColorSchemesPageViewModel.idl</DependentUpon>
       <SubType>Code</SubType>
     </ClInclude>
-    <ClInclude Include="ProfilesPageViewModel.h">
-      <DependentUpon>ProfilesPageViewModel.idl</DependentUpon>
-      <SubType>Code</SubType>
-    </ClInclude>
     <ClInclude Include="Profiles.h">
       <DependentUpon>Profiles.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -342,10 +338,6 @@
       <DependentUpon>ColorSchemesPageViewModel.idl</DependentUpon>
       <SubType>Code</SubType>
     </ClCompile>
-    <ClCompile Include="ProfilesPageViewModel.cpp">
-      <DependentUpon>ProfilesPageViewModel.idl</DependentUpon>
-      <SubType>Code</SubType>
-    </ClCompile>
     <ClCompile Include="Profiles.cpp">
       <DependentUpon>Profiles.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -475,7 +467,6 @@
     <Midl Include="TerminalColorConverters.idl" />
     <Midl Include="ColorSchemeViewModel.idl" />
     <Midl Include="ColorSchemesPageViewModel.idl" />
-    <Midl Include="ProfilesPageViewModel.idl" />
     <Midl Include="Profiles.idl">
       <DependentUpon>Profiles.xaml</DependentUpon>
       <SubType>Code</SubType>

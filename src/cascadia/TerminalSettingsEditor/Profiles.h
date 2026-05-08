@@ -6,21 +6,43 @@ Module Name:
 - Profiles.h
 
 Abstract:
-- The Profiles landing page in the Settings UI. Replaces the previous per-profile
-  navigation tree with a single "Profiles" nav item that opens this page. The page
-  hosts entry points to the Defaults profile, the Color schemes page, the Add Profile
-  flow, and the list of individual profiles.
+- The Profiles landing page in the Settings UI. The page hosts entry points to
+  the list of individual profiles among other profile-related settings.
 
 --*/
 
 #pragma once
 
 #include "Profiles.g.h"
-#include "ProfilesPageViewModel.h"
+#include "ProfilesPageViewModel.g.h"
+#include "ProfileViewModel.h"
 #include "Utils.h"
+#include "ViewModelHelpers.h"
 
 namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
 {
+    struct ProfilesPageViewModel : ProfilesPageViewModelT<ProfilesPageViewModel>, ViewModelHelper<ProfilesPageViewModel>
+    {
+    public:
+        ProfilesPageViewModel();
+
+        void RequestOpenDefaults();
+        void RequestOpenColorSchemes();
+        void RequestAddProfile();
+        void RequestOpenProfile(const Editor::ProfileViewModel& profile);
+
+        // DON'T YOU DARE ADD A `WINRT_CALLBACK(PropertyChanged` TO A CLASS DERIVED FROM ViewModelHelper. Do this instead:
+        using ViewModelHelper<ProfilesPageViewModel>::PropertyChanged;
+
+        WINRT_OBSERVABLE_PROPERTY(Windows::Foundation::Collections::IObservableVector<Editor::ProfileViewModel>, Profiles, _propertyChangedHandlers, nullptr);
+
+    public:
+        til::typed_event<Windows::Foundation::IInspectable, Windows::Foundation::IInspectable> OpenDefaultsRequested;
+        til::typed_event<Windows::Foundation::IInspectable, Windows::Foundation::IInspectable> OpenColorSchemesRequested;
+        til::typed_event<Windows::Foundation::IInspectable, Windows::Foundation::IInspectable> AddProfileRequested;
+        til::typed_event<Windows::Foundation::IInspectable, Editor::ProfileViewModel> OpenProfileRequested;
+    };
+
     struct Profiles : public HasScrollViewer<Profiles>, ProfilesT<Profiles>
     {
     public:
@@ -41,4 +63,5 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
 namespace winrt::Microsoft::Terminal::Settings::Editor::factory_implementation
 {
     BASIC_FACTORY(Profiles);
+    BASIC_FACTORY(ProfilesPageViewModel);
 }

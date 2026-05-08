@@ -24,7 +24,6 @@
     <Midl Include="ActionsViewModel.idl" />
     <Midl Include="ColorSchemeViewModel.idl" />
     <Midl Include="ColorSchemesPageViewModel.idl" />
-    <Midl Include="ProfilesPageViewModel.idl" />
     <Midl Include="RenderingViewModel.idl" />
     <Midl Include="InteractionViewModel.idl" />
     <Midl Include="GlobalAppearanceViewModel.idl" />

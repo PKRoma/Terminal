@@ -4,9 +4,11 @@
 #include "pch.h"
 #include "Profiles.h"
 #include "Profiles.g.cpp"
+#include "ProfilesPageViewModel.g.cpp"
 #include "ProfileViewModel.h"
 
 using namespace winrt::Windows::Foundation;
+using namespace winrt::Windows::Foundation::Collections;
 using namespace winrt::Windows::UI::Xaml;
 using namespace winrt::Windows::UI::Xaml::Controls;
 using namespace winrt::Windows::UI::Xaml::Navigation;
@@ -39,35 +41,21 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
 
     void Profiles::Defaults_Click(const IInspectable& /*sender*/, const RoutedEventArgs& /*args*/)
     {
-        if (_ViewModel)
-        {
-            _ViewModel.RequestOpenDefaults();
-        }
+        _ViewModel.RequestOpenDefaults();
     }
 
     void Profiles::ColorSchemes_Click(const IInspectable& /*sender*/, const RoutedEventArgs& /*args*/)
     {
-        if (_ViewModel)
-        {
-            _ViewModel.RequestOpenColorSchemes();
-        }
+        _ViewModel.RequestOpenColorSchemes();
     }
 
     void Profiles::AddProfile_Click(const IInspectable& /*sender*/, const RoutedEventArgs& /*args*/)
     {
-        if (_ViewModel)
-        {
-            _ViewModel.RequestAddProfile();
-        }
+        _ViewModel.RequestAddProfile();
     }
 
     void Profiles::Profile_Click(const IInspectable& sender, const RoutedEventArgs& /*args*/)
     {
-        if (!_ViewModel)
-        {
-            return;
-        }
-
         // Profile navigators are buttons whose DataContext is the bound ProfileViewModel.
         if (const auto element = sender.try_as<FrameworkElement>())
         {
@@ -77,4 +65,30 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
             }
         }
     }
+
+    ProfilesPageViewModel::ProfilesPageViewModel()
+    {
+        _setProfiles(single_threaded_observable_vector<Editor::ProfileViewModel>());
+    }
+
+    void ProfilesPageViewModel::RequestOpenDefaults()
+    {
+        OpenDefaultsRequested.raise(*this, nullptr);
+    }
+
+    void ProfilesPageViewModel::RequestOpenColorSchemes()
+    {
+        OpenColorSchemesRequested.raise(*this, nullptr);
+    }
+
+    void ProfilesPageViewModel::RequestAddProfile()
+    {
+        AddProfileRequested.raise(*this, nullptr);
+    }
+
+    void ProfilesPageViewModel::RequestOpenProfile(const Editor::ProfileViewModel& profile)
+    {
+        OpenProfileRequested.raise(*this, profile);
+    }
+
 }

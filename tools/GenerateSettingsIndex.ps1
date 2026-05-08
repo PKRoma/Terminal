@@ -106,6 +106,11 @@ $ClassMap = @{
         NavigationParam = "AddProfile"
         SubPage         = "BreadcrumbSubPage::None"
     }
+    "Microsoft::Terminal::Settings::Editor::Profiles" = @{
+        ResourceName    = "Nav_Profiles/Content"
+        NavigationParam = "Profiles_Nav"
+        SubPage         = "BreadcrumbSubPage::None"
+    }
 }
 
 function IsProfileSubPage($pageClass)

@@ -45,7 +45,7 @@
                         <muxc:InfoBadge Grid.Column="2"
                                         Margin="0,0,8,0"
                                         VerticalAlignment="Center"
-                                        Visibility="{x:Bind mtu:Converters.BooleanToVisibility(Hidden), Mode=OneWay}">
+                                        Visibility="{x:Bind Hidden, Mode=OneWay}">
                             <muxc:InfoBadge.IconSource>
                                 <muxc:FontIconSource FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                                      FontSize="12"
@@ -55,7 +55,7 @@
                         <muxc:InfoBadge Grid.Column="2"
                                         Margin="0,0,8,0"
                                         VerticalAlignment="Center"
-                                        Visibility="{x:Bind mtu:Converters.BooleanToVisibility(Orphaned), Mode=OneWay}">
+                                        Visibility="{x:Bind Orphaned, Mode=OneWay}">
                             <muxc:InfoBadge.IconSource>
                                 <muxc:FontIconSource FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                                      FontSize="12"
@@ -71,8 +71,7 @@
     <StackPanel Style="{StaticResource SettingsStackStyle}">
 
         <!--  General Profile Settings  -->
-        <TextBlock x:Name="GeneralSettingsHeader"
-                   x:Uid="Profiles_GeneralSettingsHeader"
+        <TextBlock x:Uid="Profiles_GeneralSettingsHeader"
                    Margin="0,0,0,4"
                    Style="{StaticResource TextBlockSubHeaderStyle}" />
 
@@ -107,24 +106,21 @@
         </Button>
 
         <!--  Terminal profiles section  -->
-        <TextBlock x:Name="TerminalProfilesHeader"
-                   x:Uid="Profiles_TerminalProfilesHeader"
+        <TextBlock x:Uid="Profiles_TerminalProfilesHeader"
                    Style="{StaticResource TextBlockSubHeaderStyle}" />
 
         <!--  Add Profile accent button  -->
-        <Border MaxWidth="{StaticResource StandardControlMaxWidth}">
-            <Button x:Name="AddProfileButton"
-                    Margin="0,4,0,0"
-                    Click="AddProfile_Click"
-                    Style="{StaticResource AccentButtonStyle}">
-                <StackPanel Orientation="Horizontal">
-                    <FontIcon FontSize="{StaticResource StandardIconSize}"
-                              Glyph="&#xE710;" />
-                    <TextBlock x:Uid="Profiles_AddProfileButton"
-                               Style="{StaticResource IconButtonTextBlockStyle}" />
-                </StackPanel>
-            </Button>
-        </Border>
+        <Button x:Name="AddProfileButton"
+                Margin="0,4,0,0"
+                Click="AddProfile_Click"
+                Style="{StaticResource AccentButtonStyle}">
+            <StackPanel Orientation="Horizontal">
+                <FontIcon FontSize="{StaticResource StandardIconSize}"
+                          Glyph="&#xE710;" />
+                <TextBlock x:Uid="Profiles_AddProfileButton"
+                           Style="{StaticResource IconButtonTextBlockStyle}" />
+            </StackPanel>
+        </Button>
 
         <!--  List of profiles. Each is a NavigatorButtonStyle button rendered by ProfileNavigatorTemplate.  -->
         <ItemsControl Margin="0,0,0,16"

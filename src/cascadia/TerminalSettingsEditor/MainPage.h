@@ -95,13 +95,13 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         void _NavigateToProfileSubPage(const Editor::ProfileViewModel& profile, ProfileSubPage page, const IInspectable& breadcrumbTag, const hstring& elementToFocus);
 
         void _PreNavigateHelper();
-        void _Navigate(const IInspectable& vm, BreadcrumbSubPage subPage, hstring elementToFocus = {}, hstring parentNavTag = {});
+        void _Navigate(const IInspectable& vm, BreadcrumbSubPage subPage = BreadcrumbSubPage::None, hstring elementToFocus = {}, hstring parentNavTag = {});
         void _NavigateToProfileHandler(const IInspectable& sender, winrt::guid profileGuid);
         void _NavigateToColorSchemeHandler(const IInspectable& sender, const IInspectable& args);
         Editor::ProfileViewModel _FindProfileVMByGuid(winrt::guid profileGuid) const;
 
         void _AppendProfilesRootCrumb();
-        bool _RootCrumbIsProfiles() const;
+        bool _RootCrumbIsProfilesBreadcrumb() const;
         void _SelectNavItemByTag(std::wstring_view tag);
 
         void _UpdateBackgroundForMica();
@@ -110,7 +110,6 @@ namespace winrt::Microsoft::Terminal::Settings::Editor::implementation
         safe_void_coroutine _UpdateSearchIndex();
 
         winrt::Microsoft::Terminal::Settings::Editor::ProfileViewModel _profileDefaultsVM{ nullptr };
-        Windows::Foundation::Collections::IObservableVector<winrt::Microsoft::Terminal::Settings::Editor::ProfileViewModel> _profileVMs{ nullptr };
         winrt::Microsoft::Terminal::Settings::Editor::ColorSchemesPageViewModel _colorSchemesPageVM{ nullptr };
         winrt::Microsoft::Terminal::Settings::Editor::ActionsViewModel _actionsVM{ nullptr };
         winrt::Microsoft::Terminal::Settings::Editor::NewTabMenuViewModel _newTabMenuPageVM{ nullptr };
